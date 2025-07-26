@@ -20,6 +20,7 @@ Assets/AssetStoreTools*
 *.booproj
 *.svd
 *.pdb
+*.git
 
 # Rider
 .idea/
