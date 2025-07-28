@@ -13,4 +13,16 @@ MonoBehaviour:
   m_Name: Recoil Secondary Noise
   m_EditorClassIdentifier: 
   PositionNoise: []
-  OrientationNoise: []
+  OrientationNoise:
+  - X:
+      Frequency: 0.075
+      Amplitude: 4
+      Constant: 0
+    Y:
+      Frequency: 0
+      Amplitude: 0
+      Constant: 0
+    Z:
+      Frequency: 0
+      Amplitude: 0
+      Constant: 0

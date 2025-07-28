@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Player_InventorySystem : NetworkBehaviour {
     private Player_InteractionSystem Interaction;
+    private Player_CombatSystem Combat;
 
     [Header("Hands")]
     [SerializeField] private Transform m_rightHand;
@@ -21,6 +22,7 @@ public class Player_InventorySystem : NetworkBehaviour {
 
     private void Awake() {
         Interaction = GetComponent<Player_InteractionSystem>();
+        Combat = GetComponent<Player_CombatSystem>();
 
         _inventoryItems = new List<Item_SO>(m_maxSlots);
         _itemsOnSlots = new Item_SO[UI_PlayerHUD.GetSlotsCount()];
@@ -31,24 +33,20 @@ public class Player_InventorySystem : NetworkBehaviour {
     }
 
     #region Network Initialization
-    public override void OnNetworkSpawn()
-    {
+    public override void OnNetworkSpawn() {
         base.OnNetworkSpawn();
 
-        if (IsOwner)
-        {
+        if (IsOwner) {
             Singleton.Instance.GameEvents.OnSlotItemDropped.AddListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnItemCollected);
             Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
         }
     }
 
-    public override void OnNetworkDespawn()
-    {
+    public override void OnNetworkDespawn() {
         base.OnNetworkDespawn();
 
-        if (IsOwner)
-        {
+        if (IsOwner) {
             Singleton.Instance.GameEvents.OnSlotItemDropped.RemoveListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnItemCollected);
             Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
@@ -73,6 +71,9 @@ public class Player_InventorySystem : NetworkBehaviour {
 
         if (_itemsOnSlots[index] != null) {
             itemOnHand = Instantiate(_itemsOnSlots[index].m_onHandItemPrefab, m_rightHand);
+            if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
+                    firearm.SetupWeapon(_itemsOnSlots[index], Combat, 
+                    Singleton.Instance.GameManager.GetWeaponDataByID(_itemsOnSlots[index].id));
             SpawnItemOnHandServerRpc(_itemsOnSlots[index].id);
         }
 

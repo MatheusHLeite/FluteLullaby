@@ -49,8 +49,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     #endregion
 
     #region Public setup
-    public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat) {
-        weapon = item as LongRangeWeapon_SO;
+    public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat, WeaponData data) {
+        weapon = item as LongRangeWeapon_SO; 
 
         m_damage = weapon.m_damage;
         m_maxAmmo = weapon.m_maxAmmo;
@@ -64,8 +64,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         CameraMovement = combat.GetComponent<Player_CameraMovementSystem>();
         AnimationSystem = combat.GetComponent<Player_AnimationSystem>();
 
-        currentAmmo = m_maxAmmo; //[TODO] Change logic
-        stockedAmmo = m_maxAmmo;
+        currentAmmo = data.currentAmmo;
+        stockedAmmo = data.stockedAmmo;
     }
 
     public virtual void UpgradeWeapon() {
@@ -91,7 +91,12 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
     #region Public functions
     public virtual void CallFire() {
-        if (isReloading || isShooting || currentAmmo <= 0) return;
+        if (isReloading || isShooting || (currentAmmo <= 0 && stockedAmmo <= 0)) return;
+
+        if (currentAmmo <= 0 && stockedAmmo > 0) {
+            CallReload();
+            return;
+        }
 
         isShooting = true;
 
@@ -100,7 +105,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     }
 
     public virtual void CallReload() {
-        if (isReloading || isShooting) return;
+        if (isReloading || isShooting || stockedAmmo <= 0) return;
 
         if (currentAmmo < m_maxAmmo)
             Reload();        
@@ -113,7 +118,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
         currentAmmo--;
 
-        Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(currentAmmo, m_maxAmmo);
+        Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(weapon.id, currentAmmo, stockedAmmo);
 
         muzzleFlash.Play();
         smokeFX.Play();
@@ -129,18 +134,32 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     protected abstract void Fire();
 
     public virtual void OnReloadEnd() {
-        currentAmmo = m_maxAmmo; //[TODO] remaining ammo
+        int prevCurrentAmmo = currentAmmo;
+        currentAmmo = stockedAmmo + currentAmmo >= m_maxAmmo ? m_maxAmmo : currentAmmo + stockedAmmo;
+
+        stockedAmmo -= m_maxAmmo - prevCurrentAmmo;
+        if (stockedAmmo <= 0) stockedAmmo = 0;
+
         isReloading = false;
 
-        Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(currentAmmo, m_maxAmmo);
+        Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(weapon.id, currentAmmo, stockedAmmo);
     }
 
     public virtual void OnFireEnd() {
-        if (currentAmmo == 0) {
+        if (currentAmmo == 0 && stockedAmmo > 0) {
             Reload();
         }
 
         isShooting = false;
     }
     #endregion
+    
+    private void Update() { 
+        if (!Singleton.Instance.GameManager._developmentMode) return;
+
+        if (UnityEngine.Input.GetKeyDown(KeyCode.L)){
+            stockedAmmo++;
+            Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(weapon.id, currentAmmo, stockedAmmo);
+        }
+    }
 }

@@ -119,12 +119,7 @@ public class Player_CombatSystem : NetworkBehaviour {
 
         yield return new WaitForEndOfFrame();
 
-        if (rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Firearm weapon)) {
-            this.weapon = weapon;
-            weapon.SetupWeapon(_actualEquippedWeapon, this);
-        }
-        else 
-            this.weapon = null;       
+        this.weapon = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Firearm weapon) ? weapon : null;      
         
         Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.weapon);
     }

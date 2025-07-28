@@ -89,7 +89,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
     }
 
-    private void OnAmmoSpent(int currentAmmo, int maxAmmo) {
+    private void OnAmmoSpent(string id, int currentAmmo, int maxAmmo) {
         m_ammo.text = $"{currentAmmo}/<size=50%>{maxAmmo}</size>";
     }
 

@@ -18,7 +18,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent OnKill { get; private set; } = new();
     public UnityEvent<float> OnSensitivityChange { get; private set; } = new();
     public UnityEvent<float> OnSensitivityInitiated { get; private set; } = new();
-    public UnityEvent<int, int> OnAmmoConsumed { get; private set; } = new();
+    public UnityEvent<string, int, int> OnAmmoConsumed { get; private set; } = new();
     public UnityEvent<Weapon_Firearm> OnWeaponChanged { get; private set; } = new();
     public UnityEvent<RaycastHit> OnShotHit { get; private set; } = new();
     public UnityEvent OnGameStarted { get; private set; } = new(); 
