@@ -4411,7 +4411,7 @@ MonoBehaviour:
   Use2DDistance: 0
   UseLocalSpace: 1
   ReactionSettings:
-    m_SecondaryNoise: {fileID: 11400000, guid: 86d428c6628a97e4789ac9e307212275, type: 2}
+    m_SecondaryNoise: {fileID: 11400000, guid: d5dd73d68d87f0b409d2b039133427f5, type: 2}
     AmplitudeGain: 1
     FrequencyGain: 1
     Duration: 0.125
@@ -4508,7 +4508,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -2935581447736933011, guid: 693430919429cff4d9e10f1225ca56c8, type: 2}
+  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4552,8 +4552,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Player
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 693430919429cff4d9e10f1225ca56c8, type: 2}
-  m_sharedMaterial: {fileID: -2935581447736933011, guid: 693430919429cff4d9e10f1225ca56c8, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
