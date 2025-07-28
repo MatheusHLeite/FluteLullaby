@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c724a671d56793041b7a2c62e313ca9c, type: 3}
+  m_Name: Default Player Parameters
+  m_EditorClassIdentifier: 
+  m_walkSpeed: 3
+  m_sprintSpeed: 6
+  m_maxVelocityChange: 10
+  m_acceleration: 9
+  m_deceleration: 23
+  m_jumpPower: 6.275
+  m_coyoteTime: 0.245
+  m_maxAirVelocityChange: 0.15
+  m_sprintDuration: 6
+  m_sprintCooldown: 0.5
+  m_sprintRecoverSpeed: 0.35
+  m_raycastDistance: 0.445
+  m_mouseSensitivity: 2
+  m_sensitivityMultiplier: 0.045
+  m_maxPositiveLookAngle: 75
+  m_maxNegativeLookAngle: 60
+  m_invertCamera: 0
+  m_defaultFov: 70
+  m_zoomFOV: 30
+  m_zoomStepTime: 5
