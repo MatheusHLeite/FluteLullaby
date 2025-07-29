@@ -71,13 +71,16 @@ public class Player_InventorySystem : NetworkBehaviour {
 
         if (_itemsOnSlots[index] != null) {
             itemOnHand = Instantiate(_itemsOnSlots[index].m_onHandItemPrefab, m_rightHand);
-            if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
-                    firearm.SetupWeapon(_itemsOnSlots[index], Combat, 
-                    Singleton.Instance.GameManager.GetWeaponDataByID(_itemsOnSlots[index].id));
+            SetupItemOHand(_itemsOnSlots[index]);
             SpawnItemOnHandServerRpc(_itemsOnSlots[index].id);
         }
 
         Singleton.Instance.GameEvents.OnActualSlotItem?.Invoke(_itemsOnSlots[index] != null ? _itemsOnSlots[index] : null);
+    }
+
+    private void SetupItemOHand(Item_SO item) {
+        if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
+            firearm.SetupWeapon(item, Combat, Singleton.Instance.GameManager.GetWeaponDataByID(item.id));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -86,7 +89,11 @@ public class Player_InventorySystem : NetworkBehaviour {
     [ClientRpc]
     private void SpawnItemOnHandClientRpc(string id) {
         if (IsOwner) return;
-        itemOnTPHand = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_thirdPersonItemPrefab, m_thirdPersonRightHand);
+        itemOnTPHand = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_collectibleItemPrefab, m_thirdPersonRightHand);
+        Destroy(itemOnTPHand.GetComponent<Collider>());
+        Destroy(itemOnTPHand.GetComponent<Rigidbody>());
+        Destroy(itemOnTPHand.GetComponent<Weapon_Interactor>());
+        Destroy(itemOnTPHand.GetComponent<ClientNetworkTransform>()); //[TODO] Change this later
     }
 
     [ServerRpc(RequireOwnership = false)]

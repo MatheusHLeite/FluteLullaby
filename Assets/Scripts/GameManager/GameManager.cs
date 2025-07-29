@@ -123,4 +123,11 @@ public struct WeaponData {
     [ReadOnly] public string id;
     public int currentAmmo;
     public int stockedAmmo;
+    public float reloadingSpeedMultiplier;
+    public float fireRateMultiplier;
+}
+
+public struct MeleeWeaponData {
+    [ReadOnly] public string id;
+    
 }

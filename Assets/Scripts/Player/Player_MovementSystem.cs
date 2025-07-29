@@ -69,6 +69,14 @@ public class Player_MovementSystem : NetworkBehaviour {
     public bool IsCrouched { get; private set; }
     #endregion
 
+    #region Network variables
+    private NetworkVariable<bool> isCrouched_NV = new NetworkVariable<bool>(
+    false,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
+    #endregion
+
     #region Private movement variables
     private Vector3 targetVelocity;
     private Vector3 movementInput;
@@ -143,9 +151,19 @@ public class Player_MovementSystem : NetworkBehaviour {
             return;
         }
 
+        isCrouched_NV.OnValueChanged += OnCrouchStateChanged;
+
         GetComponent<CapsuleCollider>().enabled = false;        
     }
+
+    public override void OnNetworkDespawn() {
+        isCrouched_NV.OnValueChanged -= OnCrouchStateChanged;
+    }
     #endregion
+
+    private void OnCrouchStateChanged(bool oldValue, bool newValue) {
+        Animation.OnCrouch(newValue);
+    }
 
     #region Movement
     private void HandleMovement() {
@@ -230,16 +248,18 @@ public class Player_MovementSystem : NetworkBehaviour {
 
     private void HandleCrouch() {
         if (m_enableCrouch && IsGrounded) {
-            if (Input.Crouch)            
-                Crouch();            
-            else if (!Input.Crouch)            
-                StandUp();            
+            if (Input.Crouch) {
+                Crouch();        
+            }       
+            else if (!Input.Crouch) {
+                StandUp(); 
+            }                     
         }
 
         camPos.y = camPosY;
 
         _thisCollider.center = Vector3.Lerp(_thisCollider.center, colliderCenter, Time.deltaTime * m_toCrouchSpeed);
-        _thisCollider.height = Mathf.Lerp(_thisCollider.height, colliderHeight, Time.deltaTime * m_toCrouchSpeed);     
+        _thisCollider.height = Mathf.Lerp(_thisCollider.height, colliderHeight, Time.deltaTime * m_toCrouchSpeed);
         _cameraPivot.localPosition = Vector3.Lerp(_cameraPivot.localPosition, camPos, Time.deltaTime * m_toCrouchSpeed);
     }
 
@@ -247,8 +267,10 @@ public class Player_MovementSystem : NetworkBehaviour {
         if (IsCrouched) return;
         IsCrouched = true;
 
+        SetCrouchStateServerRpc(true);
+
         colliderCenter = new Vector3(0, m_crouchCenter, 0);
-        colliderHeight = m_crouchHeight;        
+        colliderHeight = m_crouchHeight; 
         camPosY = m_cameraCrouchY;        
     }
 
@@ -256,9 +278,16 @@ public class Player_MovementSystem : NetworkBehaviour {
         if (!IsCrouched || !canStandUp) return;
         IsCrouched = false;
 
+        SetCrouchStateServerRpc(false);
+
         colliderCenter = Vector3.zero;
         colliderHeight = standHeight;
         camPosY = m_cameraStandY;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void SetCrouchStateServerRpc(bool crouched) {
+        isCrouched_NV.Value = crouched;
     }
 
     private void Jump() {
@@ -286,11 +315,12 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
 
     private void Update() {
+        HandleCrouch();
+
         if (!IsOwner || HealthSystem.IsDead) return;
 
         HandleJump();
         HandleSprint();
-        HandleCrouch();
     }
 
     private void FixedUpdate() {

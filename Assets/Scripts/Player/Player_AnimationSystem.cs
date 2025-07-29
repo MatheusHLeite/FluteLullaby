@@ -201,6 +201,10 @@ public class Player_AnimationSystem : NetworkBehaviour {
         }
     } //[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
+    public void OnCrouch(bool crouch) {
+        RequestAnimationStateServerRpc("IsCrouch", crouch);
+    }
+
     public void OnJump() {
         RequestAnimationServerRpc(Jump);
     }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
@@ -227,6 +231,16 @@ public class Player_AnimationSystem : NetworkBehaviour {
     [ClientRpc]
     void PlayAnimationClientRpc(string animationTrigger) {
         m_fullBodyAnimator.SetTrigger(animationTrigger);
+    }
+
+    [ServerRpc]
+    void RequestAnimationStateServerRpc(string state, bool condition) {
+        SetAnimationStateClientRpc(state, condition);
+    }
+
+    [ClientRpc]
+    void SetAnimationStateClientRpc(string state, bool condition) {
+        m_fullBodyAnimator.SetBool(state, condition);
     }
 
     [ServerRpc]

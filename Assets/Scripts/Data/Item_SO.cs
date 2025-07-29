@@ -6,7 +6,6 @@ public class Item_SO : ScriptableObject {
     [FoldoutGroup("Item setup")] public Sprite m_icon;
     [FoldoutGroup("Item setup")] public GameObject m_collectibleItemPrefab;
     [FoldoutGroup("Item setup")] public GameObject m_onHandItemPrefab;
-    [FoldoutGroup("Item setup")] public GameObject m_thirdPersonItemPrefab;
     [FoldoutGroup("Item setup")] [TextArea] public string m_description;
     [FoldoutGroup("Item setup")] public ItemType m_itemType;
     [Space(10)]

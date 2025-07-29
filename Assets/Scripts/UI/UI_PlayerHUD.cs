@@ -15,12 +15,11 @@ public class UI_PlayerHUD : MonoBehaviour {
     [SerializeField] private TMP_Text m_killCounter;
     [SerializeField] private TMP_Text m_deathCounter;
     [SerializeField] private CanvasGroup m_killIndicator;
-    [SerializeField] private CanvasGroup[] m_damageTakenScreenEffect;
     [SerializeField] private TMP_Text m_ammo;
-
+    [SerializeField] private CanvasGroup[] m_damageTakenScreenEffect;
+    
     [Header("Crosshair")]
-    [SerializeField] private CanvasGroup m_hitCrosshair;
-    [SerializeField] private CanvasGroup m_killCrosshair;
+    [SerializeField] private Animator m_crosshairAnimator;
 
     private CinemachineImpulseSource impulseSource;
 
@@ -44,7 +43,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaUsage.AddListener(OnStaminaUsage);
-        Singleton.Instance.GameEvents.OnHit.AddListener(() => OnHit(false));
+        Singleton.Instance.GameEvents.OnHit.AddListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
@@ -60,7 +59,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnHealthSet.RemoveListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.RemoveListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaUsage.RemoveListener(OnStaminaUsage);
-        Singleton.Instance.GameEvents.OnHit.RemoveListener(() => OnHit(false));
+        Singleton.Instance.GameEvents.OnHit.RemoveListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
@@ -93,8 +92,10 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_ammo.text = $"{currentAmmo}/<size=50%>{maxAmmo}</size>";
     }
 
-    private void OnHit(bool killed) {
-        if (killed) {
+    private void OnHit() {
+        m_crosshairAnimator.SetTrigger("OnHit");
+
+        /*if (killed) {
             m_hitCrosshair.alpha = 0;
             m_killCrosshair.alpha = 1;
             m_killCrosshair.DOFade(0, 0.55f).SetDelay(0.14f);
@@ -103,11 +104,11 @@ public class UI_PlayerHUD : MonoBehaviour {
             m_killCrosshair.alpha = 0;
             m_hitCrosshair.alpha = 1;
             m_hitCrosshair.DOFade(0, 0.4f).SetDelay(0.11f);
-        }        
+        }  */      
     }
 
     private void OnKill() {
-        OnHit(true);
+         m_crosshairAnimator.SetTrigger("OnKill");
 
         _killCount++;
         m_killCounter.SetText(_killCount.ToString());
@@ -140,7 +141,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_damageTakenScreenEffect[index].alpha = 1;
         m_damageTakenScreenEffect[index].DOFade(0, 0.5f).SetDelay(1.7f);
     
-        impulseSource.GenerateImpulse(new Vector3(Random.Range(.1f, .35f), Random.Range(-.15f, .15f), 0f));
+        //impulseSource.GenerateImpulse(new Vector3(Random.Range(.1f, .35f), Random.Range(-.15f, .15f), 0f));
     }
 
     private void OnDamageTaken(float currentHealth, float maxHealth) {

@@ -76,7 +76,7 @@ MonoBehaviour:
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
-  LogLevel: 0
+  LogLevel: 1
 --- !u!114 &2143212686116921670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,6 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04641277e8765ad44ae9409f88a37d65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxPlayers: 2
 --- !u!114 &8716630607953361162
 MonoBehaviour:
   m_ObjectHideFlags: 0
