@@ -17,7 +17,8 @@ public class Player_InventorySystem : NetworkBehaviour {
 
     private List<Item_SO> _inventoryItems = new List<Item_SO>(6);
 
-    private GameObject itemOnTPHand;
+    private Interactor itemOnTPHand;
+    private GameObject itemOnTPHandRef;
     private GameObject itemOnHand;
 
     private void Awake() {
@@ -81,6 +82,8 @@ public class Player_InventorySystem : NetworkBehaviour {
     private void SetupItemOHand(Item_SO item) {
         if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
             firearm.SetupWeapon(item, Combat, Singleton.Instance.GameManager.GetWeaponDataByID(item.id));
+        if (itemOnHand.transform.TryGetComponent(out Weapon_Melee melee))
+            melee.SetupWeapon(item, Combat); 
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -90,10 +93,8 @@ public class Player_InventorySystem : NetworkBehaviour {
     private void SpawnItemOnHandClientRpc(string id) {
         if (IsOwner) return;
         itemOnTPHand = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_collectibleItemPrefab, m_thirdPersonRightHand);
-        Destroy(itemOnTPHand.GetComponent<Collider>());
-        Destroy(itemOnTPHand.GetComponent<Rigidbody>());
-        Destroy(itemOnTPHand.GetComponent<Weapon_Interactor>());
-        Destroy(itemOnTPHand.GetComponent<ClientNetworkTransform>()); //[TODO] Change this later
+        itemOnTPHandRef = itemOnTPHand.gameObject;
+        itemOnTPHand.SetThirdPersonViewOnly();        
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -102,7 +103,7 @@ public class Player_InventorySystem : NetworkBehaviour {
     [ClientRpc]
     private void DespawnItemOnHandClientRpc() {
         if (IsOwner) return;
-        Destroy(itemOnTPHand);
+        Destroy(itemOnTPHandRef);
     }
 
     private void OnItemCollected(Item_SO item, int index) {
@@ -122,7 +123,7 @@ public class Player_InventorySystem : NetworkBehaviour {
     [ServerRpc(RequireOwnership = false)]
     private void SpawnItemServerRpc(string id, Vector3 pos) {
         if (!IsServer) return;
-        GameObject item = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_collectibleItemPrefab, pos, Quaternion.LookRotation(pos));
+        Interactor item = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_collectibleItemPrefab, pos, Quaternion.LookRotation(pos));
         item.GetComponent<NetworkObject>().Spawn(true);
     }
     #endregion

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be2e3952cc4b8a34395096ee9dcb2e23, type: 3}
+  m_Name: Firearm_DoubleBarrelShotgun
+  m_EditorClassIdentifier: 
+  m_itemName: Shotgun
+  m_icon: {fileID: 21300000, guid: ea4d5803805e1974fbac13952cf3be6e, type: 3}
+  m_collectibleItemPrefab: {fileID: 8580961907081263343, guid: 4e5477c4d5ca66440bb54f0e4a7928a6, type: 3}
+  m_onHandItemPrefab: {fileID: 4258108827142480399, guid: a70ceb1b00c4aea4ba81fc2040fbcf0a, type: 3}
+  m_description: 
+  m_itemType: 1
+  id: 087058f1-9013-4d3a-9af6-80d88f97d729
+  m_weapon: 1
+  m_damage: 100
+  m_maxAmmo: 2
+  m_range: 30
+  m_recoilForce: 135
+  m_impactForce: 220

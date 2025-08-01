@@ -315,10 +315,9 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
 
     private void Update() {
-        HandleCrouch();
-
         if (!IsOwner || HealthSystem.IsDead) return;
 
+        HandleCrouch();
         HandleJump();
         HandleSprint();
     }

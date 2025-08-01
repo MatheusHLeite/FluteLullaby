@@ -648,7 +648,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.45
+  m_Volume: 0.55
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -2094,6 +2094,7 @@ GameObject:
   - component: {fileID: 1421015815934445736}
   - component: {fileID: 1083899724122043962}
   - component: {fileID: 173913343818902698}
+  - component: {fileID: 3561814839737095583}
   - component: {fileID: 3728322197870010108}
   - component: {fileID: 1297623330574925968}
   - component: {fileID: 6493769121387737917}
@@ -2310,7 +2311,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   m_fullBodyAnimator: {fileID: 264613001944911014}
-  m_firstPersonAnimator: {fileID: 4809280416043271526}
   m_animationSmoothness: 8
   ragdollBodies:
   - {fileID: 6453651065967344213}
@@ -2324,11 +2324,6 @@ MonoBehaviour:
   - {fileID: 661658911798263451}
   - {fileID: 4962376310597600414}
   - {fileID: 7436024588284030500}
-  revolverShot:
-  - {fileID: 8300000, guid: 11a7135fe081a7a45ab54152c8e9c8e8, type: 3}
-  shotgunShot:
-  - {fileID: 8300000, guid: 6b4d9805cc162414e95691646f6dbef6, type: 3}
-  _as: {fileID: 7725295059780827285}
 --- !u!114 &173913343818902698
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2417,6 +2412,23 @@ MonoBehaviour:
         byte0059: 0
         byte0060: 0
         byte0061: 0
+--- !u!114 &3561814839737095583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4069122965828796249}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 220fc24bf202303468a63831445406ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_shootAudioSource: {fileID: 7725295059780827285}
+  revolverShotSounds:
+  - {fileID: 8300000, guid: 11a7135fe081a7a45ab54152c8e9c8e8, type: 3}
+  shotgunShotSounds:
+  - {fileID: 8300000, guid: 6b4d9805cc162414e95691646f6dbef6, type: 3}
 --- !u!114 &3728322197870010108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4794,8 +4806,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9175101713682120579}
-  - component: {fileID: 4809280416043271526}
-  - component: {fileID: 581685561039514180}
   m_Layer: 0
   m_Name: RightHand
   m_TagString: Untagged
@@ -4818,40 +4828,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3238552059071448730}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &4809280416043271526
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7703340008096887397}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 335a0086531d1ab468b8bc56c7e9a8ea, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
---- !u!114 &581685561039514180
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7703340008096887397}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 503723caef68a01459688e829b1398ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7815847726612596561
 GameObject:
   m_ObjectHideFlags: 0

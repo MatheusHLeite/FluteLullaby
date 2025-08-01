@@ -4,7 +4,7 @@ public class Weapon_Revolver : Weapon_Firearm {
     protected override void Fire() {
         OnShot();
 
-        AnimationSystem.Play3DAudio(Weapons.Revolver); //[TODO] Change it to audio system
+        AudioSystem.Play3DAudio(Weapons.Revolver);
 
         Physics.Raycast(ray, out hit, m_range); 
 

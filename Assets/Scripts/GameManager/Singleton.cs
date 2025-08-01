@@ -3,8 +3,8 @@ using UnityEngine;
 public class Singleton : MonoBehaviour {
     public static Singleton Instance;
 
-    public GameEvents GameEvents { get; private set; }
     public GameManager GameManager { get; private set; }
+    public GameEvents GameEvents { get; private set; }    
     public NetworkSceneManager NetworkSceneManager { get; private set; }
     public VFXManager VFXManager { get; private set; }
 
@@ -22,8 +22,8 @@ public class Singleton : MonoBehaviour {
 
         DontDestroyOnLoad(gameObject);
 
-        GameEvents = GetComponent<GameEvents>();
         GameManager = GetComponent<GameManager>();
+        GameEvents = GetComponent<GameEvents>();        
         NetworkSceneManager = GetComponent<NetworkSceneManager>();
         VFXManager = GetComponent<VFXManager>();
     }

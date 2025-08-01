@@ -95,8 +95,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2572137436934795579}
+  - component: {fileID: 6753683618857186186}
   - component: {fileID: 6097425812857934536}
-  - component: {fileID: 1169272379781861021}
+  - component: {fileID: -9007507157528730931}
   m_Layer: 8
   m_Name: pfb_FirstPerson_Weapon_Default
   m_TagString: Untagged
@@ -121,6 +122,28 @@ Transform:
   - {fileID: 6194684162026247503}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &6753683618857186186
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2719613241572335835}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 335a0086531d1ab468b8bc56c7e9a8ea, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!65 &6097425812857934536
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -142,7 +165,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.3, y: 2, z: 0.2}
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &1169272379781861021
+--- !u!114 &-9007507157528730931
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -151,10 +174,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2719613241572335835}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e52a354a7a72f6a49a495d4d1b45b97d, type: 3}
+  m_Script: {fileID: 11500000, guid: 0f52f637e61f3ca4089017e011d6264e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_thisWeapon: {fileID: 11400000, guid: 5521447aa413e99499dcced905ddca49, type: 2}
 --- !u!1 &7883729404967389928
 GameObject:
   m_ObjectHideFlags: 0

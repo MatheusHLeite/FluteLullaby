@@ -13,14 +13,11 @@ public class Player_CombatSystem : NetworkBehaviour {
 
     private Item_SO _actualEquippedWeapon;
 
-    private int comboStep;
-    private int maxComboStep = 3;
-
-    private bool canAttack;
-    private bool canCombo;
-
     private Transform rightHand;
-    private Weapon_Firearm weapon;
+    private Weapon_Firearm firearm;
+    private Weapon_Melee melee;
+
+    private bool canSwitchWeapons;
 
     #region Initialization
     private void Awake() {
@@ -31,11 +28,8 @@ public class Player_CombatSystem : NetworkBehaviour {
         HealthSystem = GetComponent<Player_HealthSystem>();
 
         rightHand = Inventory.GetRightHand();
-    }
 
-    private void Start()
-    {
-        canAttack = true; //[TODO] Change logic
+        SetCanSwitch(true);
     }
     #endregion
 
@@ -59,6 +53,10 @@ public class Player_CombatSystem : NetworkBehaviour {
 
     public Item_SO GetActualEquippedWeapon() { return _actualEquippedWeapon; }
 
+    public void SetCanSwitch(bool canSwitch) => canSwitchWeapons = canSwitch;
+
+    public bool GetCanSwitch() => canSwitchWeapons;
+
     private void HandleAttack() {
         if (_actualEquippedWeapon == null) return;
 
@@ -69,44 +67,20 @@ public class Player_CombatSystem : NetworkBehaviour {
     }
 
     private void HandleMeleeAttack() {
-        if (Input.Attack) {
-            if (canCombo || canAttack) {
-                if (canCombo)                
-                    IncreaseComboStep();                
+        if (melee == null) return;
 
-                Animator.OnAttack(comboStep);
-            }
-        }        
+        if (Input.Attack)
+            melee.CallAttack();
     }
 
     private void HandleFirearmAttack() {
-        if (weapon == null) return;
+        if (firearm == null) return;
 
         if (Input.Attack) 
-            weapon.CallFire();        
+            firearm.CallFire();        
 
         if (Input.Reload) 
-            weapon.CallReload();        
-    }
-
-    public void IncreaseComboStep() {
-        comboStep++;
-
-        if (comboStep > maxComboStep)
-            ResetComboStep();        
-    }
-
-    public void ResetComboStep() {
-        comboStep = 0;
-        canCombo = false;
-    }
-
-    public void SetAttackWindow(bool attack) {
-        canAttack = attack;
-    }
-
-    public void SetComboWindow(bool combo) {
-        canCombo = combo;
+            firearm.CallReload();        
     }
 
     private void OnSlotSelected(Item_SO item) {        
@@ -119,9 +93,10 @@ public class Player_CombatSystem : NetworkBehaviour {
 
         yield return new WaitForEndOfFrame();
 
-        this.weapon = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Firearm weapon) ? weapon : null;      
-        
-        Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.weapon);
+        this.firearm = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Firearm firearm) ? firearm : null;
+        this.melee = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Melee melee) ? melee : null;
+
+        Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.firearm);
     }
 
     private void Update() {

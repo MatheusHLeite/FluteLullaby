@@ -5,7 +5,6 @@ using UnityEngine;
 public class Player_AnimationSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Animator m_fullBodyAnimator;
-    [SerializeField] private Animator m_firstPersonAnimator;
 
     [Header("Animation settings")]
     [SerializeField] private float m_animationSmoothness;
@@ -38,10 +37,9 @@ public class Player_AnimationSystem : NetworkBehaviour {
     private const string MovementY = "MovementY";
     private const string IsGrounded = "IsGrounded";
     private const string Jump = "Jump";
-    private const string Attack_01 = "Attack_01";
-    private const string Attack_02 = "Attack_02";
-    private const string Attack_03 = "Attack_03";
-    private const string Attack_04 = "Attack_04";
+    private const string Crouch = "IsCrouch";
+    private const string IdleState = "SetIdle";
+    private const string Attack = "Attack_";
     #endregion
 
     private void Awake() {
@@ -183,42 +181,27 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
     #region Actions
     public void OnAttack(int comboStep) {
-        RequestAnimationServerRpc(Attack_01); //Change to events [TODO]
-
-        switch (comboStep) {
-            case 0:
-                m_firstPersonAnimator.SetTrigger(Attack_01);
-                break;
-            case 1:
-                m_firstPersonAnimator.SetTrigger(Attack_02);
-                break;
-            case 2:
-                m_firstPersonAnimator.SetTrigger(Attack_03);
-                break;
-            case 3:
-                m_firstPersonAnimator.SetTrigger(Attack_04);
-                break;
-        }
+        RequestAnimationServerRpc(Attack + "1" /*comboStep*/); //Change to events [TODO]
     } //[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
     public void OnCrouch(bool crouch) {
-        RequestAnimationStateServerRpc("IsCrouch", crouch);
-    }
+        RequestAnimationStateServerRpc(Crouch, crouch);
+    }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
     public void OnJump() {
         RequestAnimationServerRpc(Jump);
     }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
-    public void OnShot() {
+    public void OnShot() {// Set weapon type
         RequestAnimationServerRpc("Shot_r");
     }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
-    public void OnReload() { 
+    public void OnReload() { // Set weapon type
         RequestAnimationServerRpc("ReloadRevolver");
     } //[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
 
     public void ChangeIdleState() { //[TODO]Add animation name on the weapon SO
-        RequestAnimationServerRpc("SetIdle");
+        RequestAnimationServerRpc(IdleState);
     }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
     #endregion
 
@@ -233,7 +216,7 @@ public class Player_AnimationSystem : NetworkBehaviour {
         m_fullBodyAnimator.SetTrigger(animationTrigger);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     void RequestAnimationStateServerRpc(string state, bool condition) {
         SetAnimationStateClientRpc(state, condition);
     }
@@ -243,7 +226,7 @@ public class Player_AnimationSystem : NetworkBehaviour {
         m_fullBodyAnimator.SetBool(state, condition);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     void RequestAnimatorSyncServerRpc(MovementAnimationParameters parameters) {
         SetAnimatorValuesClientRpc(parameters);
     }
@@ -278,7 +261,7 @@ public class Player_AnimationSystem : NetworkBehaviour {
             m_moveX = inputX,
             m_moveY = inputY,
             m_isGrounded = Movement.IsGrounded,
-            m_holdingRevolver = Combat.GetActualEquippedWeapon() != null ? Combat.GetActualEquippedWeapon().m_itemType == ItemType.Firearm : false
+            m_holdingRevolver = Combat.GetActualEquippedWeapon() != null ? Combat.GetActualEquippedWeapon().m_itemType == ItemType.Firearm : false //[TODO]
         };
 
         RequestAnimatorSyncServerRpc(parameters);
@@ -290,57 +273,4 @@ public class Player_AnimationSystem : NetworkBehaviour {
         UpdateAnimator();
     }
     #endregion
-
-    #region Audio
-    public AudioClip[] revolverShot;
-    public AudioClip[] shotgunShot;
-    public AudioSource _as;
-
-    internal void Play3DAudio(Weapons weapon) { //[TODO] ADD a Player_AudioSystem 
-        RequestShootSoundServerRpc(weapon);
-    }
-
-    [ServerRpc]
-    void RequestShootSoundServerRpc(Weapons weapon, ServerRpcParams rpcParams = default) {
-        PlayShootSoundClientRpc(weapon);
-    }
-    
-    [ClientRpc]
-    void PlayShootSoundClientRpc(Weapons weapon) {
-        _as.pitch = Random.Range(0.8f, 1.4f);
-        AudioClip clip;
-
-        switch (weapon) {
-            case Weapons.Revolver:
-                clip = revolverShot[Random.Range(0, revolverShot.Length)];
-                break;
-            case Weapons.Shotgun:
-                clip = shotgunShot[Random.Range(0, shotgunShot.Length)];
-                break;
-            default:
-                clip = null;
-                break;
-        }
-
-        _as.PlayOneShot(clip);
-    }
-    #endregion
 }
-
-public struct MovementAnimationParameters : INetworkSerializable {
-    public float m_moveMagnitude;
-    public float m_moveX;
-    public float m_moveY;
-    public bool m_isGrounded;
-    public bool m_holdingRevolver;
-
-    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
-        serializer.SerializeValue(ref m_moveMagnitude);
-        serializer.SerializeValue(ref m_moveX);
-        serializer.SerializeValue(ref m_moveY);
-        serializer.SerializeValue(ref m_isGrounded);
-        serializer.SerializeValue(ref m_holdingRevolver);
-    }
-}
-
-public enum Weapons { Revolver, Shotgun }

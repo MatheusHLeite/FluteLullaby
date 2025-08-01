@@ -5,6 +5,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     [Header("Weapon setup")]    
     public ParticleSystem muzzleFlash;
     public ParticleSystem smokeFX;
+    public Animator armsAnimator;
 
     #region Protected variables
     protected float m_damage;
@@ -16,6 +17,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
     protected Player_CameraMovementSystem CameraMovement;
     protected Player_AnimationSystem AnimationSystem;
+    protected Player_AudioSystem AudioSystem;
     #endregion
 
     #region Private variables
@@ -37,11 +39,6 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     private LongRangeWeapon_SO weapon;
     #endregion
 
-    protected virtual void Start() {        
-        animator = GetComponent<Animator>();
-        impulseSource = GetComponent<CinemachineImpulseSource>();
-    }
-
     #region Get
     public Item_SO GetItem() => weapon;
     public int GetCurrentAmmo() => currentAmmo;
@@ -50,27 +47,34 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
     #region Public setup
     public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat, WeaponData data) {
-        weapon = item as LongRangeWeapon_SO; 
-
-        m_damage = weapon.m_damage;
-        m_maxAmmo = weapon.m_maxAmmo;
-        m_range = weapon.m_range;
-        m_fireRateMultiplier = weapon.m_fireRateMultiplier;
-        m_reloadSpeedMultiplier = weapon.m_reloadSpeedMultiplier;
-        m_weaponRecoilForce = weapon.m_weaponRecoilForce;
-        m_impact = weapon.m_impactForce;
+        weapon = item as LongRangeWeapon_SO;
 
         CombatSystem = combat;
         CameraMovement = combat.GetComponent<Player_CameraMovementSystem>();
         AnimationSystem = combat.GetComponent<Player_AnimationSystem>();
+        AudioSystem = combat.GetComponent<Player_AudioSystem>();
+        animator = GetComponent<Animator>();
+        impulseSource = GetComponent<CinemachineImpulseSource>();
 
-        currentAmmo = data.currentAmmo;
-        stockedAmmo = data.stockedAmmo;
+        CombatSystem.SetCanSwitch(true);
+
+        m_damage = weapon.m_damage;
+        m_maxAmmo = weapon.m_maxAmmo;
+        m_range = weapon.m_range;
+        m_weaponRecoilForce = weapon.m_recoilForce;
+        m_impact = weapon.m_impactForce;
+
+        currentAmmo = data.m_currentAmmo;
+        stockedAmmo = data.m_stockedAmmo;
+
+        armsAnimator.SetTrigger(weapon.m_weapon.ToString());
+
+        OnWeaponUpgrade(data);
     }
 
-    public virtual void UpgradeWeapon() {
-        //m_fireRateMultiplier += x;
-        //m_reloadSpeedMultiplier += y;
+    public void OnWeaponUpgrade(WeaponData data) {
+        m_fireRateMultiplier = data.m_fireRateMultiplier < 1 ? 1 : data.m_fireRateMultiplier;
+        m_reloadSpeedMultiplier = data.m_reloadSpeedMultiplier < 1 ? 1 : data.m_reloadSpeedMultiplier;
 
         HandleWeaponMultipliers();
     }
@@ -78,11 +82,13 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
     #region Private calls
     private void HandleWeaponMultipliers() {
-        animator.SetFloat("FireRate_Multiplier", m_fireRateMultiplier); //weapon.m_fireRateMultiplier;
-        animator.SetFloat("ReloadSpeed_Multiplier", m_reloadSpeedMultiplier); //weapon.m_reloadSpeedMultiplier;
+        animator.SetFloat("FireRate_Multiplier", m_fireRateMultiplier);
+        animator.SetFloat("ReloadSpeed_Multiplier", m_reloadSpeedMultiplier);
     }
 
     private void Reload() {
+        CombatSystem.SetCanSwitch(false);
+
         AnimationSystem.OnReload();
         animator.SetTrigger("Reload");
         isReloading = true;
@@ -123,8 +129,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         muzzleFlash.Play();
         smokeFX.Play();
 
-        Vector3 impulse = new Vector3(-m_weaponRecoilForce, 0, 0);
-        impulseSource.GenerateImpulse(impulse);
+        impulseSource.GenerateImpulse(new Vector3(-m_weaponRecoilForce, 0, 0));
 
         ray = CameraMovement.GetPlayerCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));        
     }
@@ -143,19 +148,22 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         isReloading = false;
 
         Singleton.Instance.GameEvents.OnAmmoConsumed?.Invoke(weapon.id, currentAmmo, stockedAmmo);
+
+        CombatSystem.SetCanSwitch(true);
     }
 
     public virtual void OnFireEnd() {
-        if (currentAmmo == 0 && stockedAmmo > 0) {
-            Reload();
-        }
+        CombatSystem.SetCanSwitch(true);
+
+        if (currentAmmo == 0 && stockedAmmo > 0)
+            Reload();       
 
         isShooting = false;
     }
     #endregion
     
     private void Update() { 
-        if (!Singleton.Instance.GameManager._developmentMode) return;
+        if (!Singleton.Instance.GameManager._developmentMode || !CombatSystem.IsOwner) return;
 
         if (UnityEngine.Input.GetKeyDown(KeyCode.L)){
             stockedAmmo++;

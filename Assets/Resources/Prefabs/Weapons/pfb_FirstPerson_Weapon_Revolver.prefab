@@ -987,7 +987,7 @@ Transform:
   m_GameObject: {fileID: 3746605840035463093}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.05, z: -0.25}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1291,6 +1291,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   muzzleFlash: {fileID: 2565357368319306477}
   smokeFX: {fileID: 7045345745902610594}
+  armsAnimator: {fileID: 6248526079111772099}
 --- !u!114 &-3711936716361504080
 MonoBehaviour:
   m_ObjectHideFlags: 0

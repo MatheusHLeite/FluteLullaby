@@ -7,6 +7,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private Player_InputHandler Input;
     private Player_HealthSystem HealthSystem;
     private Player_InventorySystem InventorySystem;
+    private Player_CombatSystem CombatSystem;
 
     [SerializeField] private Transform m_playerCamera;
     [SerializeField] private float m_interactionRadius;
@@ -34,6 +35,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         Input = GetComponent<Player_InputHandler>();
         HealthSystem = GetComponent<Player_HealthSystem>();
         InventorySystem = GetComponent<Player_InventorySystem>();
+        CombatSystem = GetComponent<Player_CombatSystem>();
         _occupiedSlots = new bool[UI_PlayerHUD.GetSlotsCount()];  
     }
 
@@ -161,6 +163,9 @@ public class Player_InteractionSystem : NetworkBehaviour {
         if (!IsOwner || HealthSystem.IsDead) return;
        
         DetectInteractable();
+
+        if (!CombatSystem.GetCanSwitch()) return;
+
         HandleItemDrop();
         HandleSlotSelection();
         HandleInteract();

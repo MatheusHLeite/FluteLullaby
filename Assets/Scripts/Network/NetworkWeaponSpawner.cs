@@ -16,7 +16,7 @@ public class NetworkWeaponSpawner : NetworkBehaviour {
         if (!IsServer) return;
 
         CollectableItems selectedItem = m_items[Random.Range(0, m_items.Length)];
-        GameObject item = Instantiate(selectedItem.m_item.m_collectibleItemPrefab, 
+        Interactor item = Instantiate(selectedItem.m_item.m_collectibleItemPrefab, 
             selectedItem.m_useActualPositionAndRotation ? transform.position : selectedItem.m_position, 
             selectedItem.m_useActualPositionAndRotation ? transform.rotation : selectedItem.m_rotation);
         item.GetComponent<NetworkObject>().Spawn();
