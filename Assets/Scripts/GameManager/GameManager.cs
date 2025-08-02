@@ -33,8 +33,14 @@ public class GameManager : MonoBehaviour {
     }
 
     private IEnumerator LoadPlayerData() {
-        yield return new WaitUntil(() => SteamServer.IsValid);
-        //var save = SaveSystemHandler.Load();
+        yield return new WaitUntil(() => SteamClient.IsValid);
+        var data = SaveSystemHandler.LoadData();
+        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(data);
+
+        for (int i = 0; i < data.acquiredWeapons.Count; i++)
+        {
+            print(data.acquiredWeapons[i].id);
+        }
     }
 
     private void SetupWeaponData() {
@@ -144,6 +150,16 @@ public struct MovementAnimationParameters : INetworkSerializable {
     }
 }
 
+public struct WeaponEntry {
+    public string id;
+    public int index;
+
+    public WeaponEntry(string id, int index) {
+        this.id = id;
+        this.index = index;
+    }
+}
+
 public struct WeaponData {
     [ReadOnly] public string id;
     public int m_currentAmmo;
@@ -154,5 +170,5 @@ public struct WeaponData {
 
 public struct MeleeWeaponData {
     [ReadOnly] public string id;
-    
+    public float m_attackSpeedMultiplier;
 }

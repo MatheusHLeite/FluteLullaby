@@ -55,3 +55,6 @@ UnityCache/
 
 # Localization
 *.locres
+/.vs
+/Logs
+/UserSettings

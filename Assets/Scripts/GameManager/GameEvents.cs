@@ -22,4 +22,5 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<Weapon_Firearm> OnWeaponChanged { get; private set; } = new();
     public UnityEvent<RaycastHit> OnShotHit { get; private set; } = new();
     public UnityEvent OnGameStarted { get; private set; } = new(); 
+    public UnityEvent<PlayerSaveData> OnDataLoaded { get; private set; } = new();
 }

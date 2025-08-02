@@ -83,7 +83,17 @@ public class Player_InventorySystem : NetworkBehaviour {
         if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
             firearm.SetupWeapon(item, Combat, Singleton.Instance.GameManager.GetWeaponDataByID(item.id));
         if (itemOnHand.transform.TryGetComponent(out Weapon_Melee melee))
-            melee.SetupWeapon(item, Combat); 
+            melee.SetupWeapon(item, Combat);
+
+        WeaponEntry newEntry = new WeaponEntry {
+            id = item.id,
+            index = 0
+        };
+
+        PlayerSaveData data = PlayerSaveData.Default();
+        data.acquiredWeapons.Add(newEntry);
+
+        SaveSystemHandler.SaveData(data);
     }
 
     [ServerRpc(RequireOwnership = false)]
