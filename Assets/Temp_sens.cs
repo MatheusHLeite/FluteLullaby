@@ -10,7 +10,11 @@ public class Temp_sens : MonoBehaviour
     public TMP_Text txtValue;
     public Slider sensSlider;
     public GameObject go;
+    public GameObject inventoryScreen;
     public UnityEvent OnWindowClose;
+
+    private bool windowOpened;
+    private GameObject actualScreen;
 
     private void Awake() {
         sensSlider.onValueChanged.AddListener(OnSensitivityChange);
@@ -32,22 +36,45 @@ public class Temp_sens : MonoBehaviour
         Singleton.Instance.GameEvents.OnSensitivityChange?.Invoke(sensitivity);
     }
 
+    private void OpenScreen(GameObject screen) {
+        //OnWindowOpen?.Invoke();
+
+        windowOpened = true;
+
+        actualScreen = screen;
+
+        screen.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void CloseScreen(GameObject screen) {
+        OnWindowClose?.Invoke();
+
+        windowOpened = false;
+
+        screen.SetActive(false);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void ChangeScreen(GameObject previousScreen, GameObject newScreen) {
+
+    }
+
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Escape)) { //[TODO] Remove
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                go.SetActive(true);
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-            else
-            {
-                OnWindowClose?.Invoke();
+            if (!windowOpened)            
+                OpenScreen(go);            
+            else if (windowOpened && actualScreen == go)
+                CloseScreen(go);            
+        }
 
-                go.SetActive(false);
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
+        if (Input.GetKeyDown(KeyCode.Tab)) { //[TODO] Remove
+            if (!windowOpened)
+                OpenScreen(inventoryScreen);
+            else if (windowOpened && actualScreen == inventoryScreen)
+                CloseScreen(inventoryScreen);
         }
     }
 }

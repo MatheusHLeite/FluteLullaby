@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour {
 
     private void Awake() {
         Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(UpdateWeaponDataByID); //[TODO] should I set as IsOwner?
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnDataLoaded); //[TODO] should I set as IsOwner?
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false; //[TODO] keep it here?
@@ -30,17 +31,24 @@ public class GameManager : MonoBehaviour {
         m_weaponData.Clear();
 
         Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(UpdateWeaponDataByID);
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnDataLoaded);
     }
+
+    [Button]
+    private void DeleteSaveData() => SaveSystemHandler.DeletePlayerData();
 
     private IEnumerator LoadPlayerData() {
         yield return new WaitUntil(() => SteamClient.IsValid);
-        var data = SaveSystemHandler.LoadData();
-        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(data);
+        OnDataLoaded();
+    }
 
-        for (int i = 0; i < data.acquiredWeapons.Count; i++)
-        {
+    private void OnDataLoaded() {
+        PlayerSaveData data = SaveSystemHandler.LoadData();
+        for (int i = 0; i < data.acquiredWeapons.Count; i++) {
             print(data.acquiredWeapons[i].id);
         }
+
+        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(data);
     }
 
     private void SetupWeaponData() {
@@ -150,14 +158,10 @@ public struct MovementAnimationParameters : INetworkSerializable {
     }
 }
 
-public struct WeaponEntry {
+[System.Serializable]
+public class WeaponEntry {
     public string id;
     public int index;
-
-    public WeaponEntry(string id, int index) {
-        this.id = id;
-        this.index = index;
-    }
 }
 
 public struct WeaponData {

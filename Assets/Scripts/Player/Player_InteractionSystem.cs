@@ -150,7 +150,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     }
 
     private void OnRespawn() {
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(ActualSlotSelected);
+        OnSlotSelected(ActualSlotSelected);
     }
 
     private void OnSlotItemCollected(Item_SO item, int index) {

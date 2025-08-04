@@ -8,32 +8,48 @@ public static class SaveSystemHandler {
     public static void SaveData(PlayerSaveData data) {
         string json = JsonUtility.ToJson(data);
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
-        SteamRemoteStorage.FileWrite(SaveFileName, bytes);
+        bool success = SteamRemoteStorage.FileWrite(SaveFileName, bytes);
 
+        if (!success)  {
+            Debug.LogError("<color=red>Steam Cloud save failed!</color>");
+            return;
+        }
         Debug.Log("<color=green>Player data saved</color>");
     }
 
     public static PlayerSaveData LoadData() {
-        try {
-            if (SteamRemoteStorage.FileExists(SaveFileName)) {
-                byte[] bytes = SteamRemoteStorage.FileRead(SaveFileName);
-                string json = System.Text.Encoding.UTF8.GetString(bytes);
-                Debug.Log("<color=yellow>Player data loaded</color>");
-                return JsonUtility.FromJson<PlayerSaveData>(json);
+        if (SteamRemoteStorage.FileExists(SaveFileName)) {
+            byte[] bytes = SteamRemoteStorage.FileRead(SaveFileName);
+            string json = System.Text.Encoding.UTF8.GetString(bytes);
+            Debug.Log("<color=green>Data loaded!</color>");
+            return JsonUtility.FromJson<PlayerSaveData>(json);
+        }
+
+        PlayerSaveData data = PlayerSaveData.Default();        
+        Debug.Log("<color=yellow>Creating new player data!</color>");
+        SaveData(data);
+        return data;
+    }
+
+    public static bool DeletePlayerData() {
+        if (SteamRemoteStorage.FileExists(SaveFileName)) {
+            bool success = SteamRemoteStorage.FileDelete(SaveFileName);
+            if (!success) {
+                Debug.LogError("<color=red>Steam Cloud data delete fail</color>");
             }
 
-            Debug.Log("<color=yellow>Player data loaded</color>");
-            return PlayerSaveData.Default();
+            Debug.Log("<color=green>Steam Cloud data deleted</color>");
+            return success;
         }
-        catch (System.Exception e) {
-            Debug.LogError("Saving error: " + e);
-            return PlayerSaveData.Default();
+        else  {
+            Debug.Log("No save file!");
+            return false;
         }
     }
 }
 
 [System.Serializable]
-public struct PlayerSaveData {
+public class PlayerSaveData {
     public float masterVolume;
     public float musicVolume;
     public float soundEffectsVolume;
@@ -46,7 +62,7 @@ public struct PlayerSaveData {
             musicVolume = 0.6f,
             soundEffectsVolume = 0.785f,
             mouseSensitivity = 2f,
-            acquiredWeapons = new List<WeaponEntry> { }
+            acquiredWeapons = new List<WeaponEntry>()
         };
     }
 }

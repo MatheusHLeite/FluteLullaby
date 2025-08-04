@@ -21,6 +21,8 @@ public class Player_InventorySystem : NetworkBehaviour {
     private GameObject itemOnTPHandRef;
     private GameObject itemOnHand;
 
+    public PlayerSaveData PlayerData { get; private set; }
+
     private void Awake() {
         Interaction = GetComponent<Player_InteractionSystem>();
         Combat = GetComponent<Player_CombatSystem>();
@@ -41,6 +43,9 @@ public class Player_InventorySystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnSlotItemDropped.AddListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnItemCollected);
             Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnDataLoaded);
+
+            Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke(); //[TODO] Create a Player_Manager
         }
     }
 
@@ -51,6 +56,7 @@ public class Player_InventorySystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnSlotItemDropped.RemoveListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnItemCollected);
             Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnDataLoaded.RemoveListener(OnDataLoaded);
         }
     }
     #endregion
@@ -62,6 +68,15 @@ public class Player_InventorySystem : NetworkBehaviour {
 
     public List<Item_SO> Inventory() => _inventoryItems;
     #endregion
+
+    private void OnDataLoaded(PlayerSaveData data) { 
+        PlayerData = data;
+
+        for (int i = 0; i < PlayerData.acquiredWeapons.Count; i++) {
+            OnItemCollected(Singleton.Instance.GameManager.GetItemByID(PlayerData.acquiredWeapons[i].id), PlayerData.acquiredWeapons[i].index);
+            //Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(PlayerData.acquiredWeapons[i].index);
+        }
+    }
 
     #region Slot handle
     private void OnSlotSelected(int index) {
@@ -90,10 +105,8 @@ public class Player_InventorySystem : NetworkBehaviour {
             index = 0
         };
 
-        PlayerSaveData data = PlayerSaveData.Default();
-        data.acquiredWeapons.Add(newEntry);
-
-        SaveSystemHandler.SaveData(data);
+        PlayerData.acquiredWeapons.Add(newEntry);
+        SaveSystemHandler.SaveData(PlayerData);
     }
 
     [ServerRpc(RequireOwnership = false)]
