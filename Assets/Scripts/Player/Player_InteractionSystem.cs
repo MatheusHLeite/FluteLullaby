@@ -36,15 +36,13 @@ public class Player_InteractionSystem : NetworkBehaviour {
         HealthSystem = GetComponent<Player_HealthSystem>();
         InventorySystem = GetComponent<Player_InventorySystem>();
         CombatSystem = GetComponent<Player_CombatSystem>();
-        _occupiedSlots = new bool[UI_PlayerHUD.GetSlotsCount()];  
+        _occupiedSlots = new bool[UI_InventoryManager.GetSlotsCount()];  
     }
 
     public override void OnDestroy() {
         _occupiedSlots = null;
     }
     #endregion
-
-    public List<Item_SO> GetPlayerInventory() => InventorySystem.Inventory();
 
     #region Network Initialization
     public override void OnNetworkSpawn() {
@@ -53,6 +51,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnSlotItemCollected);
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
+            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.AddListener(OnQuickSlotItemUpdated);
         }
     }
 
@@ -62,6 +61,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnSlotItemCollected);
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
+            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.RemoveListener(OnQuickSlotItemUpdated);
         }
     }
     #endregion
@@ -141,12 +141,16 @@ public class Player_InteractionSystem : NetworkBehaviour {
         OnSlotSelected(index);
     }
 
-    private void OnSlotSelected(int index) { //[TODO] Call it and Handle on load, the slot the player was using when quit
+    private void OnSlotSelected(int index) {
         _slotSelectionCooldown = Time.time + 0.025f;
         _lastSlot = _lastSelectedSlotIndex;
         _lastSelectedSlotIndex = index;
 
         Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(index);
+    }
+
+    private void OnQuickSlotItemUpdated() {
+        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(ActualSlotSelected);
     }
 
     private void OnRespawn() {

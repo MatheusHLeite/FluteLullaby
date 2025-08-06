@@ -10,30 +10,16 @@ public class Player_InventorySystem : NetworkBehaviour {
     [SerializeField] private Transform m_rightHand;
     [SerializeField] private Transform m_thirdPersonRightHand;
 
-    [Header("Setup")]
-    [SerializeField] private int m_maxSlots;
-
-    private Item_SO[] _itemsOnSlots;
-
-    private List<Item_SO> _inventoryItems = new List<Item_SO>(6);
-
     private Interactor itemOnTPHand;
     private GameObject itemOnTPHandRef;
     private GameObject itemOnHand;
 
-    public PlayerSaveData PlayerData { get; private set; }
-
+    #region Initialization
     private void Awake() {
         Interaction = GetComponent<Player_InteractionSystem>();
         Combat = GetComponent<Player_CombatSystem>();
-
-        _inventoryItems = new List<Item_SO>(m_maxSlots);
-        _itemsOnSlots = new Item_SO[UI_PlayerHUD.GetSlotsCount()];
     }
-
-    public override void OnDestroy() {
-        _itemsOnSlots = null;
-    }
+    #endregion
 
     #region Network Initialization
     public override void OnNetworkSpawn() {
@@ -43,9 +29,6 @@ public class Player_InventorySystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnSlotItemDropped.AddListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnItemCollected);
             Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
-            Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnDataLoaded);
-
-            Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke(); //[TODO] Create a Player_Manager
         }
     }
 
@@ -55,28 +38,14 @@ public class Player_InventorySystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnSlotItemDropped.RemoveListener(OnSlotItemDropped);
             Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnItemCollected);
-            Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
-            Singleton.Instance.GameEvents.OnDataLoaded.RemoveListener(OnDataLoaded);
+            Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);            
         }
     }
     #endregion
 
     #region Get
-    public Item_SO[] GetItemSlots() => _itemsOnSlots;
-
     public Transform GetRightHand() => m_rightHand;
-
-    public List<Item_SO> Inventory() => _inventoryItems;
     #endregion
-
-    private void OnDataLoaded(PlayerSaveData data) { 
-        PlayerData = data;
-
-        for (int i = 0; i < PlayerData.acquiredWeapons.Count; i++) {
-            OnItemCollected(Singleton.Instance.GameManager.GetItemByID(PlayerData.acquiredWeapons[i].id), PlayerData.acquiredWeapons[i].index);
-            //Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(PlayerData.acquiredWeapons[i].index);
-        }
-    }
 
     #region Slot handle
     private void OnSlotSelected(int index) {
@@ -85,30 +54,40 @@ public class Player_InventorySystem : NetworkBehaviour {
             DespawnItemOnHandServerRpc();
         }
 
-        if (_itemsOnSlots[index] != null) {
-            itemOnHand = Instantiate(_itemsOnSlots[index].m_onHandItemPrefab, m_rightHand);
-            SetupItemOHand(_itemsOnSlots[index]);
-            SpawnItemOnHandServerRpc(_itemsOnSlots[index].id);
+        Item_SO item = Singleton.Instance.InventoryManager.GetItemFromSlot(index);
+
+        if (item != null) {
+            itemOnHand = Instantiate(item.m_onHandItemPrefab, m_rightHand);
+            SetupItemOHand(item);
+            SpawnItemOnHandServerRpc(item.id);
         }
 
-        Singleton.Instance.GameEvents.OnActualSlotItem?.Invoke(_itemsOnSlots[index] != null ? _itemsOnSlots[index] : null);
+        Singleton.Instance.GameEvents.OnActualSlotItem?.Invoke(item);
     }
 
     private void SetupItemOHand(Item_SO item) {
         if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
-            firearm.SetupWeapon(item, Combat, Singleton.Instance.GameManager.GetWeaponDataByID(item.id));
+            firearm.SetupWeapon(item, Combat, Singleton.Instance.SaveManager.GetWeaponDataByID(item.id));
         if (itemOnHand.transform.TryGetComponent(out Weapon_Melee melee))
             melee.SetupWeapon(item, Combat);
-
-        WeaponEntry newEntry = new WeaponEntry {
-            id = item.id,
-            index = 0
-        };
-
-        PlayerData.acquiredWeapons.Add(newEntry);
-        SaveSystemHandler.SaveData(PlayerData);
     }
 
+    private void OnItemCollected(Item_SO item, int index) {
+        Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(item, index);
+    }
+
+    private void OnSlotItemDropped(int index) {
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved?.Invoke(index);
+
+        string id = Singleton.Instance.InventoryManager.GetItemFromSlot(index).id;
+        SpawnItemServerRpc(id, Interaction.GetTargetAim());
+
+        if (m_rightHand.childCount > 0)
+            Destroy(m_rightHand.GetChild(0).gameObject);
+    }
+    #endregion
+
+    #region Network visuals
     [ServerRpc(RequireOwnership = false)]
     private void SpawnItemOnHandServerRpc(string id) => SpawnItemOnHandClientRpc(id);
 
@@ -129,40 +108,11 @@ public class Player_InventorySystem : NetworkBehaviour {
         Destroy(itemOnTPHandRef);
     }
 
-    private void OnItemCollected(Item_SO item, int index) {
-        OnNewInventoryItemCollected(item);
-        _itemsOnSlots[index] = item; //[TODO] Mudar para adicionar o item no inventario se index for -1       
-    }
-
-    private void OnSlotItemDropped(int index) {
-        OnInventoryItemRemoved(_itemsOnSlots[index]);
-
-        if (m_rightHand.childCount > 0)
-            Destroy(m_rightHand.GetChild(0).gameObject);
-
-        _itemsOnSlots[index] = null;
-    }
-
     [ServerRpc(RequireOwnership = false)]
     private void SpawnItemServerRpc(string id, Vector3 pos) {
         if (!IsServer) return;
         Interactor item = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_collectibleItemPrefab, pos, Quaternion.LookRotation(pos));
         item.GetComponent<NetworkObject>().Spawn(true);
-    }
-    #endregion
-
-    #region Inventory Handle
-    private void OnNewInventoryItemCollected(Item_SO item) {        
-        _inventoryItems.Add(item);
-    }
-
-    private void OnInventoryItemRemoved(Item_SO item) {
-        RemoveInventoryItem(item.id);
-        _inventoryItems.Remove(item);
-    }
-
-    private void RemoveInventoryItem(string id) {
-        SpawnItemServerRpc(id, Interaction.GetTargetAim());
     }
     #endregion
 }

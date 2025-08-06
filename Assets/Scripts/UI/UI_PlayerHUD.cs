@@ -6,10 +6,9 @@ using UnityEngine.UI;
 
 public class UI_PlayerHUD : MonoBehaviour {
     [Header("UI")]
-    [SerializeField] private Transform[] m_slots;
     [SerializeField] private TMP_Text m_selectedActionIndicator;
-    [SerializeField] private Image m_slotItem_prefab; //[TODO] Change to   item  
     [SerializeField] private Image m_healthBar;
+    [SerializeField] private Image m_healthBarEffect;
     [SerializeField] private Image m_staminaBar;
     [SerializeField] private CanvasGroup m_staminaBarCanvas;
     [SerializeField] private TMP_Text m_killCounter;
@@ -23,23 +22,12 @@ public class UI_PlayerHUD : MonoBehaviour {
 
     private CinemachineImpulseSource impulseSource;
 
-    private static Transform[] _slots;
-    public static int _slotsCount;
-
-    private Transform _lastSlot;
-    private float _slotChangeTime = 0.125f;
-
     private int _killCount;
     private int _deathCount;
     private bool m_staminaFull;
 
-    private Vector3 _increasedSlotSize => Vector3.one + new Vector3(0.15f, 0.15f, 0.15f);
-
     private void Awake() {
-        Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);
-        Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnSlotItemCollected);
-        Singleton.Instance.GameEvents.OnSlotItemDropped.AddListener(OnSlotItemDropped);
-        Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
+        Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaUsage.AddListener(OnStaminaUsage);
@@ -47,15 +35,10 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
-
-        _slots = m_slots;
     }
 
     private void OnDestroy() {
-        Singleton.Instance.GameEvents.OnHoverOverItem.RemoveListener(SetSelectedActionText);
-        Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnSlotItemCollected);
-        Singleton.Instance.GameEvents.OnSlotItemDropped.RemoveListener(OnSlotItemDropped);
-        Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
+        Singleton.Instance.GameEvents.OnHoverOverItem.RemoveListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.RemoveListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.RemoveListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaUsage.RemoveListener(OnStaminaUsage);
@@ -64,19 +47,14 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
 
-        _slots = null;
+        
     }
 
     private void Start() {
         impulseSource = GetComponent<CinemachineImpulseSource>();
 
-        _lastSlot = m_slots[0]; //[TODO] handle on load, see which slot the player left the game selected
-        OnSlotSelected(0);
-
         Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(null); //[TODO] Change after save system
     }
-
-    public static int GetSlotsCount() => _slots.Length;
 
     private void OnWeaponChanged(Weapon_Firearm weapon) {
         if (weapon == null || (weapon != null && weapon.GetItem().m_itemType != ItemType.Firearm)) {
@@ -150,6 +128,10 @@ public class UI_PlayerHUD : MonoBehaviour {
 
         m_healthBar.fillAmount = currentHealth / maxHealth;
 
+        m_healthBarEffect.DOFillAmount(currentHealth / maxHealth, 0.25f).SetDelay(1f);
+        m_healthBarEffect.color = Color.white;
+        m_healthBarEffect.DOColor(Color.red, 0.25f);
+
         m_healthBar.color = Color.green;
 
         if (m_healthBar.fillAmount <= 0.7)
@@ -177,22 +159,6 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_healthBar.fillAmount = maxHealth;
 
         m_healthBar.color = Color.green;
-    }
-
-    private void OnSlotSelected(int index) {
-        _lastSlot.DOScale(Vector3.one, _slotChangeTime);
-        m_slots[index].DOScale(_increasedSlotSize, _slotChangeTime);
-
-        _lastSlot = m_slots[index];
-    }
-
-    private void OnSlotItemCollected(Item_SO item, int index) {
-        Image slot = Instantiate(m_slotItem_prefab, m_slots[index]);
-        slot.sprite = item.m_icon;
-    }
-
-    private void OnSlotItemDropped(int index) {
-        Destroy(m_slots[index].GetChild(0).gameObject);
     }
 
     private void SetSelectedActionText(string text) {

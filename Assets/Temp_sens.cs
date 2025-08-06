@@ -40,7 +40,6 @@ public class Temp_sens : MonoBehaviour
         //OnWindowOpen?.Invoke();
 
         windowOpened = true;
-
         actualScreen = screen;
 
         screen.SetActive(true);

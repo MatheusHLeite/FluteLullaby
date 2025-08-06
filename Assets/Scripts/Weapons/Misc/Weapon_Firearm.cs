@@ -46,7 +46,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     #endregion
 
     #region Public setup
-    public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat, WeaponData data) {
+    public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat, WeaponFirearmData data) {
         weapon = item as LongRangeWeapon_SO;
 
         CombatSystem = combat;
@@ -72,7 +72,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         OnWeaponUpgrade(data);
     }
 
-    public void OnWeaponUpgrade(WeaponData data) {
+    public void OnWeaponUpgrade(WeaponFirearmData data) {
         m_fireRateMultiplier = data.m_fireRateMultiplier < 1 ? 1 : data.m_fireRateMultiplier;
         m_reloadSpeedMultiplier = data.m_reloadSpeedMultiplier < 1 ? 1 : data.m_reloadSpeedMultiplier;
 

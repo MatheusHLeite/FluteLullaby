@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,9 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<Item_SO, int> OnSlotItemCollected { get; private set; } = new();
     public UnityEvent<int> OnSlotItemDropped { get; private set; } = new(); 
     public UnityEvent<int> OnSlotSelected { get; private set; } = new();
+    public UnityEvent<Item_SO, int, int> OnSlotChanged { get; private set; } = new();
+    public UnityEvent<Item_SO, int, int> OnInventoryItemSlotChanged { get; private set; } = new();
+    public UnityEvent OnQuickSlotItemUpdated { get; private set; } = new();
     public UnityEvent<Item_SO> OnActualSlotItem { get; private set; } = new();
     public UnityEvent<int, int> OnHealthSet { get; private set; } = new();
     public UnityEvent<float, float> OnDamageTaken { get; private set; } = new();
@@ -23,5 +27,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<RaycastHit> OnShotHit { get; private set; } = new();
     public UnityEvent OnGameStarted { get; private set; } = new(); 
     public UnityEvent<PlayerSaveData> OnDataLoaded { get; private set; } = new();
-    public UnityEvent OnPlayerLoaded { get; private set; } = new();    
+    public UnityEvent OnPlayerLoaded { get; private set; } = new();
+    public UnityEvent<Item_SO, int> OnInventoryItemAdded { get; private set; } = new();
+    public UnityEvent<int> OnInventoryItemRemoved { get; private set; } = new();
 }

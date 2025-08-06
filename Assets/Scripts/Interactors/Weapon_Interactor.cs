@@ -11,10 +11,10 @@ public class Weapon_Interactor : Interactor {
     }
 
     public override void Interact(Player_InteractionSystem interactor) {
-        if (interactor.GetPlayerInventory().Contains(m_weapon)) return;
+        if (!Singleton.Instance.InventoryManager.CanPickUpItem(m_weapon)) return;
         
         Singleton.Instance.GameEvents.OnSlotItemCollected?.Invoke(m_weapon, interactor.ActualSlotSelected);
-       
+
         base.Interact(interactor);
     }
 }

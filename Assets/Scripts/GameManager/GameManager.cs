@@ -1,6 +1,4 @@
 using Sirenix.OdinInspector;
-using Steamworks;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -14,109 +12,42 @@ public class GameManager : MonoBehaviour {
     [SerializeField] private List<BodyPartDamageMultiplier> m_bodyPartDamageMultiplier = new List<BodyPartDamageMultiplier>();
     [SerializeField] private List<Transform> m_spawnPoints = new List<Transform>();
 
-    private List<WeaponData> m_weaponData = new List<WeaponData>();
+    private static bool initialized = false;
 
+    #region Initialization
     private void Awake() {
-        Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(UpdateWeaponDataByID); //[TODO] should I set as IsOwner?
-        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnDataLoaded); //[TODO] should I set as IsOwner?
+        if (initialized) return;
+        initialized = true;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false; //[TODO] keep it here?
-
-        SetupWeaponData();
-        StartCoroutine(LoadPlayerData());
     }
+    #endregion
 
-    private void OnDestroy(){
-        m_weaponData.Clear();
-
-        Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(UpdateWeaponDataByID);
-        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnDataLoaded);
-    }
-
-    [Button]
-    private void DeleteSaveData() => SaveSystemHandler.DeletePlayerData();
-
-    private IEnumerator LoadPlayerData() {
-        yield return new WaitUntil(() => SteamClient.IsValid);
-        OnDataLoaded();
-    }
-
-    private void OnDataLoaded() {
-        PlayerSaveData data = SaveSystemHandler.LoadData();
-        for (int i = 0; i < data.acquiredWeapons.Count; i++) {
-            print(data.acquiredWeapons[i].id);
-        }
-
-        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(data);
-    }
-
-    private void SetupWeaponData() {
-        for (int i = 0; i < m_allGameItems.Count; i++) {
-            if (m_allGameItems[i].m_itemType == ItemType.Firearm) {
-                WeaponData data = new WeaponData {
-                    id = m_allGameItems[i].id,
-                    m_currentAmmo = PlayerPrefs.GetInt($"currentAmmo_weaponData_{m_allGameItems[i].id}"), 
-                    m_stockedAmmo = PlayerPrefs.GetInt($"stockedAmmo_weaponData_{m_allGameItems[i].id}")
-                };//[TODO] Load from a JSON file
-                m_weaponData.Add(data);
-            }                          
-        }   
-    }
-
+    #region Get
     public Item_SO GetItemByID(string id) {
         for (int i = 0; i < m_allGameItems.Count; i++) {
-            if (m_allGameItems[i].id == id)            
-                return m_allGameItems[i];            
+            if (m_allGameItems[i].id == id)
+                return m_allGameItems[i];
         }
         return null;
     }
 
-    private void UpdateWeaponDataByID(string id, int currentAmmo, int stockedAmmo) {
-        for (int i = 0; i < m_weaponData.Count; i++) {
-            if (m_weaponData[i].id == id) {
-                WeaponData data = m_weaponData[i];
-
-                data.m_currentAmmo = currentAmmo;
-                data.m_stockedAmmo = stockedAmmo;
-
-                PlayerPrefs.SetInt($"currentAmmo_weaponData_{id}", currentAmmo); //[TODO] Set to a JSON file
-                PlayerPrefs.SetInt($"stockedAmmo_weaponData_{id}", stockedAmmo);
-
-                m_weaponData[i] = data;
-                break;
-            }
-        }
-    }
-
-    public WeaponData GetWeaponDataByID(string id) {
-        WeaponData data = new WeaponData();
-        for (int i = 0; i < m_weaponData.Count; i++) {
-            if (m_weaponData[i].id == id) {
-                data = m_weaponData[i];
-
-                data.m_currentAmmo = PlayerPrefs.GetInt($"currentAmmo_weaponData_{id}"); //[TODO] Get from a JSON file
-                data.m_stockedAmmo = PlayerPrefs.GetInt($"stockedAmmo_weaponData_{id}");
-                break;
-            }
-        } 
-        return data; 
-    }
-
     public float GetDamageMultiplier(BodyPart bodyPart) {
         for (int i = 0; i < m_bodyPartDamageMultiplier.Count; i++) {
-            if (m_bodyPartDamageMultiplier[i].m_bodyPart == bodyPart) {
-                return m_bodyPartDamageMultiplier[i].m_damageMultiplier;
-            }
+            if (m_bodyPartDamageMultiplier[i].m_bodyPart == bodyPart)
+                return m_bodyPartDamageMultiplier[i].m_damageMultiplier;            
         }
         return 0;
     }
 
-    public Vector3 GetRandomSpawnPos() {
-        return m_spawnPoints[UnityEngine.Random.Range(0, m_spawnPoints.Count)].position;
-    }
+    public Vector3 GetRandomSpawnPos() => m_spawnPoints[UnityEngine.Random.Range(0, m_spawnPoints.Count)].position;
+
+    public List<Item_SO> GetAllItems() => m_allGameItems;
+    #endregion
 }
 
+#region Interfaces, enums and structs
 public interface IInteractable {
     void OnHoverOverItem(bool isOnTarget);
     void Interact(Player_InteractionSystem interactor);
@@ -158,13 +89,7 @@ public struct MovementAnimationParameters : INetworkSerializable {
     }
 }
 
-[System.Serializable]
-public class WeaponEntry {
-    public string id;
-    public int index;
-}
-
-public struct WeaponData {
+public struct WeaponFirearmData {
     [ReadOnly] public string id;
     public int m_currentAmmo;
     public int m_stockedAmmo;
@@ -176,3 +101,11 @@ public struct MeleeWeaponData {
     [ReadOnly] public string id;
     public float m_attackSpeedMultiplier;
 }
+
+[System.Serializable]
+public class ItemData {
+    public string id;
+    public int m_quantity;
+    public int index;
+}
+#endregion

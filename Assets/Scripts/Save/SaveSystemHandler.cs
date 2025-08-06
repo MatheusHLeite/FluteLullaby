@@ -54,7 +54,7 @@ public class PlayerSaveData {
     public float musicVolume;
     public float soundEffectsVolume;
     public float mouseSensitivity;
-    public List<WeaponEntry> acquiredWeapons;
+    public List<ItemData> acquiredWeapons;
 
     public static PlayerSaveData Default() {
         return new PlayerSaveData {
@@ -62,7 +62,7 @@ public class PlayerSaveData {
             musicVolume = 0.6f,
             soundEffectsVolume = 0.785f,
             mouseSensitivity = 2f,
-            acquiredWeapons = new List<WeaponEntry>()
+            acquiredWeapons = new List<ItemData>()
         };
     }
 }
