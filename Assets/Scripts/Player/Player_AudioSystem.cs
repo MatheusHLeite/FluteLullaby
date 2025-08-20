@@ -1,17 +1,30 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class Player_AudioSystem : MonoBehaviour {
+public class Player_AudioSystem : NetworkBehaviour {
     [Header("AudioSources")]    
     public AudioSource m_shootAudioSource;
+    public AudioSource m_voiceChatSource;
     [Space(10)]
-    public AudioClip[] revolverShotSounds;
-    public AudioClip[] shotgunShotSounds; //[TODO] Add to an SO
+    public AudioClip[] m_revolverShotSounds;
+    public AudioClip[] m_shotgunShotSounds;
 
-    internal void Play3DAudio(Weapons weapon) {
-        RequestShootSoundServerRpc(weapon);
+    private string connectedDevice;
+
+    public override void OnNetworkSpawn() {
+        if (!IsOwner) return;
+
+        Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.AddListener(OnMicrophoneDeviceSwitch);
     }
 
+    public override void OnNetworkDespawn() {
+        if (!IsOwner) return;
+
+        Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.RemoveListener(OnMicrophoneDeviceSwitch);
+    }
+
+    internal void PlayShotSFX(Weapons weapon) => RequestShootSoundServerRpc(weapon);
+ 
     [ServerRpc]
     void RequestShootSoundServerRpc(Weapons weapon, ServerRpcParams rpcParams = default) => PlayShootSoundClientRpc(weapon);
 
@@ -23,11 +36,11 @@ public class Player_AudioSystem : MonoBehaviour {
         switch (weapon) {
             case Weapons.Revolver:
                 m_shootAudioSource.volume = 0.5f;
-                clip = revolverShotSounds[Random.Range(0, revolverShotSounds.Length)];
+                clip = m_revolverShotSounds[Random.Range(0, m_revolverShotSounds.Length)];
                 break;
             case Weapons.Shotgun:
                 m_shootAudioSource.volume = 1f;
-                clip = shotgunShotSounds[Random.Range(0, shotgunShotSounds.Length)];
+                clip = m_shotgunShotSounds[Random.Range(0, m_shotgunShotSounds.Length)];
                 break;
             default:
                 clip = null;
@@ -35,5 +48,12 @@ public class Player_AudioSystem : MonoBehaviour {
         }
 
         m_shootAudioSource.PlayOneShot(clip);
+    }
+
+    private void OnMicrophoneDeviceSwitch(string device) {
+        if (!string.IsNullOrEmpty(connectedDevice)) Microphone.End(connectedDevice);
+        m_voiceChatSource.clip = Microphone.Start(device, true, 10, 44100);
+
+        connectedDevice = device;
     }
 }

@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff3c7d2fcb308804d8f33f11805e151e, type: 3}
   m_Name: Melee_Sword
   m_EditorClassIdentifier: 
-  m_itemName: Sword
+  m_itemName: Wooden Plank
   m_icon: {fileID: 21300000, guid: d86a7e245c400834d9aaf77096656a80, type: 3}
   m_collectibleItemPrefab: {fileID: 6141448346860764315, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
   m_onHandItemPrefab: {fileID: 2719613241572335835, guid: 21eb20af287389540a45a8be9e771db6, type: 3}
-  m_description: 
+  m_description: A rough piece of wood. Not ideal for combat, but better than nothing.
   m_itemType: 0
   id: 21fd2e28-4fc1-45a7-ae97-fa765b0800d4
   m_damage: 25

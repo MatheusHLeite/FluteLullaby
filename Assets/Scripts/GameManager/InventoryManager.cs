@@ -1,95 +1,70 @@
-using System.Collections.Generic;
-using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour {
-    private List<UI_Slot> m_slots;
-    private List<Item_SO> _inventoryItems = new List<Item_SO>();
-
-    private Item_SO[] _itemsOnSlots;
+    private bool[] _itemsOnSlots;
 
     private void Awake() {
         Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnPlayerSpawned);        
-        Singleton.Instance.GameEvents.OnInventoryItemAdded.AddListener(OnInventoryItemCollected);
-        Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnInventoryItemRemoved);
+        Singleton.Instance.GameEvents.OnInventoryItemAdded.AddListener(OnInventoryItemCollected);        
         Singleton.Instance.GameEvents.OnInventoryItemSlotChanged.AddListener(OnSlotItemChanged);
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnInventoryItemRemoved);
     }
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnPlayerSpawned);             
-        Singleton.Instance.GameEvents.OnInventoryItemAdded.RemoveListener(OnInventoryItemCollected);
-        Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnInventoryItemRemoved);
+        Singleton.Instance.GameEvents.OnInventoryItemAdded.RemoveListener(OnInventoryItemCollected);        
         Singleton.Instance.GameEvents.OnInventoryItemSlotChanged.RemoveListener(OnSlotItemChanged);
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnInventoryItemRemoved);        
 
-        _inventoryItems = null;
         _itemsOnSlots = null;
     }
 
     private void OnPlayerSpawned() {
-        m_slots = UI_InventoryManager._quickSlots;
-        _inventoryItems = new List<Item_SO>(UI_InventoryManager.GetAllSlotsCount());
-        _itemsOnSlots = new Item_SO[UI_InventoryManager.GetSlotsCount()];
+        _itemsOnSlots = new bool[UI_InventoryManager._quickSlots.Count];
 
         PlayerSaveData data = Singleton.Instance.SaveManager.PlayerData;
 
-        for (int i = 0; i < data.acquiredWeapons.Count; i++) {
-            Item_SO item = Singleton.Instance.GameManager.GetItemByID(data.acquiredWeapons[i].id);
-            ItemData itemData = Singleton.Instance.SaveManager.GetItemData(data.acquiredWeapons[i].id);
-
-            Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(item, itemData.index); // TODO CHANGE
+        for (int i = 0; i < data.acquiredItems.Count; i++) {
+            Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(data.acquiredItems[i], data.acquiredItems[i].index);
         }
 
         Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(0);
     }
 
-    #region Inventory management
-    public void AddItem(Item_SO item, int index = -1) {
-        if (index > 0) {
-            Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(item, index);
-            return;
-        }
+    public ItemData GetItemFromSlot(int index) => UI_InventoryManager._allSlots[index].GetItem();
 
-        for (int i = 0; i < m_slots.Count; i++) {
-            if (m_slots[i].emptySlot) {
-                Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(item, i);
-                break;
-            }
+    public int GetEmptySlotIndex(int startIndex) {
+        for (int i = startIndex; i < UI_InventoryManager._allSlots.Count; i++) {
+            if (UI_InventoryManager._allSlots[i].emptySlot)
+                return i;
         }
-
-        Debug.Log("Inventário cheio!");
+        return -1;
     }
 
-    public bool IsInventoryFull() {
-        for (int i = 0; i < m_slots.Count; i++) {
-            if (m_slots[i].emptySlot) return false;
-        }
+    public static bool IsInventoryFull() {
+        for (int i = 0; i < UI_InventoryManager._allSlots.Count; i++) 
+            if (UI_InventoryManager._allSlots[i].emptySlot) return false;     
         return true;
     }
-
-    private void OnInventoryItemCollected(Item_SO item, int index) {                
-        _inventoryItems.Add(item);
-        if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = item;
-    }
-
-    private void OnInventoryItemRemoved(int index) {   
-        _inventoryItems.Remove(_inventoryItems[index]);
-        if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = null;
-    }
-
-    private void OnSlotItemChanged(Item_SO item, int prevIndex, int newIndex) {
-        if (prevIndex < _itemsOnSlots.Length) _itemsOnSlots[prevIndex] = null;
-        if (newIndex < _itemsOnSlots.Length) _itemsOnSlots[newIndex] = item;    
-    }
-    #endregion
 
     public bool CanPickUpItem(Item_SO item) {
-        if ((item.m_itemType == ItemType.MeleeWeapon || item.m_itemType == ItemType.Firearm) && _inventoryItems.Contains(item)) return false;
+        ItemData thisItem = Singleton.Instance.SaveManager.GetItemFromInventory(item.id);
+        if ((item.m_itemType == ItemType.MeleeWeapon || item.m_itemType == ItemType.Firearm) && Singleton.Instance.SaveManager.PlayerData.acquiredItems.Contains(thisItem)) return false;
         return true;
     }
 
-    public Item_SO GetItemFromSlot(int index) => _itemsOnSlots[index];
+    #region Inventory management
+    private void OnInventoryItemCollected(ItemData item, int index) {                
+        if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = true;
+    }
 
-    public Item_SO[] GetItemSlots() => _itemsOnSlots;
+    private void OnInventoryItemRemoved(ItemData item, int index) {   
+        if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = false;
+    }
 
-    public List<Item_SO> Inventory() => _inventoryItems;
+    private void OnSlotItemChanged(ItemData item, int prevIndex, int newIndex) {
+        if (prevIndex < _itemsOnSlots.Length) _itemsOnSlots[prevIndex] = false;
+        if (newIndex < _itemsOnSlots.Length) _itemsOnSlots[newIndex] = true;    
+    }
+    #endregion
 }

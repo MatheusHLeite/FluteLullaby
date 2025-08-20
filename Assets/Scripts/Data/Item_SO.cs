@@ -5,12 +5,15 @@ public class Item_SO : ScriptableObject {
     [FoldoutGroup("Item setup")] public string m_itemName;
     [FoldoutGroup("Item setup")] public Sprite m_icon;
     [FoldoutGroup("Item setup")] public Interactor m_collectibleItemPrefab;
-    [FoldoutGroup("Item setup")] public GameObject m_onHandItemPrefab;
+    [FoldoutGroup("Item setup"), HideIf(nameof(IsAmmo))] public GameObject m_onHandItemPrefab;
     [FoldoutGroup("Item setup")] [TextArea] public string m_description;
+    [FoldoutGroup("Item setup"), ShowIf(nameof(IsFirearmOrAmmo))] public Weapons weaponType;
     [FoldoutGroup("Item setup")] public ItemType m_itemType;
     [Space(10)]
     [FoldoutGroup("Item setup")][GUIColor("#FFFF00")][ReadOnly] public string id;
 
     [FoldoutGroup("Item setup")][Button("Generate ID")]
-    public void GenerateNewID() => id = System.Guid.NewGuid().ToString();    
+    public void GenerateNewID() => id = System.Guid.NewGuid().ToString();
+    private bool IsAmmo() => m_itemType == ItemType.Ammo;
+    private bool IsFirearmOrAmmo() => m_itemType == ItemType.Ammo || m_itemType == ItemType.Firearm;
 }

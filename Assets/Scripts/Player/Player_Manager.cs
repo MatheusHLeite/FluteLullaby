@@ -3,6 +3,12 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_Manager : NetworkBehaviour {
+    [SerializeField] private PlayerParameters_SO m_playerParameters;
+
+    private Player_CameraMovementSystem PlayerCameraMovementSystem;
+    private Player_MovementSystem PlayerMovementSystem;
+    private Player_HealthSystem PlayerHealthSystem;
+
     public override void OnNetworkSpawn() {
         if (IsOwner) {
             StartCoroutine(LoadPlayer());
@@ -11,6 +17,15 @@ public class Player_Manager : NetworkBehaviour {
 
     private IEnumerator LoadPlayer() {
         yield return new WaitForEndOfFrame();
+
+        PlayerCameraMovementSystem = GetComponent<Player_CameraMovementSystem>();
+        PlayerMovementSystem = GetComponent<Player_MovementSystem>();
+        PlayerHealthSystem = GetComponent<Player_HealthSystem>();
+
+        PlayerCameraMovementSystem.SetPlayerParameters(m_playerParameters);
+        PlayerMovementSystem.SetPlayerParameters(m_playerParameters);
+        PlayerHealthSystem.SetPlayerParameters(m_playerParameters);
+
         Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke();
     }
 }

@@ -27,13 +27,15 @@ public class UI_PlayerHUD : MonoBehaviour {
     private bool m_staminaFull;
 
     private void Awake() {
+        m_ammo.gameObject.SetActive(false);
+
         Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaUsage.AddListener(OnStaminaUsage);
         Singleton.Instance.GameEvents.OnHit.AddListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
-        Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(OnAmmoSpent);
+        Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
     }
 
@@ -44,7 +46,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnStaminaUsage.RemoveListener(OnStaminaUsage);
         Singleton.Instance.GameEvents.OnHit.RemoveListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
-        Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(OnAmmoSpent);
+        Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
 
         
@@ -52,8 +54,6 @@ public class UI_PlayerHUD : MonoBehaviour {
 
     private void Start() {
         impulseSource = GetComponent<CinemachineImpulseSource>();
-
-        Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(null); //[TODO] Change after save system
     }
 
     private void OnWeaponChanged(Weapon_Firearm weapon) {
@@ -66,7 +66,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
     }
 
-    private void OnAmmoSpent(string id, int currentAmmo, int maxAmmo) {
+    private void OnAmmoSpent(LongRangeWeapon_SO weapon, int currentAmmo, int maxAmmo, int remainingAmmo) {
         m_ammo.text = $"{currentAmmo}/<size=50%>{maxAmmo}</size>";
     }
 
@@ -154,10 +154,8 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_deathCounter.text = _deathCount.ToString();
     }
 
-    private void OnHealthSet(int actualHealth, int maxHealth) {
-        //this.maxHealth = maxHealth;
+    private void OnHealthSet(float actualHealth, float maxHealth) {
         m_healthBar.fillAmount = maxHealth;
-
         m_healthBar.color = Color.green;
     }
 

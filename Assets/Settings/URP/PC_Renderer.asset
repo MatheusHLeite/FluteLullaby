@@ -48,6 +48,26 @@ MonoBehaviour:
   stripUnityChromaticAberration: 0
   stripUnityDistortion: 0
   stripUnityDebugVariants: 0
+--- !u!114 &-5497657353482585151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
+  m_Name: GammaCorrectionFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  injectionPoint: 600
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: 0f1e286c08a197f438081f43de7738dc, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &-1687367861095460667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -97,7 +117,8 @@ MonoBehaviour:
   - {fileID: 7833122117494664109}
   - {fileID: -1687367861095460667}
   - {fileID: 5830760591328028385}
-  m_RendererFeatureMap: ad6b866f10d7b46cc590fed1de4395e8e1267478dd05eb50
+  - {fileID: -5497657353482585151}
+  m_RendererFeatureMap: ad6b866f10d7b46cc590fed1de4395e8e1267478dd05eb50c13bdbccc365b4b3
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -152,14 +173,14 @@ MonoBehaviour:
   m_Active: 1
   m_Settings:
     AOMethod: 0
-    Downsample: 0
-    AfterOpaque: 0
-    Source: 1
-    NormalSamples: 1
-    Intensity: 0.4
+    Downsample: 1
+    AfterOpaque: 1
+    Source: 0
+    NormalSamples: 2
+    Intensity: 0.6
     DirectLightingStrength: 0.25
-    Radius: 0.3
-    Samples: 1
+    Radius: 0.45
+    Samples: 0
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1

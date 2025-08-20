@@ -40,7 +40,12 @@ public class Player_AnimationSystem : NetworkBehaviour {
     private const string Crouch = "IsCrouch";
     private const string IdleState = "SetIdle";
     private const string Attack = "Attack_";
+    private const string Shot = "Shot";
+    private const string Reload = "Reload";
+    private const string HoldingWeapon = "Holding_";
     #endregion
+
+    private string lastState;
 
     private void Awake() {
         Input = GetComponent<Player_InputHandler>();
@@ -180,56 +185,40 @@ public class Player_AnimationSystem : NetworkBehaviour {
     #endregion
 
     #region Actions
-    public void OnAttack(int comboStep) {
-        RequestAnimationServerRpc(Attack + "1" /*comboStep*/); //Change to events [TODO]
-    } //[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
+    public void OnAttack(int comboStep) => RequestAnimationServerRpc(Attack + comboStep); 
+ 
+    public void OnCrouch(bool crouch) => RequestAnimationStateServerRpc(Crouch, crouch);
 
-    public void OnCrouch(bool crouch) {
-        RequestAnimationStateServerRpc(Crouch, crouch);
-    }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
+    public void OnJump() => RequestAnimationServerRpc(Jump);
 
-    public void OnJump() {
-        RequestAnimationServerRpc(Jump);
-    }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
+    public void OnShot() => RequestAnimationServerRpc(Shot);
+   
+    public void OnReload() => RequestAnimationServerRpc(Reload);
 
-    public void OnShot() {// Set weapon type
-        RequestAnimationServerRpc("Shot_r");
-    }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
+    public void ChangeIdleState(Weapons weapons) {
+        if (!string.IsNullOrEmpty(lastState)) RequestAnimationStateServerRpc(lastState, false);
+        lastState = HoldingWeapon + weapons;
+        RequestAnimationStateServerRpc(lastState, true);
 
-    public void OnReload() { // Set weapon type
-        RequestAnimationServerRpc("ReloadRevolver");
-    } //[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
-
-    public void ChangeIdleState() { //[TODO]Add animation name on the weapon SO
-        RequestAnimationServerRpc(IdleState);
-    }//[TODO] CHANGE ALL TO PLAY ONLY FOR THE CLIENT NOT FOR THE OWNER
+        RequestAnimationServerRpc(IdleState); 
+    }
     #endregion
 
     #region Network calls
     [ServerRpc]
-    void RequestAnimationServerRpc(string animationTrigger) {
-        PlayAnimationClientRpc(animationTrigger);
-    }
+    void RequestAnimationServerRpc(string animationTrigger) => PlayAnimationClientRpc(animationTrigger);
 
     [ClientRpc]
-    void PlayAnimationClientRpc(string animationTrigger) {
-        m_fullBodyAnimator.SetTrigger(animationTrigger);
-    }
-
+    void PlayAnimationClientRpc(string animationTrigger) => m_fullBodyAnimator.SetTrigger(animationTrigger);
+    
     [ServerRpc(RequireOwnership = false)]
-    void RequestAnimationStateServerRpc(string state, bool condition) {
-        SetAnimationStateClientRpc(state, condition);
-    }
-
+    void RequestAnimationStateServerRpc(string state, bool condition) => SetAnimationStateClientRpc(state, condition);
+    
     [ClientRpc]
-    void SetAnimationStateClientRpc(string state, bool condition) {
-        m_fullBodyAnimator.SetBool(state, condition);
-    }
-
+    void SetAnimationStateClientRpc(string state, bool condition) => m_fullBodyAnimator.SetBool(state, condition);
+    
     [ServerRpc(RequireOwnership = false)]
-    void RequestAnimatorSyncServerRpc(MovementAnimationParameters parameters) {
-        SetAnimatorValuesClientRpc(parameters);
-    }
+    void RequestAnimatorSyncServerRpc(MovementAnimationParameters parameters) => SetAnimatorValuesClientRpc(parameters);
 
     [ClientRpc]
     void SetAnimatorValuesClientRpc(MovementAnimationParameters parameters) {
@@ -237,7 +226,6 @@ public class Player_AnimationSystem : NetworkBehaviour {
         m_fullBodyAnimator.SetFloat(MovementX, parameters.m_moveX);
         m_fullBodyAnimator.SetFloat(MovementY, parameters.m_moveY);
         m_fullBodyAnimator.SetBool(IsGrounded, parameters.m_isGrounded);
-        m_fullBodyAnimator.SetBool("Revolver", parameters.m_holdingRevolver); //[TODO] Add const string and change for more weapon types
     }
     #endregion
 
@@ -250,18 +238,11 @@ public class Player_AnimationSystem : NetworkBehaviour {
         inputX = Mathf.Lerp(inputX, rawInputX, m_animationSmoothness * Time.deltaTime);
         inputY = Mathf.Lerp(inputY, rawInputY, m_animationSmoothness * Time.deltaTime);
 
-        m_fullBodyAnimator.SetFloat(MovementMagnitude, inputMagnitude);
-        m_fullBodyAnimator.SetFloat(MovementX, inputX);
-        m_fullBodyAnimator.SetFloat(MovementY, inputY);
-        m_fullBodyAnimator.SetBool(IsGrounded, Movement.IsGrounded);
-        m_fullBodyAnimator.SetBool("Revolver", Combat.GetActualEquippedWeapon() != null ? Combat.GetActualEquippedWeapon().m_itemType == ItemType.Firearm : false); //[TODO] Add const string and change for more weapon types
-
         MovementAnimationParameters parameters = new MovementAnimationParameters {
             m_moveMagnitude = inputMagnitude,
             m_moveX = inputX,
             m_moveY = inputY,
-            m_isGrounded = Movement.IsGrounded,
-            m_holdingRevolver = Combat.GetActualEquippedWeapon() != null ? Combat.GetActualEquippedWeapon().m_itemType == ItemType.Firearm : false //[TODO]
+            m_isGrounded = Movement.IsGrounded
         };
 
         RequestAnimatorSyncServerRpc(parameters);

@@ -2,9 +2,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_MovementSystem : NetworkBehaviour {
-    [Header("Setup")]
-    [SerializeField] private PlayerParameters_SO m_playerParameters;
-
     [Header("Crouch system")]
     [SerializeField] private float m_crouchHeight = 1.1f;
     [SerializeField] private float m_crouchCenter = -0.35f;
@@ -110,27 +107,25 @@ public class Player_MovementSystem : NetworkBehaviour {
         CameraMovementSystem = GetComponent<Player_CameraMovementSystem>();
     }
 
-    public void SetPlayerParameters() {
-        m_walkSpeed = m_playerParameters.m_walkSpeed;
-        m_sprintSpeed = m_playerParameters.m_sprintSpeed;
-        m_crouchSpeed = m_playerParameters.m_crouchSpeed;
+    public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
+        m_walkSpeed = playerParameters.m_walkSpeed;
+        m_sprintSpeed = playerParameters.m_sprintSpeed;
+        m_crouchSpeed = playerParameters.m_crouchSpeed;
         m_maxVelocityChange = 10f;
-        m_maxAirVelocityChange = m_playerParameters.m_maxAirVelocityChange;
-        m_acceleration = m_playerParameters.m_acceleration;
-        m_deceleration = m_playerParameters.m_deceleration;
-        m_jumpPower = m_playerParameters.m_jumpPower;
-        m_coyoteTime = m_playerParameters.m_coyoteTime;
-        m_sprintDuration = m_playerParameters.m_sprintDuration;
-        m_sprintCooldown = m_playerParameters.m_sprintCooldown;
-        m_sprintRecoverSpeed = m_playerParameters.m_sprintRecoverSpeed;
-        m_toCrouchSpeed = m_playerParameters.m_toCrouchSpeed;
+        m_maxAirVelocityChange = playerParameters.m_maxAirVelocityChange;
+        m_acceleration = playerParameters.m_acceleration;
+        m_deceleration = playerParameters.m_deceleration;
+        m_jumpPower = playerParameters.m_jumpPower;
+        m_coyoteTime = playerParameters.m_coyoteTime;
+        m_sprintDuration = playerParameters.m_sprintDuration;
+        m_sprintCooldown = playerParameters.m_sprintCooldown;
+        m_sprintRecoverSpeed = playerParameters.m_sprintRecoverSpeed;
+        m_toCrouchSpeed = playerParameters.m_toCrouchSpeed;
 
         standHeight = _thisCollider.height;
         colliderHeight = standHeight;
         colliderCenter = Vector3.zero;
         camPosY = m_cameraStandY;
-
-        _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
 
         m_playerCanMove = true;
         m_enableSprint = true;
@@ -147,23 +142,20 @@ public class Player_MovementSystem : NetworkBehaviour {
     #region Network Initialization
     public override void OnNetworkSpawn()  {
         if (IsOwner) {
-            SetPlayerParameters(); //[TODO] Add to a manager  
-            return;
+            _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
+            return; 
         }
 
         isCrouched_NV.OnValueChanged += OnCrouchStateChanged;
-
         GetComponent<CapsuleCollider>().enabled = false;        
     }
 
     public override void OnNetworkDespawn() {
         isCrouched_NV.OnValueChanged -= OnCrouchStateChanged;
     }
-    #endregion
 
-    private void OnCrouchStateChanged(bool oldValue, bool newValue) {
-        Animation.OnCrouch(newValue);
-    }
+    private void OnCrouchStateChanged(bool oldValue, bool newValue) => Animation.OnCrouch(newValue);
+    #endregion
 
     #region Movement
     private void HandleMovement() {
@@ -206,8 +198,6 @@ public class Player_MovementSystem : NetworkBehaviour {
         _rb.AddForce(movementDirection, ForceMode.VelocityChange);
 
         IsSprinting = sprintFlag && movementInput.magnitude > 0;
-
-        //_actualPlayerSpeed = movementDirection.magnitude; //[TODO] remove it
     }
 
     private void HandleSprint() {
@@ -301,6 +291,7 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
     #endregion
 
+    #region Raycast
     private void RaycastCheck() {
         Vector3 baseCenter = transform.position + _thisCollider.center - (Vector3.up * ((_thisCollider.height / 2f) - _thisCollider.radius));
         Vector3 boxHalfExtents = new Vector3(_thisCollider.radius * 0.9f, .1f, _thisCollider.radius * 0.9f);    
@@ -313,9 +304,11 @@ public class Player_MovementSystem : NetworkBehaviour {
         boxHalfExtents.y *= 3.5f;
         canStandUp = !Physics.BoxCast(topCenter, boxHalfExtents, Vector3.up, out RaycastHit topHit, Quaternion.identity, m_raycastDistance * 2, m_groundLayerMask);
     }
+    #endregion
 
+    #region Update
     private void Update() {
-        if (!IsOwner || HealthSystem.IsDead) return;
+        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() == GameState.Paused) return;
 
         HandleCrouch();
         HandleJump();
@@ -323,12 +316,12 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
 
     private void FixedUpdate() {
-        if (!IsOwner || HealthSystem.IsDead) return;
+        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() == GameState.Paused) return;
 
         HandleMovement();
         RaycastCheck();
     }
-
+    #endregion
 
 #if UNITY_EDITOR
     private void OnDrawGizmos() {

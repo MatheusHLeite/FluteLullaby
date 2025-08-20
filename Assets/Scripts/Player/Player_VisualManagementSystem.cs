@@ -5,13 +5,15 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_VisualManagementSystem : NetworkBehaviour {
-    public SkinnedMeshRenderer[] body; //[TODO] Placeholder
-    public GameObject deathCamera; //[TODO] Placeholder
-    public TMP_Text nameIndicator; //[TODO] Placeholder
-    public GameObject firstPersonHolder; //[TODO] Placeholder
+    [Header("Visuals")]
+    [SerializeField] private SkinnedMeshRenderer[] m_body;
+    [SerializeField] private GameObject m_deathCamera;
+    [SerializeField] private GameObject m_firstPersonHolder;
+
+    [Header("Identification")]
+    [SerializeField] private TMP_Text m_nameIndicator; 
 
     private Player_CameraMovementSystem CameraSystem;
-
     public NetworkVariable<FixedString64Bytes> PlayerName = new NetworkVariable<FixedString64Bytes>(writePerm: NetworkVariableWritePermission.Server);
 
     private void Awake() {
@@ -26,17 +28,17 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
             Singleton.Instance.GameEvents.OnShotHit.AddListener(OnWeaponHit);
 
-            nameIndicator.gameObject.SetActive(false);
+            m_nameIndicator.gameObject.SetActive(false);
             SetBodyVisible(false);
-            firstPersonHolder.SetActive(true);
+            m_firstPersonHolder.SetActive(true);
 
             if (GameNetworkManager.IsSteam) SubmitNameServerRpc(SteamClient.Name);
             return;
         }
 
-        nameIndicator.gameObject.SetActive(true);
+        m_nameIndicator.gameObject.SetActive(true);
         SetBodyVisible(true);
-        firstPersonHolder.SetActive(false);
+        m_firstPersonHolder.SetActive(false);
     }
 
     public override void OnNetworkDespawn() {
@@ -48,7 +50,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     }
 
     public void OnNameChanged(FixedString64Bytes prevValue, FixedString64Bytes newValue) {
-        nameIndicator.SetText(newValue.ToString());
+        m_nameIndicator.SetText(newValue.ToString());
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -69,27 +71,27 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
 
     private void OnPlayerDie(Vector3 point, Vector3 dir, float impact) {
         SetBodyVisible(true);
-        firstPersonHolder.SetActive(false);
-        deathCamera.gameObject.SetActive(true);
+        m_firstPersonHolder.SetActive(false);
+        m_deathCamera.gameObject.SetActive(true);
         CameraSystem.SetCameraGameObjectActive(false);
     }
 
     private void OnPlayerRespawn() {
         SetBodyVisible(false);
-        firstPersonHolder.SetActive(true);
-        deathCamera.gameObject.SetActive(false);
+        m_firstPersonHolder.SetActive(true);
+        m_deathCamera.gameObject.SetActive(false);
         CameraSystem.SetCameraGameObjectActive(true);
     }    
 
     private void SetBodyVisible(bool visible) {
-        foreach (var skin in body) {
+        foreach (var skin in m_body) {
             skin.enabled = visible;
         }
     }
 
     private void Update() {
         if (!IsOwner && Camera.main != null) {
-            nameIndicator.transform.forward = Camera.main.transform.forward;
+            m_nameIndicator.transform.forward = Camera.main.transform.forward;
         }
     }
 }

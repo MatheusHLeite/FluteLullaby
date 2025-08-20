@@ -38,7 +38,7 @@ public class Player_CombatSystem : NetworkBehaviour {
         base.OnNetworkSpawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnActualSlotItem.AddListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnActualSlotItemSet.AddListener(OnSlotSelected);
         }
     }
 
@@ -46,7 +46,7 @@ public class Player_CombatSystem : NetworkBehaviour {
         base.OnNetworkDespawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnActualSlotItem.RemoveListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnActualSlotItemSet.RemoveListener(OnSlotSelected);
         }
     }
     #endregion
@@ -74,7 +74,7 @@ public class Player_CombatSystem : NetworkBehaviour {
     }
 
     private void HandleFirearmAttack() {
-        if (firearm == null) return;
+        if (firearm == null || !canSwitchWeapons) return;
 
         if (Input.Attack) 
             firearm.CallFire();        
@@ -88,8 +88,8 @@ public class Player_CombatSystem : NetworkBehaviour {
     }
 
     private IEnumerator DelayedEquip(Item_SO item) {
-        _actualEquippedWeapon = item;
-        Animator.ChangeIdleState();
+        _actualEquippedWeapon = item;        
+        Animator.ChangeIdleState(item != null ? item.weaponType : Weapons.None);
 
         yield return new WaitForEndOfFrame();
 
@@ -100,7 +100,7 @@ public class Player_CombatSystem : NetworkBehaviour {
     }
 
     private void Update() {
-        if (!IsOwner || HealthSystem.IsDead) return;
+        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
 
         HandleAttack();        
     }

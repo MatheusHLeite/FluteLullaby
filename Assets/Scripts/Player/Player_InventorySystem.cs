@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using DG.Tweening;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -10,14 +10,27 @@ public class Player_InventorySystem : NetworkBehaviour {
     [SerializeField] private Transform m_rightHand;
     [SerializeField] private Transform m_thirdPersonRightHand;
 
+    #region Private upgradable/modifiable variables
+    private float changeWeaponSpeed = 0.4f;
+    #endregion
+
+    #region Private
+    private Transform weaponHolder;
     private Interactor itemOnTPHand;
     private GameObject itemOnTPHandRef;
     private GameObject itemOnHand;
+
+    private ItemData equippedItem;
+
+    private int previousIndex;
+    #endregion
 
     #region Initialization
     private void Awake() {
         Interaction = GetComponent<Player_InteractionSystem>();
         Combat = GetComponent<Player_CombatSystem>();
+
+        weaponHolder = m_rightHand.parent;
     }
     #endregion
 
@@ -26,9 +39,10 @@ public class Player_InventorySystem : NetworkBehaviour {
         base.OnNetworkSpawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSlotItemDropped.AddListener(OnSlotItemDropped);
-            Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnItemCollected);
+            Singleton.Instance.GameEvents.OnItemDropped.AddListener(OnSlotItemDropped);            
             Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnDragBegun.AddListener(i => previousIndex = i);
+            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.AddListener(OnQuickSlotItemUpdated);
         }
     }
 
@@ -36,9 +50,10 @@ public class Player_InventorySystem : NetworkBehaviour {
         base.OnNetworkDespawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSlotItemDropped.RemoveListener(OnSlotItemDropped);
-            Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnItemCollected);
-            Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);            
+            Singleton.Instance.GameEvents.OnItemDropped.RemoveListener(OnSlotItemDropped);
+            Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
+            Singleton.Instance.GameEvents.OnDragBegun.RemoveListener(i => previousIndex = i);
+            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.RemoveListener(OnQuickSlotItemUpdated);
         }
     }
     #endregion
@@ -49,41 +64,56 @@ public class Player_InventorySystem : NetworkBehaviour {
 
     #region Slot handle
     private void OnSlotSelected(int index) {
-        if (itemOnHand != null) {
-            Destroy(itemOnHand);
-            DespawnItemOnHandServerRpc();
-        }
+        ItemData itemData = Singleton.Instance.InventoryManager.GetItemFromSlot(index);
+        Item_SO item = Singleton.Instance.GameManager.GetItemByID(itemData == null ? "" : itemData.id);
 
-        Item_SO item = Singleton.Instance.InventoryManager.GetItemFromSlot(index);
+        if (equippedItem == itemData) return;
+        equippedItem = itemData;
 
-        if (item != null) {
-            itemOnHand = Instantiate(item.m_onHandItemPrefab, m_rightHand);
-            SetupItemOHand(item);
-            SpawnItemOnHandServerRpc(item.id);
-        }
+        Combat.SetCanSwitch(false);
 
-        Singleton.Instance.GameEvents.OnActualSlotItem?.Invoke(item);
+        weaponHolder.DOLocalRotate(new Vector3(45, 0, 0), changeWeaponSpeed).SetEase(Ease.InBack).OnComplete(() => {
+            if (itemOnHand != null) {
+                Destroy(itemOnHand);
+                DespawnItemOnHandServerRpc();
+            }
+
+            if (item != null && item.m_itemType != ItemType.Ammo) {
+                itemOnHand = Instantiate(item.m_onHandItemPrefab, m_rightHand);
+                SetupItemOHand(item);
+                SpawnItemOnHandServerRpc(item.id);
+            }
+
+            Singleton.Instance.GameEvents.OnActualSlotItemSet?.Invoke(item);
+
+            weaponHolder.DOLocalRotate(Vector3.zero, changeWeaponSpeed / 1.75f).SetDelay(0.15f).SetEase(Ease.OutBack).OnComplete(() => {
+                Combat.SetCanSwitch(true);
+            });
+        });
+    }
+
+    private void OnQuickSlotItemUpdated(int previousIndex, int nextIndex) {
+        if (previousIndex == Interaction.ActualSlotSelected) OnSlotSelected(previousIndex);
+        if (nextIndex == Interaction.ActualSlotSelected) OnSlotSelected(nextIndex);
     }
 
     private void SetupItemOHand(Item_SO item) {
         if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
-            firearm.SetupWeapon(item, Combat, Singleton.Instance.SaveManager.GetWeaponDataByID(item.id));
+            firearm.SetupWeapon(item, Combat);
         if (itemOnHand.transform.TryGetComponent(out Weapon_Melee melee))
             melee.SetupWeapon(item, Combat);
     }
 
-    private void OnItemCollected(Item_SO item, int index) {
-        Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(item, index);
-    }
-
     private void OnSlotItemDropped(int index) {
-        Singleton.Instance.GameEvents.OnInventoryItemRemoved?.Invoke(index);
+        string itemId = Singleton.Instance.InventoryManager.GetItemFromSlot(index).id;
+        ItemData data = Singleton.Instance.SaveManager.GetItemFromInventory(itemId);
 
-        string id = Singleton.Instance.InventoryManager.GetItemFromSlot(index).id;
-        SpawnItemServerRpc(id, Interaction.GetTargetAim());
+        SpawnItemServerRpc(itemId, Interaction.GetTargetAim());
 
-        if (m_rightHand.childCount > 0)
+        if (index == Interaction.ActualSlotSelected || index == previousIndex && m_rightHand.childCount > 0)        
             Destroy(m_rightHand.GetChild(0).gameObject);
+
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved?.Invoke(data, index);
     }
     #endregion
 

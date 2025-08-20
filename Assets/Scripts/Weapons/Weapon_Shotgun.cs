@@ -14,7 +14,7 @@ public class Weapon_Shotgun : Weapon_Firearm {
     protected override void Fire() {
         OnShot();
 
-        AudioSystem.Play3DAudio(Weapons.Shotgun);
+        AudioSystem.PlayShotSFX(Weapons.Shotgun);
 
         for (int i = 0; i < pelletCount; i++) {
             Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, GetSpreadDirection(), out hit, m_range);

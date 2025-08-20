@@ -535,10 +535,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   m_outlineMaterial: {fileID: 2100000, guid: 3dd6c2228bd03e243ae32058fabf4073, type: 2}
-  m_outlineWidth: 1.1
   m_thirdPersonVisual: {fileID: 7911476537652282119}
   m_onGroundVisual: {fileID: 6752005437105541031}
-  m_weapon: {fileID: 11400000, guid: 5521447aa413e99499dcced905ddca49, type: 2}
+  m_item: {fileID: 11400000, guid: 5521447aa413e99499dcced905ddca49, type: 2}
+  m_randomizeAmount: 0
+  m_amount: 1
+  m_itemVisuals: []
 --- !u!114 &3635955688020534299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -572,9 +574,9 @@ MonoBehaviour:
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01

@@ -25,15 +25,12 @@ public class Player_InputHandler : NetworkBehaviour {
 
 
     private void OnEnable() {
-        if (Input == null) {
-            AddInputListeners();
-        }        
+        if (Input == null) AddInputListeners();
+          
     }
 
     private void OnDisable() {
-        if (Input != null) {
-            RemoveInputListeners();
-        }
+        if (Input != null) RemoveInputListeners();
     }
 
     private void AddInputListeners() {

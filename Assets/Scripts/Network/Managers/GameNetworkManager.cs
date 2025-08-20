@@ -10,7 +10,7 @@ public class GameNetworkManager : MonoBehaviour {
     public Lobby? CurrentLobby { get; private set; } = null;
 
     private FacepunchTransport _transport = null;
-    [SerializeField] private int _maxPlayers = 2; //Modders will break this xD [TODO] Back to 2 players
+    [SerializeField] private int _maxPlayers = 2; //[TODO] Back to 2 players
 
     public static bool IsSteam;
     private bool connected;

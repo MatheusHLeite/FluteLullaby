@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -5,7 +6,6 @@ using UnityEngine;
 
 public class Player_HealthSystem : NetworkBehaviour {
     [Header("Setup")]
-    [SerializeField] private int maxHealth; //[TODO] add to SO
     private NetworkVariable<float> currentHealth = new NetworkVariable<float>(100f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     [SerializeField] private float respawnDelay = 3f;
 
@@ -18,6 +18,8 @@ public class Player_HealthSystem : NetworkBehaviour {
 
     private NetworkTransform NTransform;
 
+    private float maxHealth;
+
     private void Awake() {
         NTransform = GetComponent<NetworkTransform>();
     }
@@ -25,12 +27,8 @@ public class Player_HealthSystem : NetworkBehaviour {
     #region Network Initialization
     public override void OnNetworkSpawn() {
         if (IsOwner) {
-            currentHealth.OnValueChanged += OnHealthChanged;
-
             Singleton.Instance.GameEvents.OnHealthSet.AddListener(SetHealth);
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnSpawn);
-
-            OnSpawn();
         }
     }
 
@@ -44,6 +42,14 @@ public class Player_HealthSystem : NetworkBehaviour {
     }
     #endregion
 
+    internal void SetPlayerParameters(PlayerParameters_SO playerParameters) {
+        maxHealth = playerParameters.m_maxHealth;
+
+        currentHealth.OnValueChanged += OnHealthChanged;
+
+        OnSpawn();
+    }
+
     private void OnHealthChanged(float previousValue, float newValue) {
         if (newValue <= 0f && !IsDead) {
             Die(hitPoint.Value, hitDirection.Value, impact.Value);
@@ -56,7 +62,7 @@ public class Player_HealthSystem : NetworkBehaviour {
         Singleton.Instance.GameEvents.OnHealthSet?.Invoke(maxHealth, maxHealth);        
     }
 
-    private void SetHealth(int actualHealth, int maxHealth) {
+    private void SetHealth(float actualHealth, float maxHealth) {
         if (IsServer) {
             OnHealthSet(actualHealth);
             return;

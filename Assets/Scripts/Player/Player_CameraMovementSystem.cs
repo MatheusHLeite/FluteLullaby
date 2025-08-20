@@ -2,8 +2,6 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_CameraMovementSystem : NetworkBehaviour {
-    [SerializeField] private PlayerParameters_SO m_playerParameters;
-
     [Header("References")]
     [SerializeField] private Transform m_playerCameraHolder;
     [SerializeField] private Camera m_playerCamera;
@@ -64,21 +62,19 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         originalPosition = m_playerCamera.transform.localPosition;
     }
 
-    public void SetPlayerParameters() {
-        m_mouseSensitivity = m_playerParameters.m_mouseSensitivity;
-        m_sensitivityMultiplier = m_playerParameters.m_sensitivityMultiplier;
-        m_maxPositiveLookAngle = m_playerParameters.m_maxPositiveLookAngle;
-        m_maxNegativeLookAngle = m_playerParameters.m_maxNegativeLookAngle;
-        m_invertCamera = m_playerParameters.m_invertCamera;
-        m_defaultFov = m_playerParameters.m_defaultFov;
-        m_zoomFOV = m_playerParameters.m_zoomFOV;
-        m_zoomStepTime = m_playerParameters.m_zoomStepTime;
+    public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
+        m_mouseSensitivity = playerParameters.m_mouseSensitivity;
+        m_sensitivityMultiplier = playerParameters.m_sensitivityMultiplier;
+        m_maxPositiveLookAngle = playerParameters.m_maxPositiveLookAngle;
+        m_maxNegativeLookAngle = playerParameters.m_maxNegativeLookAngle;
+        m_invertCamera = playerParameters.m_invertCamera;
+        m_defaultFov = playerParameters.m_defaultFov;
+        m_zoomFOV = playerParameters.m_zoomFOV;
+        m_zoomStepTime = playerParameters.m_zoomStepTime;
 
         m_cameraCanMove = true;
         m_enableZoom = true;
         m_playerCamera.fieldOfView = m_defaultFov;
-
-        UpdatePlayerPreferences();
     }
     #endregion
 
@@ -89,8 +85,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         if (!IsOwner) 
             m_playerCamera.gameObject.SetActive(false);        
         else {
-            Singleton.Instance.GameEvents.OnSensitivityChange.AddListener(OnSensitivityChanged);
-            SetPlayerParameters(); //[TODO] Add to a manager  
+            Singleton.Instance.GameEvents.OnSensitivityChange.AddListener(OnSensitivityChanged);              
         }                  
     }
 
@@ -103,10 +98,6 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     }
     #endregion
 
-    private void UpdatePlayerPreferences() {
-        //m_mouseSensitivity = m_mouseSensitivity;
-    }
-
     private void OnSensitivityChanged(float value) {
         m_mouseSensitivity = value;
     }
@@ -116,7 +107,10 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     }
 
     private void HandleCameraMovement() {
-        if (!m_cameraCanMove) return;
+        if (!m_cameraCanMove) {
+            ResetCameraBalance();
+            return;
+        }
 
         _yaw = transform.localEulerAngles.y + (Input.LookInput.x * m_sensitivityMultiplier) * m_mouseSensitivity;
 
@@ -151,10 +145,22 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
             m_playerCameraHolder.localRotation = cameraRotation.Value;        
     }
 
+    private void ResetCameraBalance() {
+        _zRotation = Mathf.Lerp(_zRotation, 0, Time.deltaTime * m_cameraZRotationTime);
+        Vector3 localEA = new Vector3(_pitch, 0, -_zRotation);
+
+        if (m_playerCameraHolder.localEulerAngles != localEA) { 
+            m_playerCameraHolder.localEulerAngles = localEA; 
+        }
+    }
+
     private void Update() {
         HandleNetworkCameraRotation();
 
-        if (!IsOwner || HealthSystem.IsDead) return;
+        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) {
+            ResetCameraBalance();
+            return; 
+        }
 
         if (Cursor.lockState == CursorLockMode.None) return;
  

@@ -1,12 +1,10 @@
 using Sirenix.OdinInspector;
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour {
-    [Header("Development mode")]
-    public bool _developmentMode; //[TODO] Remember to turn off when official building
-
     [Header("Setup")]
     [SerializeField] private List<Item_SO> m_allGameItems = new List<Item_SO>();
     [SerializeField] private List<BodyPartDamageMultiplier> m_bodyPartDamageMultiplier = new List<BodyPartDamageMultiplier>();
@@ -14,15 +12,31 @@ public class GameManager : MonoBehaviour {
 
     private static bool initialized = false;
 
+    private static GameState GameState;
+
     #region Initialization
     private void Awake() {
         if (initialized) return;
         initialized = true;
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false; //[TODO] keep it here?
+        Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
+        Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnInventoryOpened.AddListener(OnInventoryOpened);
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnPlayerLoaded);
+    }
+
+    private void OnDestroy() {
+        Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
+        Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnInventoryOpened.RemoveListener(OnInventoryOpened);
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnPlayerLoaded);
     }
     #endregion
+
+    private void OnPlayerLoaded() {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 
     #region Get
     public Item_SO GetItemByID(string id) {
@@ -44,6 +58,16 @@ public class GameManager : MonoBehaviour {
     public Vector3 GetRandomSpawnPos() => m_spawnPoints[UnityEngine.Random.Range(0, m_spawnPoints.Count)].position;
 
     public List<Item_SO> GetAllItems() => m_allGameItems;
+
+    public static GameState GetGameState() => GameState;
+    #endregion
+
+    #region Set
+    private void OnGameResumed() => GameState = GameState.Resumed;
+
+    private void OnGamePaused() => GameState = GameState.Paused;
+
+    private void OnInventoryOpened() => GameState = GameState.InventoryOpened;    
     #endregion
 }
 
@@ -53,18 +77,20 @@ public interface IInteractable {
     void Interact(Player_InteractionSystem interactor);
 }
 
-public enum ItemType { MeleeWeapon, Firearm, PuzzlePiece, Collectible }
+public enum ItemType { MeleeWeapon, Firearm, PuzzlePiece, Collectible, Ammo }
 
 public enum BodyPart { UpperBody, LowerBody, Head, Arm, Leg }
 
-public enum Weapons { Revolver, Shotgun }
+public enum Weapons { None, Revolver, Shotgun }
+[Flags]
+public enum GameState { Resumed, Paused, InventoryOpened }
 
 [System.Serializable]
 public struct CollectableItems {
     public Item_SO m_item;
     public bool m_useActualPositionAndRotation;
-    [HideIf("m_useActualPositionAndRotation")] public Vector3 m_position;
-    [HideIf("m_useActualPositionAndRotation")] public Quaternion m_rotation;
+    [HideIf(nameof(m_useActualPositionAndRotation))] public Vector3 m_position;
+    [HideIf(nameof(m_useActualPositionAndRotation))] public Quaternion m_rotation;
 }
 
 [System.Serializable]
@@ -78,34 +104,12 @@ public struct MovementAnimationParameters : INetworkSerializable {
     public float m_moveX;
     public float m_moveY;
     public bool m_isGrounded;
-    public bool m_holdingRevolver;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
         serializer.SerializeValue(ref m_moveMagnitude);
         serializer.SerializeValue(ref m_moveX);
         serializer.SerializeValue(ref m_moveY);
         serializer.SerializeValue(ref m_isGrounded);
-        serializer.SerializeValue(ref m_holdingRevolver);
     }
-}
-
-public struct WeaponFirearmData {
-    [ReadOnly] public string id;
-    public int m_currentAmmo;
-    public int m_stockedAmmo;
-    public float m_fireRateMultiplier;
-    public float m_reloadSpeedMultiplier;
-}
-
-public struct MeleeWeaponData {
-    [ReadOnly] public string id;
-    public float m_attackSpeedMultiplier;
-}
-
-[System.Serializable]
-public class ItemData {
-    public string id;
-    public int m_quantity;
-    public int index;
 }
 #endregion

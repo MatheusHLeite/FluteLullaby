@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour {
-    [SerializeField] private Material m_onHitMaterial; //[TODO]
+    [SerializeField] private Material m_onHitMaterial;
     [SerializeField] private Renderer m_enemySkin;
     [Range(0, 255)] public byte m_onHitEffectIntensity;
     public float m_hp;

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8042cf94f5be0e84b8565cbc67641b04, type: 3}
+  m_Name: Ammo_Revolver
+  m_EditorClassIdentifier: 
+  m_itemName: Revolver Ammo
+  m_icon: {fileID: 21300000, guid: 005888ede18a58e4db8d069cfa3007cb, type: 3}
+  m_collectibleItemPrefab: {fileID: 888951278089668794, guid: 71236474c341ee34083157d638c4ebb5, type: 3}
+  m_onHandItemPrefab: {fileID: 0}
+  m_description: A box of .38 caliber rounds. Enough to keep your revolver talking.
+  m_itemType: 4
+  id: c17622cb-502a-4f4f-bb8e-862b6157fae6
+  m_weapon: 0

@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class Player_InteractionSystem : NetworkBehaviour {
     private Player_InputHandler Input;
     private Player_HealthSystem HealthSystem;
-    private Player_InventorySystem InventorySystem;
     private Player_CombatSystem CombatSystem;
 
     [SerializeField] private Transform m_playerCamera;
@@ -22,8 +19,6 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private int _lastSelectedSlotIndex;
     private int _lastSlot;
     private float _slotSelectionCooldown;
-
-    private bool[] _occupiedSlots;
     #endregion
 
     #region Public variables
@@ -34,13 +29,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private void Awake() {
         Input = GetComponent<Player_InputHandler>();
         HealthSystem = GetComponent<Player_HealthSystem>();
-        InventorySystem = GetComponent<Player_InventorySystem>();
-        CombatSystem = GetComponent<Player_CombatSystem>();
-        _occupiedSlots = new bool[UI_InventoryManager.GetSlotsCount()];  
-    }
-
-    public override void OnDestroy() {
-        _occupiedSlots = null;
+        CombatSystem = GetComponent<Player_CombatSystem>();        
     }
     #endregion
 
@@ -49,9 +38,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         base.OnNetworkSpawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnSlotItemCollected);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
-            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.AddListener(OnQuickSlotItemUpdated);
+            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);            
         }
     }
 
@@ -59,9 +46,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         base.OnNetworkDespawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnSlotItemCollected);
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
-            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.RemoveListener(OnQuickSlotItemUpdated);
         }
     }
     #endregion
@@ -111,16 +96,14 @@ public class Player_InteractionSystem : NetworkBehaviour {
     #endregion
 
     private void HandleInteract() {
-        if (Input.Interact && _actualInteractable != null && !_occupiedSlots[ActualSlotSelected]) {
+        if (Input.Interact && _actualInteractable != null) {
             _actualInteractable.Interact(this);
         }
     }
 
     private void HandleItemDrop() {
-        if (Input.Drop && _occupiedSlots[ActualSlotSelected]) {
-            _occupiedSlots[ActualSlotSelected] = false;
-
-            Singleton.Instance.GameEvents.OnSlotItemDropped?.Invoke(ActualSlotSelected);
+        if (Input.Drop && Singleton.Instance.InventoryManager.GetItemFromSlot(ActualSlotSelected) != null) {
+            Singleton.Instance.GameEvents.OnItemDropped?.Invoke(ActualSlotSelected);
         }
     }
 
@@ -149,30 +132,22 @@ public class Player_InteractionSystem : NetworkBehaviour {
         Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(index);
     }
 
-    private void OnQuickSlotItemUpdated() {
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(ActualSlotSelected);
-    }
-
     private void OnRespawn() {
         OnSlotSelected(ActualSlotSelected);
-    }
-
-    private void OnSlotItemCollected(Item_SO item, int index) {
-        _occupiedSlots[index] = true;
     }
 
     public Vector3 GetTargetAim() => _target;
 
     private void Update() {
-        if (!IsOwner || HealthSystem.IsDead) return;
+        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
        
         DetectInteractable();
+        HandleInteract();
 
         if (!CombatSystem.GetCanSwitch()) return;
 
         HandleItemDrop();
-        HandleSlotSelection();
-        HandleInteract();
+        HandleSlotSelection();        
     }
 
     private void OnDrawGizmos() {

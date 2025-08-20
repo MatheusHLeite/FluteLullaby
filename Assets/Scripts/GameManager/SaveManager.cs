@@ -1,15 +1,10 @@
 using Sirenix.OdinInspector;
 using Steamworks;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SaveManager : MonoBehaviour {
     public PlayerSaveData PlayerData { get; private set; }
-
-    private List<WeaponFirearmData> m_weaponData = new List<WeaponFirearmData>();
-    private List<ItemData> m_allItemsData = new List<ItemData>();
-    private List<Item_SO> m_allGameItems;
 
     private static bool initialized;
 
@@ -18,146 +13,318 @@ public class SaveManager : MonoBehaviour {
         if (initialized) return;
         initialized = true;
 
-        Singleton.Instance.GameEvents.OnAmmoConsumed.AddListener(UpdateWeaponDataByID);
+        Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnWeaponAmmoConsumed);
         Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(LoadData);
-        Singleton.Instance.GameEvents.OnSlotItemCollected.AddListener(OnNewWeaponAdded);
-        Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnDataLoaded);
-
-        m_allGameItems = GetComponent<GameManager>().GetAllItems();
+        Singleton.Instance.GameEvents.OnItemCollected.AddListener(OnNewItemAdded);
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnItemRemoved);
+        Singleton.Instance.GameEvents.OnItemSplit.AddListener(OnItemSplit);
+        Singleton.Instance.GameEvents.OnSensitivityChange.AddListener(OnSensitivityChanged);
 
         StartCoroutine(LoadPlayerData());
     }
 
     private void OnDestroy() {
-        m_weaponData.Clear();
-
-        Singleton.Instance.GameEvents.OnAmmoConsumed.RemoveListener(UpdateWeaponDataByID);
+        Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnWeaponAmmoConsumed);
         Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(LoadData);
-        Singleton.Instance.GameEvents.OnSlotItemCollected.RemoveListener(OnNewWeaponAdded);
-        Singleton.Instance.GameEvents.OnDataLoaded.RemoveListener(OnDataLoaded);
+        Singleton.Instance.GameEvents.OnItemCollected.RemoveListener(OnNewItemAdded);
+        Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnItemRemoved);
+        Singleton.Instance.GameEvents.OnItemSplit.RemoveListener(OnItemSplit);
+        Singleton.Instance.GameEvents.OnSensitivityChange.RemoveListener(OnSensitivityChanged);
     }
     #endregion
 
     #region Data management
     [Button]
-    private void DeleteSaveData() => SaveSystemHandler.DeletePlayerData();
+    private void DeletePlayerData() => SaveSystemHandler.DeletePlayerData();
 
     private IEnumerator LoadPlayerData() {
-        yield return new WaitUntil(() => SteamClient.IsValid);
+        yield return new WaitUntil(() => SteamClient.IsValid || !GameNetworkManager.IsSteam);
         LoadData();
     }
 
     private void LoadData() {
-        SetupWeaponData();
-        PlayerSaveData data = SaveSystemHandler.LoadData();
-        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(data);
+        PlayerData = SaveSystemHandler.LoadData();
+        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(PlayerData); 
     }
-
-    private void OnDataLoaded(PlayerSaveData data) => PlayerData = data;
     #endregion
 
     #region Inventory management
-    private void OnNewWeaponAdded(Item_SO item, int index) {
-        ItemData newEntry = new ItemData {
-            id = item.id,
-            m_quantity = 0,
-            index = index
-        };
+    private void OnNewItemAdded(Item_SO item, int index, int itemQuantity, bool isSplitItem = false) {
+        if (!isSplitItem) {
+            for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+                if (PlayerData.acquiredItems[i].id == item.id) {
+                    UpdateItemData(i, itemQuantity);
+                    return;
+                }
+            }
+        }
 
-        PlayerData.acquiredWeapons.Add(newEntry);
+        switch (item.m_itemType) {
+            case ItemType.MeleeWeapon:
+                MeleeWeaponData meleeData = new MeleeWeaponData {
+                    m_attackSpeedMultiplier = 1,
+
+                };
+                MeleeWeapon meleeWeapon = new MeleeWeapon {
+                    id = item.id,
+                    uniqueId = System.Guid.NewGuid().ToString(),
+                    quantity = itemQuantity,
+                    index = index,
+                    meleeData = meleeData 
+                };
+
+                PlayerData.acquiredItems.Add(meleeWeapon);
+                PlayerData.acquiredMeleeWeapons.Add(meleeWeapon);
+                Singleton.Instance.GameEvents.OnItemSaved?.Invoke(meleeWeapon);
+                break;
+            case ItemType.Firearm:
+                FirearmWeaponData firearmData = new FirearmWeaponData {
+                    m_currentAmmo = 0,
+                    m_fireRateMultiplier = 1,
+                    m_reloadSpeedMultiplier = 1
+                };
+                LongRangeWeapon longRangeWeapon = new LongRangeWeapon {
+                    id = item.id,
+                    uniqueId = System.Guid.NewGuid().ToString(),
+                    quantity = itemQuantity,
+                    index = index,
+                    firearmData = firearmData 
+                };
+
+                PlayerData.acquiredItems.Add(longRangeWeapon);
+                PlayerData.acquiredLongRangeWeapons.Add(longRangeWeapon);
+                Singleton.Instance.GameEvents.OnItemSaved?.Invoke(longRangeWeapon);
+                break;
+            default:
+                InventoryItemData inventoryItemData = new InventoryItemData {
+
+                };
+                Item newItem = new Item {
+                    id = item.id,
+                    uniqueId = System.Guid.NewGuid().ToString(),
+                    quantity = itemQuantity,
+                    index = index,
+                    itemData = inventoryItemData 
+                };
+
+                PlayerData.acquiredItems.Add(newItem);
+                Singleton.Instance.GameEvents.OnItemSaved?.Invoke(newItem);
+                break;
+        }
+        
+        SaveSystemHandler.SaveData(PlayerData);        
+    }
+
+    private void OnItemRemoved(ItemData item, int index) {
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+            if (PlayerData.acquiredItems[i].id == item.id &&
+                PlayerData.acquiredItems[i].uniqueId == item.uniqueId) {
+                PlayerData.acquiredItems.RemoveAt(i);
+                SaveSystemHandler.SaveData(PlayerData);
+                break;
+            }
+        } 
+    }
+
+    private void UpdateItemData(int index, int quantity) {
+        PlayerData.acquiredItems[index].quantity += quantity;
         SaveSystemHandler.SaveData(PlayerData);
+        Singleton.Instance.GameEvents.OnItemUpdated?.Invoke(PlayerData.acquiredItems[index]);
+    }
+
+    private void OnItemSplit(ItemData itemData, int quantity) {
+        int originalSplit = quantity / 2;
+        int splitResult = quantity - originalSplit;
+
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+            if (PlayerData.acquiredItems[i].id == itemData.id && PlayerData.acquiredItems[i].uniqueId == itemData.uniqueId) {
+                PlayerData.acquiredItems[i].quantity = splitResult;
+                Singleton.Instance.GameEvents.OnItemUpdated?.Invoke(PlayerData.acquiredItems[i]);
+                break;
+            }
+        }
+
+        int newIndex = Singleton.Instance.InventoryManager.GetEmptySlotIndex(UI_InventoryManager._quickSlots.Count);
+        Item_SO item = Singleton.Instance.GameManager.GetItemByID(itemData.id);
+
+        OnNewItemAdded(item, newIndex, originalSplit, true);
+    }
+
+    private void OnWeaponAmmoConsumed(LongRangeWeapon_SO weapon, int currentAmmo, int stockedAmmo, int remainingAmmo) {
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+            if (PlayerData.acquiredItems[i].id == weapon.m_ammo.id) 
+            {
+                int amountToRemove = Mathf.Min(PlayerData.acquiredItems[i].quantity, remainingAmmo);
+
+                PlayerData.acquiredItems[i].quantity -= amountToRemove;
+                remainingAmmo -= amountToRemove;
+
+                Singleton.Instance.GameEvents.OnItemUpdated?.Invoke(PlayerData.acquiredItems[i]);
+
+                if (PlayerData.acquiredItems[i].quantity <= 0)               
+                    OnItemRemoved(PlayerData.acquiredItems[i], PlayerData.acquiredItems[i].index);                
+            }
+        }
+
+        for (int i = 0; i < PlayerData.acquiredLongRangeWeapons.Count; i++) {
+            if (PlayerData.acquiredLongRangeWeapons[i].id == weapon.id) {
+                PlayerData.acquiredLongRangeWeapons[i].firearmData.m_currentAmmo = currentAmmo;
+                break;
+            }
+        }
+
+        SaveSystemHandler.SaveData(PlayerData);        
+    }
+
+    public void OnInventoryItemUpdated(string id, string uniqueId, int newIndex, int newQuantity) {
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+            if (PlayerData.acquiredItems[i].id == id && 
+                PlayerData.acquiredItems[i].uniqueId == uniqueId) {
+                PlayerData.acquiredItems[i].index = newIndex;
+                PlayerData.acquiredItems[i].quantity = newQuantity;
+
+                SaveSystemHandler.SaveData(PlayerData);
+                break;
+            }
+        }
+    }
+
+    public void OnItemStackUpdated(ItemData itemDataToRemove, ItemData itemDataToBeUpdated) {
+        int quantityToBeAdded = itemDataToRemove.quantity;
+
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
+            if (PlayerData.acquiredItems[i].id == itemDataToBeUpdated.id && 
+                PlayerData.acquiredItems[i].uniqueId == itemDataToBeUpdated.uniqueId) {
+                UpdateItemData(i, quantityToBeAdded);
+                break;
+            }
+        }
+
+        OnItemRemoved(itemDataToRemove, itemDataToRemove.index);
     }
     #endregion
 
-    public WeaponFirearmData GetWeaponDataByID(string id) {
-        WeaponFirearmData data = new WeaponFirearmData();
-        for (int i = 0; i < m_weaponData.Count; i++) {
-            if (m_weaponData[i].id == id) {
-                data = m_weaponData[i];
-
-                data.m_currentAmmo = PlayerPrefs.GetInt($"currentAmmo_weaponData_{id}"); //[TODO] Get from a JSON file
-                data.m_stockedAmmo = PlayerPrefs.GetInt($"stockedAmmo_weaponData_{id}");
-                break;
-            }
-        }
-        return data;
+    #region Get
+    public ItemData GetItemFromInventory(string id) {
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++)
+            if (PlayerData.acquiredItems[i].id == id)
+                return PlayerData.acquiredItems[i];
+        return null;
     }
 
-    private void SetupWeaponData() {
-        for (int i = 0; i < m_allGameItems.Count; i++) {
-            if (m_allGameItems[i].m_itemType == ItemType.Firearm) {
-                WeaponFirearmData data = new WeaponFirearmData
-                {
-                    id = m_allGameItems[i].id,
-                    m_currentAmmo = PlayerPrefs.GetInt($"currentAmmo_weaponData_{m_allGameItems[i].id}"),
-                    m_stockedAmmo = PlayerPrefs.GetInt($"stockedAmmo_weaponData_{m_allGameItems[i].id}")
-                };//[TODO] Load from a JSON file
-                m_weaponData.Add(data);
-            }
-
-            ItemData itemData = new ItemData
-            {
-                id = m_allGameItems[i].id,
-                m_quantity = PlayerPrefs.GetInt($"itemData_quantity_{m_allGameItems[i].id}"),
-                index = PlayerPrefs.GetInt($"itemData_inventoryIndex_{m_allGameItems[i].id}")
-            };//[TODO] Load from a JSON file
-            m_allItemsData.Add(itemData);
-        }
-    }
-
-    private void UpdateWeaponDataByID(string id, int currentAmmo, int stockedAmmo)
-    {
-        for (int i = 0; i < m_weaponData.Count; i++)
-        {
-            if (m_weaponData[i].id == id)
-            {
-                WeaponFirearmData data = m_weaponData[i];
-
-                data.m_currentAmmo = currentAmmo;
-                data.m_stockedAmmo = stockedAmmo;
-
-                PlayerPrefs.SetInt($"currentAmmo_weaponData_{id}", currentAmmo); //[TODO] Set to a JSON file
-                PlayerPrefs.SetInt($"stockedAmmo_weaponData_{id}", stockedAmmo);
-
-                m_weaponData[i] = data;
-                break;
+    public LongRangeWeapon GetLongRangeWeaponFromInventory(string id) {
+        if (PlayerData.acquiredLongRangeWeapons.Count > 0) {
+            for (int i = 0; i < PlayerData.acquiredLongRangeWeapons.Count; i++) {
+                if (PlayerData.acquiredLongRangeWeapons[i].id == id)
+                    return PlayerData.acquiredLongRangeWeapons[i];
             }
         }
+        return null;
     }
 
-    public void SaveItemData(string id, int newIndex, int newQuantity)
-    {
-        for (int i = 0; i < m_allItemsData.Count; i++)
-        {
-            if (m_allItemsData[i].id == id)
-            {
-                ItemData data = m_allItemsData[i];
-
-                data.m_quantity = newQuantity;
-                data.index = newIndex;
-
-                PlayerPrefs.SetInt($"itemData_quantity_{id}", newQuantity); //[TODO] Set to a JSON file
-                PlayerPrefs.SetInt($"itemData_inventoryIndex_{id}", newIndex);
-
-                m_allItemsData[i] = data;
-                break;
+    public MeleeWeapon GetMeleeWeaponFromInventory(string id) {
+        if (PlayerData.acquiredMeleeWeapons.Count > 0) {
+            for (int i = 0; i < PlayerData.acquiredMeleeWeapons.Count; i++) {
+                if (PlayerData.acquiredMeleeWeapons[i].id == id)
+                    return PlayerData.acquiredMeleeWeapons[i];
             }
         }
+        return null;
     }
 
-    public ItemData GetItemData(string id)
-    {
-        ItemData data = new ItemData();
-        for (int i = 0; i < m_allItemsData.Count; i++)
-        {
-            if (m_allItemsData[i].id == id)
-            {
-                data = m_allItemsData[i];
-                data.m_quantity = PlayerPrefs.GetInt($"itemData_quantity_{id}");
-                data.index = PlayerPrefs.GetInt($"itemData_inventoryIndex_{id}"); //[TODO] Add to the JSON
-                break;
-            }
-        }
-        return data;
+    public int GetAllItemQuantities(string id) {
+        int quantity = 0;
+        for (int i = 0; i < PlayerData.acquiredItems.Count; i++)
+            if (PlayerData.acquiredItems[i].id == id) 
+                quantity += PlayerData.acquiredItems[i].quantity;           
+        return quantity;
     }
+    #endregion
+
+    #region Settings management
+    private void OnSensitivityChanged(float sensitivity) {
+        PlayerData.settings.mouseSensitivity = sensitivity;
+        OnSettingsChanged(PlayerData.settings);
+    }
+
+    private void OnSettingsChanged(Settings settings) {
+        PlayerData.settings = settings;
+        SaveSystemHandler.SaveData(PlayerData);
+    }
+    #endregion
 }
+
+#region Data classes
+[System.Serializable]
+public class FirearmWeaponData {
+    public int m_currentAmmo;
+    public float m_fireRateMultiplier;
+    public float m_reloadSpeedMultiplier;
+}
+
+[System.Serializable]
+public class MeleeWeaponData {    
+    public float m_attackSpeedMultiplier;
+}
+
+[System.Serializable]
+public class InventoryItemData {
+    
+}
+
+[System.Serializable]
+public class ItemData {
+    public string id;
+    public string uniqueId;
+    public int quantity;
+    public int index;
+}
+
+[System.Serializable]
+public class LongRangeWeapon : ItemData {
+    public FirearmWeaponData firearmData;
+}
+
+[System.Serializable]
+public class MeleeWeapon : ItemData {
+    public MeleeWeaponData meleeData;
+}
+
+[System.Serializable]
+public class Item : ItemData {
+    public InventoryItemData itemData;
+}
+
+[System.Serializable]
+public class Settings {
+    public bool firstSetup;
+
+    public int resolutionIndex;
+    public int displayModeIndex;
+    public int refreshRateIndex;
+    public int vSyncEnabledIndex;
+    public int qualityPresetIndex;
+    public int textureQualityIndex;
+    public int shadowQualityIndex;
+    public int antiAliasingModeIndex;
+    public float gammaValue;
+    public int anisotropicFilteringIndex;
+    public int ambientOcclusionIndex;    
+    public float resolutionScaleValue;
+    public int hdrEnabledIndex;
+    public int fpsLimitValue;
+
+    public Volume masterVolume;
+    public Volume soundEffectsVolume;
+    public Volume musicVolume;
+    public Volume voiceChatVolume;
+    public int outputDeviceIndex;
+
+    public float mouseSensitivity;
+}
+
+public class Volume {
+    public VolumeMixer volumeMixer;
+    public float volume;
+}
+#endregion

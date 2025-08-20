@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 125643946
+  GlobalObjectIdHash: 761054629
   InScenePlacedSourceGlobalObjectIdHash: 761054629
   DeferredDespawnTick: 0
   Ownership: 1
@@ -127,7 +127,10 @@ MonoBehaviour:
   m_outlineMaterial: {fileID: 2100000, guid: 3dd6c2228bd03e243ae32058fabf4073, type: 2}
   m_thirdPersonVisual: {fileID: 8036717955924367489}
   m_onGroundVisual: {fileID: 2440680969976234398}
-  m_weapon: {fileID: 11400000, guid: a2be64c25ab54cd4f9d3f16ddb89c544, type: 2}
+  m_item: {fileID: 11400000, guid: a2be64c25ab54cd4f9d3f16ddb89c544, type: 2}
+  m_randomizeAmount: 0
+  m_amount: 1
+  m_itemVisuals: []
 --- !u!114 &4995615677981664352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,7 +144,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
+  NetworkTransformExpanded: 1
   AutoOwnerAuthorityTickOffset: 1
   PositionInterpolationType: 0
   RotationInterpolationType: 0
@@ -161,9 +164,9 @@ MonoBehaviour:
   SyncRotAngleX: 1
   SyncRotAngleY: 1
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
+  SyncScaleZ: 0
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01
   ScaleThreshold: 0.01

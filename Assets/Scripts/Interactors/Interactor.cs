@@ -1,12 +1,11 @@
+using Sirenix.OdinInspector;
 using Unity.Netcode;
 using UnityEngine;
 
 public class Interactor : NetworkBehaviour, IInteractable {
-    [Header("Visual")]    
-    [SerializeField] private Material m_outlineMaterial;
-    [Space(10)]
-    [SerializeField] private GameObject m_thirdPersonVisual;
-    [SerializeField] private GameObject m_onGroundVisual;
+    [FoldoutGroup("Visual")] [SerializeField] private Material m_outlineMaterial;
+    [FoldoutGroup("Visual")][SerializeField] private GameObject m_thirdPersonVisual;
+    [FoldoutGroup("Visual")][SerializeField] private GameObject m_onGroundVisual;
 
     private float m_outlineWidth = 1.075f;
 
@@ -19,10 +18,7 @@ public class Interactor : NetworkBehaviour, IInteractable {
     private MaterialPropertyBlock propBlock;
     private Material outlineInstance;
 
-    private NetworkObject _object;
-
-    private void Awake() {
-        _object = GetComponent<NetworkObject>();
+    protected virtual void Awake() {        
         _collider = GetComponent<Collider>();
         _clientNetworkTransform = GetComponent<ClientNetworkTransform>();
         _rigidbody = GetComponent<Rigidbody>();
@@ -36,10 +32,10 @@ public class Interactor : NetworkBehaviour, IInteractable {
 
     private void SetMaterials() {
         m_itemVisual = GetComponentsInChildren<Renderer>();
+        propBlock = new MaterialPropertyBlock();
 
         m_outlineWidth = 1.05f;
 
-        propBlock = new MaterialPropertyBlock();
         for (int v = 0; v < m_itemVisual.Length; v++) {
             Material[] currentMaterials = m_itemVisual[v].materials;
             if (!System.Array.Exists(currentMaterials, m => m.name.Contains(m_outlineMaterial.name))) {
@@ -79,16 +75,5 @@ public class Interactor : NetworkBehaviour, IInteractable {
     public virtual void Interact(Player_InteractionSystem interactor) {
         Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke("");
         Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(interactor.ActualSlotSelected);
-
-        if (IsOwner || IsClient)
-            DespawnObjectServerRpc();
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public virtual void DespawnObjectServerRpc() {
-        if (!IsServer) return;
-
-        if (_object != null && _object.IsSpawned)
-            _object.Despawn(true);
     }
 }

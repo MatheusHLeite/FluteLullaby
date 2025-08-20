@@ -11,6 +11,9 @@ public class PlayerParameters_SO : ScriptableObject {
     public float m_deceleration = 10;
     public float m_toCrouchSpeed = 12f;
 
+    [Header("Health")]
+    public float m_maxHealth = 100f;
+
     [Header("Jump")]
     public float m_jumpPower = 5.8f;
     public float m_coyoteTime = 0.245f;
