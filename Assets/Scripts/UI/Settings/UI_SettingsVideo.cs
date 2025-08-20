@@ -2,8 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.Events;
-using TMPro;
-using System;
 
 public class UI_SettingsVideo : MonoBehaviour {
     private SettingsManager manager;
@@ -15,6 +13,7 @@ public class UI_SettingsVideo : MonoBehaviour {
     [SerializeField] private UI_Setting presetQualityOptions;
     [SerializeField] private UI_Setting textureQualityOptions;
     [SerializeField] private UI_Setting shadowQualityOptions;
+    [SerializeField] private UI_Setting effectsQualityOptions;
     [SerializeField] private UI_Setting vSyncOptions;
     [SerializeField] private UI_Setting antiAliasingOptions;
     [SerializeField] private UI_Setting hdrOptions;
@@ -22,7 +21,8 @@ public class UI_SettingsVideo : MonoBehaviour {
     [SerializeField] private UI_Setting ambientOcclusionOptions;
     [SerializeField] private UI_FPSLimiterSlider fpsLimitSlider;
     [SerializeField] private UI_GammaSlider gammaSlider;
-    [SerializeField] private UI_VolumeSlider resolutionScaleSlider;
+    [SerializeField] private UI_VolumeSlider resolutionScaleSlider;    
+    [SerializeField] private UI_Setting motionBlurOptions;
     [Space(10)]
     [SerializeField] private Button btn_apply;
 
@@ -73,22 +73,32 @@ public class UI_SettingsVideo : MonoBehaviour {
             rrStringList.Add(new UIOption() { text = rrString, value = i });
         }
 
-        presetQualityOptions.SetupOptions(manager.qualityPresetOptions, data.settings.qualityPresetIndex);
+        List<UIOption> disabledHDR = new List<UIOption>() {
+            new UIOption() { text = "Disabled", value = 0 }
+        };
 
         resolutionOptions.SetupOptions(manager.resolutionOptions, data.settings.resolutionIndex);        
         refreshRateOptions.SetupOptions(rrStringList, data.settings.refreshRateIndex);
         displayModeOptions.SetupOptions(manager.displayModeOptions, data.settings.displayModeIndex);
-        textureQualityOptions.SetupOptions(manager.textureQualityOptions, data.settings.textureQualityIndex);
-        shadowQualityOptions.SetupOptions(manager.shadowQualityOptions, data.settings.shadowQualityIndex);
-        vSyncOptions.SetupOptions(manager.inverseEnableOptions, data.settings.vSyncEnabledIndex);
-        antiAliasingOptions.SetupOptions(manager.antiAliasingOptions, data.settings.antiAliasingModeIndex);
-        hdrOptions.SetupOptions(manager.enableOptions, data.settings.hdrEnabledIndex);
+
+        presetQualityOptions.SetupOptions(manager.qualityOptions, data.settings.qualityPresetIndex);
+        textureQualityOptions.SetupOptions(manager.qualityOptions, data.settings.textureQualityIndex);
+        shadowQualityOptions.SetupOptions(manager.qualityOptions, data.settings.shadowQualityIndex);
+        ambientOcclusionOptions.SetupOptions(manager.qualityOptions, data.settings.ambientOcclusionIndex);
+        effectsQualityOptions.SetupOptions(manager.qualityOptions, data.settings.effectsQualityIndex);
+
+        hdrOptions.SetupOptions(!HDROutputSettings.main.available ? disabledHDR : manager.enableOptions, data.settings.hdrEnabledIndex);
         fpsLimitSlider.Setup(new Vector2(30, 301), data.settings.fpsLimitValue, data.settings.fpsLimitValue < 300 
             ? data.settings.fpsLimitValue.ToString() : "Unlimited");
-        anisotropicFilteringOptions.SetupOptions(manager.anisotropicFilteringOptions, data.settings.anisotropicFilteringIndex);
-        ambientOcclusionOptions.SetupOptions(manager.shadowQualityOptions, data.settings.ambientOcclusionIndex);
-        gammaSlider.Setup(new Vector2(0, 1), data.settings.gammaValue, null, false);
+
+        antiAliasingOptions.SetupOptions(manager.antiAliasingOptions, data.settings.antiAliasingModeIndex);
+        anisotropicFilteringOptions.SetupOptions(manager.enableOptions, data.settings.anisotropicFilteringIndex);
+        vSyncOptions.SetupOptions(manager.inverseEnableOptions, data.settings.vSyncEnabledIndex);
+
+        gammaSlider.Setup(new Vector2(0, 1), data.settings.gammaValue, null, false, false);
         resolutionScaleSlider.Setup(new Vector2(0,2), data.settings.resolutionScaleValue, null, false);
+
+        if (!HDROutputSettings.main.available) hdrOptions.SetInactive();
 
         SetupListeners();
     }
@@ -109,7 +119,8 @@ public class UI_SettingsVideo : MonoBehaviour {
         antiAliasingOptions.onValueChanged.AddListener(i => manager.SetAntiAliasing(i));
         hdrOptions.onValueChanged.AddListener(i => manager.SetHDR(i));
         anisotropicFilteringOptions.onValueChanged.AddListener(i => manager.SetAnisotropicFiltering(i));
-        ambientOcclusionOptions.onValueChanged.AddListener(i => manager.SetAmbientOcclusion(i));        
+        ambientOcclusionOptions.onValueChanged.AddListener(i => manager.SetAmbientOcclusion(i));
+        effectsQualityOptions.onValueChanged.AddListener(i => manager.SetEffectQuality(i));
 
         textureQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         shadowQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
@@ -117,6 +128,7 @@ public class UI_SettingsVideo : MonoBehaviour {
         hdrOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         anisotropicFilteringOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         ambientOcclusionOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
+        effectsQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
 
         btn_apply.onClick.AddListener(OnSettingsApply);
         btn_apply.gameObject.SetActive(false);
@@ -138,7 +150,12 @@ public class UI_SettingsVideo : MonoBehaviour {
         vSyncOptions.onValueChanged.RemoveAllListeners();
         antiAliasingOptions.onValueChanged.RemoveAllListeners();
         hdrOptions.onValueChanged.RemoveAllListeners();
+        anisotropicFilteringOptions.onValueChanged.RemoveAllListeners();
+        ambientOcclusionOptions.onValueChanged.RemoveAllListeners();
+        effectsQualityOptions.onValueChanged.RemoveAllListeners();
         fpsLimitSlider.RemoveAllListeners();
+        gammaSlider.RemoveAllListeners();
+        resolutionScaleSlider.RemoveAllListeners();
         btn_apply.onClick.RemoveAllListeners();
 
         onApply -= OnSettingsApply;
@@ -150,72 +167,84 @@ public class UI_SettingsVideo : MonoBehaviour {
             return;
         }
 
-        Array qualities = Enum.GetValues(typeof(QualityPreset));
-        QualityPreset qualityPreset = (QualityPreset)qualities.GetValue(index);
-
+        Quality qualityPreset = Quality.Ultra;
         int textureQuality = 0;
         int shadowQuality = 0;
         int antiAliasingQuality = 0;
         int hdrEnabled = 0;
         int anisotropicFiltering = 0;
         int ambientOcclusion = 0;
+        int effectsQuality = 0;
+
+        switch (index) {
+            case 0:
+                qualityPreset = Quality.Low;
+                break;
+            case 1:
+                qualityPreset = Quality.Medium;
+                break;
+            case 2:
+                qualityPreset = Quality.High;
+                break;
+            case 3:
+                qualityPreset = Quality.Ultra;
+                break;
+        }
 
         switch (qualityPreset) {
-            case QualityPreset.Lowest:
+            case Quality.Low:
                 textureQuality = 0;
                 shadowQuality = 0;
                 antiAliasingQuality = 0;
                 hdrEnabled = 0;
                 anisotropicFiltering = 0;
                 ambientOcclusion = 0;
+                effectsQuality = 0;
                 break;
-            case QualityPreset.Low:
-                textureQuality = 1;
-                shadowQuality = 0;
-                antiAliasingQuality = 1;
-                hdrEnabled = 0;
-                anisotropicFiltering = 0;
-                ambientOcclusion = 0;
-                break;
-            case QualityPreset.Medium:
+            case Quality.Medium:
                 textureQuality = 2;
                 shadowQuality = 1;
                 antiAliasingQuality = 1;
                 hdrEnabled = 0;
-                anisotropicFiltering = 1;
+                anisotropicFiltering = 0;
                 ambientOcclusion = 1;
+                effectsQuality = 1;
                 break;
-            case QualityPreset.High:
+            case Quality.High:
                 textureQuality = 3;
-                shadowQuality = 1;
+                shadowQuality = 2;
                 antiAliasingQuality = 2;
                 hdrEnabled = 0;
                 anisotropicFiltering = 1;
                 ambientOcclusion = 2;
+                effectsQuality = 2;
                 break;
-            case QualityPreset.Ultra:
+            case Quality.Ultra:
                 textureQuality = 3;
-                shadowQuality = 2;
+                shadowQuality = 3;
                 antiAliasingQuality = 3;
                 hdrEnabled = 1;
-                anisotropicFiltering = 2;
-                ambientOcclusion = 2;
+                anisotropicFiltering = 1;
+                ambientOcclusion = 3;
+                effectsQuality = 3;
                 break;
         }
 
         textureQualityOptions.UpdateIndexWithoutNotify(textureQuality);
         shadowQualityOptions.UpdateIndexWithoutNotify(shadowQuality);
         antiAliasingOptions.UpdateIndexWithoutNotify(antiAliasingQuality);
-        hdrOptions.UpdateIndexWithoutNotify(hdrEnabled);
+        if (HDROutputSettings.main.available) hdrOptions.UpdateIndexWithoutNotify(hdrEnabled);
         anisotropicFilteringOptions.UpdateIndexWithoutNotify(anisotropicFiltering);
         ambientOcclusionOptions.UpdateIndexWithoutNotify(ambientOcclusion);
+        effectsQualityOptions.UpdateIndexWithoutNotify(effectsQuality);
 
         manager.SetTextureQuality(textureQuality);
         manager.SetShadowQuality(shadowQuality);
         manager.SetAntiAliasing(antiAliasingQuality);
-        manager.SetHDR(hdrEnabled);
+        if (HDROutputSettings.main.available) manager.SetHDR(hdrEnabled);
         manager.SetAnisotropicFiltering(anisotropicFiltering);
         manager.SetAmbientOcclusion(ambientOcclusion);
+        manager.SetEffectQuality(effectsQuality);
     }
 
     private void OnQualitySettingsChanged(int i) {

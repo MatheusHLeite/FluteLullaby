@@ -309,7 +309,8 @@ public class Settings {
     public int antiAliasingModeIndex;
     public float gammaValue;
     public int anisotropicFilteringIndex;
-    public int ambientOcclusionIndex;    
+    public int ambientOcclusionIndex;
+    public int effectsQualityIndex;
     public float resolutionScaleValue;
     public int hdrEnabledIndex;
     public int fpsLimitValue;

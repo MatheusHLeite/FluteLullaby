@@ -91,7 +91,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (3)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -178,7 +178,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 810390217
+  GlobalObjectIdHash: 1037546510
   InScenePlacedSourceGlobalObjectIdHash: 810390217
   DeferredDespawnTick: 0
   Ownership: 1
@@ -279,9 +279,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_globalVolume: {fileID: 11400000, guid: 62bf76e20e5e7fe438e62246bdf6f9fb, type: 2}
   m_ssao: {fileID: 7833122117494664109, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
-  m_gammaMaterial: {fileID: 2100000, guid: 0f1e286c08a197f438081f43de7738dc, type: 2}
   m_audioMixer: {fileID: 24100000, guid: b069e6acee9aa1741a1ba714d0b98585, type: 2}
-  value: 0
 --- !u!114 &6569613439342767934
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -331,7 +329,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (4)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -362,7 +360,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (6)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -393,7 +391,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (1)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -510,7 +508,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (5)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -541,7 +539,7 @@ GameObject:
   m_Layer: 0
   m_Name: sp (2)
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 4422084297763085224, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1

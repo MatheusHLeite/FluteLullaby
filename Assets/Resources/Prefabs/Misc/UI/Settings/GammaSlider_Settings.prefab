@@ -653,6 +653,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_stringComplement: '%'
+  m_type: 1
   thisCanvasGroup: {fileID: 4982515510549968141}
 --- !u!1 &7197425695315348100
 GameObject:

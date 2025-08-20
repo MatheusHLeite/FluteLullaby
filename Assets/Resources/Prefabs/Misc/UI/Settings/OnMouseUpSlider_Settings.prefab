@@ -567,6 +567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_stringComplement: 
+  m_type: 2
   thisCanvasGroup: {fileID: 8108546953003528619}
 --- !u!222 &4998824183063690464
 CanvasRenderer:

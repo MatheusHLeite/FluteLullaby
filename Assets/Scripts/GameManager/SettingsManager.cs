@@ -12,7 +12,6 @@ using UnityEngine.UI;
 public class SettingsManager : MonoBehaviour {
     [Header("Settings")]
     [SerializeField] private VolumeProfile m_globalVolume;
-    [SerializeField] private ScreenSpaceAmbientOcclusion m_ssao;
     private ColorAdjustments colorAdjustments;
 
     [Header("Audio")]
@@ -29,45 +28,40 @@ public class SettingsManager : MonoBehaviour {
     private Resolution[] resolutions;
     private string[] allDevices;
     private List<string> allResolutions;
-    
+
+    private ScreenSpaceAmbientOcclusion m_ssao;
+    private FieldInfo fiSettings, fiIntensity, fiRadius;
+
+    private FieldInfo fiSoftShadows, fiSoftShadowQuality;
+
     private string actualMicrophone;    
 
-    #region Video options string
-    public List<UIOption> qualityPresetOptions { get; private set; }
-    public Vector2 minMaxFPS { get; private set; }
-    public List<UIOption> enableOptions { get; private set; }
-    public List<UIOption> inverseEnableOptions { get; private set; }
+    #region Video options string    
     public List<UIOption> resolutionOptions { get; private set; }
     public List<RefreshRate> refreshRateOptions { get; private set; }
     public List<UIOption> displayModeOptions { get; private set; }
-    public List<UIOption> textureQualityOptions { get; private set; }
-    public List<UIOption> shadowQualityOptions { get; private set; }
     public List<UIOption> antiAliasingOptions { get; private set; }
-    public List<UIOption> anisotropicFilteringOptions { get; private set; }
-    public List<UIOption> ambientOcclusionOption { get; private set; }
+    public List<UIOption> enableOptions { get; private set; }
+    public List<UIOption> inverseEnableOptions { get; private set; }
+    public List<UIOption> qualityOptions { get; private set; }
+    
+    public Vector2 minMaxFPS { get; private set; }
     #endregion
 
     #region Audio options string
-    public List<UIOption> outputDevices { get; private set; }
+    public List<UIOption> outputDevices { get; private set; } = new List<UIOption>();
     #endregion
 
     private void Awake() {        
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnSettingsDataLoaded);
 
-        if (m_globalVolume.TryGet(out ColorAdjustments ca))       
-            colorAdjustments = ca;        
-
+        if (m_globalVolume.TryGet(out ColorAdjustments ca)) colorAdjustments = ca;
         SaveManager = Singleton.Instance.SaveManager;
-
         minMaxFPS = new Vector2(30, 300);
 
-        resolutions = Screen.resolutions;
-        allResolutions = resolutions.Select(r => $"{r.width} x {r.height}").Distinct().ToList();
-
-        resolutionOptions = new List<UIOption>();
-        for (int i = 0; i < allResolutions.Count; i++)
-            resolutionOptions.Add(CreateNewOption(allResolutions[i], i));
-        refreshRateOptions = resolutions.Select(r => r.refreshRateRatio).Distinct().ToList();
+        InitializeMainVideoSettings();
+        InitializeShadowSettings();
+        InitializeAOSettings();
 
         enableOptions = new List<UIOption>() { 
             CreateNewOption("Disabled", 0),
@@ -82,40 +76,17 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("Fullscreen", 1), //tela cheia
             CreateNewOption("Borderless Fullscreen", 2) //tela cheia em janela
         };
-        textureQualityOptions = new List<UIOption>() {
-            CreateNewOption("Minimum", 3),
-            CreateNewOption("Low", 2),
-            CreateNewOption("Medium", 1),
-            CreateNewOption("High", 0)
-        };
-        shadowQualityOptions = new List<UIOption>() {
-            CreateNewOption("Low", 2),
-            CreateNewOption("Medium", 1),
-            CreateNewOption("High", 0)
+        qualityOptions = new List<UIOption>() {
+            CreateNewOption("Low", 3),
+            CreateNewOption("Medium", 2),
+            CreateNewOption("High", 1),
+            CreateNewOption("Ultra", 0)
         };
         antiAliasingOptions = new List<UIOption>() {
             CreateNewOption("Disabled", 1),
             CreateNewOption("2x", 2),
             CreateNewOption("4x", 4),
             CreateNewOption("8x", 8)
-        };
-        outputDevices = new List<UIOption>();
-        qualityPresetOptions = new List<UIOption>() {
-            CreateNewOption("Lowest", 0),
-            CreateNewOption("Low", 1),
-            CreateNewOption("Medium", 2),
-            CreateNewOption("High", 3),
-            CreateNewOption("Ultra", 4)
-        };
-        anisotropicFilteringOptions = new List<UIOption>() {
-            CreateNewOption("Disabled", 0),
-            CreateNewOption("Per texture", 1),
-            CreateNewOption("Forced on", 2),
-        };
-        ambientOcclusionOption = new List<UIOption>() {
-            CreateNewOption("Disabled", 2),
-            CreateNewOption("Low", 1),
-            CreateNewOption("High", 0)
         };
 
         UpdateMicrophoneList();
@@ -129,9 +100,76 @@ public class SettingsManager : MonoBehaviour {
         resolutionOptions.Clear();
         refreshRateOptions.Clear();
         displayModeOptions.Clear();
-        textureQualityOptions.Clear();
-        shadowQualityOptions.Clear();
+        qualityOptions.Clear();
         antiAliasingOptions.Clear();
+    }
+
+    private void InitializeMainVideoSettings() {
+        resolutions = Screen.resolutions;
+        allResolutions = resolutions.Select(r => $"{r.width} x {r.height}").Distinct().ToList();
+
+        resolutionOptions = new List<UIOption>();
+        for (int i = 0; i < allResolutions.Count; i++)
+            resolutionOptions.Add(CreateNewOption(allResolutions[i], i));
+        refreshRateOptions = resolutions.Select(r => r.refreshRateRatio).Distinct().ToList();
+    }
+
+    private void InitializeShadowSettings() {
+        fiSoftShadows = typeof(UniversalRenderPipelineAsset)
+            .GetField("m_SoftShadowsSupported", BindingFlags.NonPublic | BindingFlags.Instance);
+        fiSoftShadowQuality = typeof(UniversalRenderPipelineAsset)
+            .GetField("m_SoftShadowQuality", BindingFlags.NonPublic | BindingFlags.Instance);
+    }
+
+    private void InitializeAOSettings() {
+        var camData = Camera.main.GetUniversalAdditionalCameraData();
+        ScriptableRenderer renderer = camData.scriptableRenderer;
+
+        if (!TryGetRendererFeature(renderer, out m_ssao)) {
+            Debug.LogWarning("SSAO Renderer Feature not found.");
+            return;
+        }
+
+        fiSettings = typeof(ScreenSpaceAmbientOcclusion)
+            .GetField("m_Settings", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        var boxed = fiSettings.GetValue(m_ssao);
+        var st = boxed.GetType();
+
+        fiIntensity = st.GetField("Intensity", BindingFlags.Instance | BindingFlags.NonPublic);
+        fiRadius = st.GetField("Radius", BindingFlags.Instance | BindingFlags.NonPublic);
+    }
+
+    static bool TryGetRendererFeature<T>(ScriptableRenderer renderer, out T feature)
+        where T : ScriptableRendererFeature {
+        var maybeTry = typeof(ScriptableRenderer).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(m => m.Name == "TryGetRendererFeature" && m.IsGenericMethodDefinition);
+        if (maybeTry != null) {
+            var g = maybeTry.MakeGenericMethod(typeof(T));
+            object[] args = { null };
+            bool ok = (bool)g.Invoke(renderer, args);
+            feature = (T)args[0];
+            if (ok && feature) return true;
+        }
+
+        var prop = typeof(ScriptableRenderer).GetProperty("rendererFeatures",
+            BindingFlags.Public | BindingFlags.Instance);
+        if (prop != null) {
+            var list = (List<ScriptableRendererFeature>)prop.GetValue(renderer);
+            feature = list.OfType<T>().FirstOrDefault();
+            if (feature) return true;
+        }
+
+        var fld = typeof(ScriptableRenderer).GetField("m_RendererFeatures",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        if (fld != null) {
+            var list = (List<ScriptableRendererFeature>)fld.GetValue(renderer);
+            feature = list.OfType<T>().FirstOrDefault();
+            if (feature) return true;
+        }
+
+        feature = null;
+        return false;
     }
 
     private void UpdateMicrophoneList() {
@@ -241,10 +279,10 @@ public class SettingsManager : MonoBehaviour {
             SaveManager.PlayerData.settings.qualityPresetIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to quality instead of Index
 
     public void SetTextureQuality(int index, bool initialization = false) {
-        int indexValue = textureQualityOptions[index].value;
+        int indexValue = qualityOptions[index].value;
 
         QualitySettings.globalTextureMipmapLimit = indexValue;
 
@@ -252,10 +290,12 @@ public class SettingsManager : MonoBehaviour {
             SaveManager.PlayerData.settings.textureQualityIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to quality instead of Index
 
     public void SetShadowQuality(int index, bool initialization = false) {
-        int indexValue = textureQualityOptions[index].value;
+        int indexValue = qualityOptions[index].value;
+
+        int shadowResolution = 2048;
 
         float shadowDistance = 50f;
         int shadowCascadeCount = 4;
@@ -264,61 +304,68 @@ public class SettingsManager : MonoBehaviour {
         bool enableSoftShadows = true;
         int shadowQualityIndex = 1;
 
-        var softShadowsField = typeof(UniversalRenderPipelineAsset)
-            .GetField("m_SoftShadowsSupported", BindingFlags.NonPublic | BindingFlags.Instance);
-        var softShadowQualityField = typeof(UniversalRenderPipelineAsset)
-            .GetField("m_SoftShadowQuality", BindingFlags.NonPublic | BindingFlags.Instance);
-
         switch (indexValue) {
-            case 0: //High
-                shadowDistance = 80f;
+            case 0: //Ultra
+                shadowResolution = 8192;
+                shadowDistance = 60f;
                 shadowCascadeCount = 4;
-                shadowDepthBias = .5f;
-                shadowNormalBias = .3f;
+                shadowDepthBias = 0.1f;
+                shadowNormalBias = .75f;
                 enableSoftShadows = true;
                 shadowQualityIndex = 3;
                 break;
-            case 1: //Medium
-                shadowDistance = 40f;
-                shadowCascadeCount = 2;
-                shadowDepthBias = 1;
-                shadowNormalBias = .5f;
+            case 1: //High
+                shadowResolution = 4096;
+                shadowDistance = 50f;
+                shadowCascadeCount = 3;
+                shadowDepthBias = .15f;
+                shadowNormalBias = .625f;
                 enableSoftShadows = true;
                 shadowQualityIndex = 2;
                 break;
-            case 2: //Low
+            case 2: //Medium
+                shadowResolution = 2048;
+                shadowDistance = 40f;
+                shadowCascadeCount = 2;
+                shadowDepthBias = .28f;
+                shadowNormalBias = .55f;
+                enableSoftShadows = false;
+                shadowQualityIndex = 1;
+                break;
+            case 3: //Low
+                shadowResolution = 1024;
                 shadowDistance = 20f;
                 shadowCascadeCount = 1;
-                shadowDepthBias = 2;
-                shadowNormalBias = .8f;
+                shadowDepthBias = .32f;
+                shadowNormalBias = .4f;
                 enableSoftShadows = false;
                 shadowQualityIndex = 1;
                 break;
         }
 
+        urpAsset.mainLightShadowmapResolution = shadowResolution;
         urpAsset.shadowDistance = shadowDistance;
         urpAsset.shadowCascadeCount = shadowCascadeCount;
         urpAsset.shadowDepthBias = shadowDepthBias;
         urpAsset.shadowNormalBias = shadowNormalBias;
-        softShadowsField.SetValue(urpAsset, enableSoftShadows);
-        softShadowQualityField.SetValue(urpAsset, shadowQualityIndex);
+        fiSoftShadows.SetValue(urpAsset, enableSoftShadows);
+        fiSoftShadowQuality.SetValue(urpAsset, shadowQualityIndex);
 
         if (!initialization && SaveManager.PlayerData.settings.shadowQualityIndex != index) {
             SaveManager.PlayerData.settings.shadowQualityIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to quality instead of Index
 
     public void SetVSync(int index, bool initialization = false) {
         int indexValue = inverseEnableOptions[index].value;
-
         QualitySettings.vSyncCount = indexValue;
 
         if (!initialization && SaveManager.PlayerData.settings.vSyncEnabledIndex != index) {
             SaveManager.PlayerData.settings.vSyncEnabledIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to bool instead of Index
 
     public void SetAntiAliasing(int index, bool initialization = false) {
         int indexValue = antiAliasingOptions[index].value;
@@ -328,7 +375,7 @@ public class SettingsManager : MonoBehaviour {
             SaveManager.PlayerData.settings.antiAliasingModeIndex = index;
             OnSettingsSaved();
         }
-    }
+    } 
 
     public void SetHDR(int index, bool initialization = false) {
         int indexValue = enableOptions[index].value;
@@ -338,7 +385,7 @@ public class SettingsManager : MonoBehaviour {
             SaveManager.PlayerData.settings.hdrEnabledIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to bool instead of Index
 
     public void SetFPSLimit(float value, bool initialization = false) { 
         Application.targetFrameRate = (int)value >= minMaxFPS.x && (int)value <= minMaxFPS.y ? (int)value : -1;
@@ -350,52 +397,74 @@ public class SettingsManager : MonoBehaviour {
     }
 
     public void SetAnisotropicFiltering(int index, bool initialization = false) {
-        QualitySettings.anisotropicFiltering = (AnisotropicFiltering)index;
+        int indexValue = inverseEnableOptions[index].value;
+        QualitySettings.anisotropicFiltering = indexValue == 0 ? AnisotropicFiltering.Enable : AnisotropicFiltering.Disable;
 
         if (!initialization && SaveManager.PlayerData.settings.anisotropicFilteringIndex != index)  {
             SaveManager.PlayerData.settings.anisotropicFilteringIndex = index;
             OnSettingsSaved();
         }
-    }
+    } //Change to bool instead of Index
 
     public void SetAmbientOcclusion(int index, bool initialization = false) {
-        int indexValue = ambientOcclusionOption[index].value;
-
-        return;
-        var field = typeof(ScreenSpaceAmbientOcclusion).GetField("m_Settings", BindingFlags.NonPublic | BindingFlags.Instance);
-        object settings = field?.GetValue(m_ssao as ScreenSpaceAmbientOcclusion);
-        var intensitySettings = settings.GetType().GetField("intensity", BindingFlags.Public | BindingFlags.Instance);
-        var radiusSettings = settings.GetType().GetField("radius", BindingFlags.Public | BindingFlags.Instance);
+        int indexValue = qualityOptions[index].value;
 
         float intensity = .4f;
         float radius = .1f;
+        bool enabled = true;
 
         switch (indexValue) {
-            case 0: //High
-                m_ssao.SetActive(true);
-                intensity = 0.8f;
-                radius = 0.5f;
-                break;
-            case 1: //Low
-                m_ssao.SetActive(true);
-                intensity = 0.6f;
-                radius = 0.45f;
-                break;
-            case 2: //Disabled
-                m_ssao.SetActive(false);
-                intensity = 0f;
-                radius = 0f;
-                break;
+            case 0: // Ultra
+                intensity = 0.825f; radius = 0.525f; enabled = true; break;
+            case 1: // High
+                intensity = 0.6f; radius = 0.45f; enabled = true; break;
+            case 2: // Medium
+                intensity = 0.3f; radius = 0.2f; enabled = true; break;
+            case 3: // Low
+                intensity = 0f; radius = 0f; enabled = false; break;
         }
-        
-        intensitySettings.SetValue(settings, intensity);
-        radiusSettings.SetValue(settings, radius);
+
+        m_ssao.SetActive(enabled);
+
+        var boxed = fiSettings.GetValue(m_ssao);
+        fiIntensity.SetValue(boxed, intensity);
+        fiRadius.SetValue(boxed, radius);
+
+        fiSettings.SetValue(m_ssao, boxed);
+
+        var miCreate = typeof(ScriptableRendererFeature)
+            .GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        miCreate?.Invoke(m_ssao, null);
 
         if (!initialization && SaveManager.PlayerData.settings.ambientOcclusionIndex != index) {
             SaveManager.PlayerData.settings.ambientOcclusionIndex = index;
             OnSettingsSaved();
         }
-    }
+    }  //Change to quality instead of Index
+
+    public void SetEffectQuality(int index, bool initialization = false) {
+        int indexValue = qualityOptions[index].value;
+
+        switch (indexValue) {
+            case 0: // Ultra
+
+                break;
+            case 1: // High
+
+                break;
+            case 2: // Medium
+
+                break;
+            case 3: // Low
+
+                break;
+        }
+
+        if (!initialization && SaveManager.PlayerData.settings.effectsQualityIndex != index) {
+            SaveManager.PlayerData.settings.effectsQualityIndex = index;
+            OnSettingsSaved();
+        }
+    } //Change to quality instead of Index
 
     public void SetResolutionScale(float value, bool initialization = false) {
         urpAsset.renderScale = value;
@@ -481,4 +550,4 @@ public struct UISliderOption {
 
 public enum VolumeMixer { Master, Music, SFX, VoiceChat }
 
-public enum QualityPreset { Lowest, Low, Medium, High, Ultra }
+public enum Quality { Low, Medium, High, Ultra }

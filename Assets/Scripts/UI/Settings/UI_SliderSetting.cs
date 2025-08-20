@@ -20,6 +20,7 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private int maxValue;
 
     private float defaultValue;
+    private bool hasText;
 
     protected UnityAction<float> action;
     protected bool valueIsMultiplied;
@@ -28,13 +29,14 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         thisCanvasGroup.alpha = 0;
     }
 
-    public void Setup(Vector2 minMaxValues, float value, string txtValue = null, bool wholeNumbers = true) {
+    public void Setup(Vector2 minMaxValues, float value, string txtValue = null, bool wholeNumbers = true, bool hasText = true) {
         slider = GetComponentInChildren<Slider>();
         valueTxt = GetComponentInChildren<TMP_InputField>();
 
         string stringValue = !string.IsNullOrEmpty(txtValue) ? txtValue : value.ToString();
 
         slider.wholeNumbers = wholeNumbers;
+        this.hasText = hasText;
 
         minValue = (int)minMaxValues.x;
         maxValue = (int)minMaxValues.y;
@@ -43,20 +45,26 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         slider.maxValue = maxValue;
 
         slider.SetValueWithoutNotify(value);
-        valueTxt.SetTextWithoutNotify($"{stringValue} {m_stringComplement}");
 
         defaultValue = value;
+
+        if (hasText) {
+            valueTxt.SetTextWithoutNotify($"{stringValue} {m_stringComplement}");
+            return;
+        }
+
+        valueTxt.gameObject.SetActive(false);
     }
 
     public virtual void AddListener(UnityAction<float> onValueChange) {
         action = onValueChange;
 
-        valueTxt.onEndEdit.AddListener(i => OnTextValueChanged(i));
+        if (hasText) valueTxt.onEndEdit.AddListener(i => OnTextValueChanged(i));
     }
 
     public void RemoveAllListeners() {
         slider.onValueChanged.RemoveAllListeners();
-        valueTxt.onEndEdit.RemoveAllListeners();
+        if (hasText) valueTxt.onEndEdit.RemoveAllListeners();
     }
 
     private void OnTextValueChanged(string text) {
@@ -73,22 +81,10 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         switch (m_type) {
             case SliderType.Volume:
+                value /= 100f;
+
                 if (value < minValue) value = minValue;
                 if (value > maxValue) value = maxValue;
-
-                value /= 100f;
-                break;
-            case SliderType.Gamma:
-                if (value < minValue * 100) value = minValue;
-                if (value > maxValue * 100) value = maxValue;
-     
-                if (value <= 100f) {
-                    value = (value - 10f) / (100f - 10f) * 0.5f;
-                }
-                else {
-                    value = 0.5f + (value - 100f) / (150f - 100f) * 0.5f;
-                }
-                value = Mathf.Clamp01(value);
                 break;
             case SliderType.FPS:
                 if (value < minValue) value = minValue;
@@ -116,4 +112,4 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
     }
 }
 
-public enum SliderType { Volume, Gamma, FPS }
+public enum SliderType { Volume, Gamma, FPS, ResolutionScale }

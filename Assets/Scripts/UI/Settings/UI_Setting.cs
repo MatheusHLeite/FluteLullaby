@@ -51,6 +51,13 @@ public class UI_Setting : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         SetupIndicator();
     }
 
+    public void SetInactive() {
+        m_selectedOption.color = inativeIndexColor;
+
+        m_selectNext.gameObject.SetActive(false);
+        m_selectPrevious.gameObject.SetActive(false);
+    }
+
     private void SetupIndicator() {
         m_selectedOption.SetText(actualIndex == -1 ? "Custom" : options[actualIndex].text);
 
