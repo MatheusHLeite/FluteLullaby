@@ -126,6 +126,7 @@ GameObject:
   - component: {fileID: 244218888357319759}
   - component: {fileID: 5830806235879638290}
   - component: {fileID: 1985180835361119820}
+  - component: {fileID: -7083226056749652639}
   - component: {fileID: 6569613439342767934}
   - component: {fileID: 6152729137983085424}
   - component: {fileID: 2436691046570829008}
@@ -178,7 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1037546510
+  GlobalObjectIdHash: 810390217
   InScenePlacedSourceGlobalObjectIdHash: 810390217
   DeferredDespawnTick: 0
   Ownership: 1
@@ -278,8 +279,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_globalVolume: {fileID: 11400000, guid: 62bf76e20e5e7fe438e62246bdf6f9fb, type: 2}
-  m_ssao: {fileID: 7833122117494664109, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
   m_audioMixer: {fileID: 24100000, guid: b069e6acee9aa1741a1ba714d0b98585, type: 2}
+  m_allKeyBinds: []
+--- !u!114 &-7083226056749652639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 811cdace0fee32c4c9c6da5afd7f6015, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputActionsAsset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &6569613439342767934
 MonoBehaviour:
   m_ObjectHideFlags: 0

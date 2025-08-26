@@ -33,31 +33,38 @@ public class PopUp : MonoBehaviour {
         popUp.SetActive(false);
     }
 
-    public void Setup(string titleMessage, string bodyMessage, string acceptButtonText, string cancelButtonText, UnityAction acceptAction, UnityAction cancelAction) {
+    public void Setup(string titleMessage, string bodyMessage, string acceptButtonText, string cancelButtonText, 
+        UnityAction acceptAction, UnityAction cancelAction, bool shouldClosePopUp = true) {
         titleHolder.gameObject.SetActive(titleMessage != string.Empty);
 
         txt_title.SetText(titleMessage);
         txt_body.SetText(bodyMessage);
 
-        btn_accept.gameObject.SetActive(acceptAction != null);
-        btn_cancel.gameObject.SetActive(cancelAction != null);
-     
-        if (acceptAction != null) {
-            txt_accept.SetText(acceptButtonText);
+        btn_accept.gameObject.SetActive(!string.IsNullOrEmpty(acceptButtonText));
+        btn_cancel.gameObject.SetActive(!string.IsNullOrEmpty(cancelButtonText));
 
+        txt_accept.SetText(acceptButtonText);
+        txt_cancel.SetText(cancelButtonText);
+
+        if (acceptAction != null) {
             btn_accept.onClick.RemoveAllListeners();            
             btn_accept.onClick.AddListener(acceptAction);
         }
 
         if (cancelAction != null) {
-            txt_cancel.SetText(cancelButtonText);
-
             btn_cancel.onClick.RemoveAllListeners();            
             btn_cancel.onClick.AddListener(cancelAction);
+        }
+
+        if (shouldClosePopUp) {
+            btn_accept.onClick.AddListener(ClosePopUp);
+            btn_cancel.onClick.AddListener(ClosePopUp);
         }
     }
 
     public void OpenPopUp() {
+        canvasGroup.DOKill();
+
         canvasGroup.alpha = 0;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
@@ -70,6 +77,8 @@ public class PopUp : MonoBehaviour {
 
     public void ClosePopUp() {
         if (!IsOpened) return;
+
+        canvasGroup.DOKill();
 
         canvasGroup.alpha = 1;
         canvasGroup.interactable = false;

@@ -47,8 +47,10 @@ public class GameEvents : MonoBehaviour {
 
     #region Settings
     public UnityEvent<float> OnSensitivityChange { get; private set; } = new();
-
-    public UnityEvent<string> OnMicrophoneDeviceSwitch { get; private set; } = new(); 
+    public UnityEvent<string> OnMicrophoneDeviceSwitch { get; private set; } = new();
+    public UnityEvent<Quality> OnGlobalEffectsQualityChanged { get; private set; } = new();
+    public UnityEvent<InputSystem_Actions> OnPlayerInputLoaded { get; private set; } = new();
+    public UnityEvent OnBindsUpdated { get; private set; } = new();
     #endregion
 
     #region Interaction

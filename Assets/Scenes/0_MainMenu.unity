@@ -404,10 +404,46 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -7083226056749652639, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: key.m_keyName
+      value: h
+      objectReference: {fileID: 0}
+    - target: {fileID: -7083226056749652639, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: key.m_actionReference
+      value: 
+      objectReference: {fileID: -4335538016855242775, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
       propertyPath: value
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[0].m_actionName
+      value: Crouch
+      objectReference: {fileID: 0}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[1].m_actionName
+      value: Reload
+      objectReference: {fileID: 0}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[2].m_actionName
+      value: Drop item
+      objectReference: {fileID: 0}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[0].m_actionReference
+      value: 
+      objectReference: {fileID: 711658690693808886, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[1].m_actionReference
+      value: 
+      objectReference: {fileID: -7309710167851340314, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
+      propertyPath: m_allKeyBinds.Array.data[2].m_actionReference
+      value: 
+      objectReference: {fileID: 9206334317042808333, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     - target: {fileID: 2298118058184944170, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

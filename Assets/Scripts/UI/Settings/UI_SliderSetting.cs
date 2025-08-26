@@ -1,10 +1,9 @@
-using DG.Tweening;
 using System.Text.RegularExpressions;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler {
@@ -33,7 +32,7 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         slider = GetComponentInChildren<Slider>();
         valueTxt = GetComponentInChildren<TMP_InputField>();
 
-        string stringValue = !string.IsNullOrEmpty(txtValue) ? txtValue : value.ToString();
+        string stringValue = !string.IsNullOrEmpty(txtValue) ? txtValue : value.ToString("0.00");
 
         slider.wholeNumbers = wholeNumbers;
         this.hasText = hasText;
@@ -49,6 +48,9 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         defaultValue = value;
 
         if (hasText) {
+            if (m_type == SliderType.Volume) 
+                stringValue = Mathf.RoundToInt(slider.value * 100).ToString();
+
             valueTxt.SetTextWithoutNotify($"{stringValue} {m_stringComplement}");
             return;
         }
@@ -60,11 +62,30 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         action = onValueChange;
 
         if (hasText) valueTxt.onEndEdit.AddListener(i => OnTextValueChanged(i));
+        slider.onValueChanged.AddListener(OnSliderChange); 
     }
 
     public void RemoveAllListeners() {
         slider.onValueChanged.RemoveAllListeners();
         if (hasText) valueTxt.onEndEdit.RemoveAllListeners();
+    }
+
+    private void OnSliderChange(float value) {
+        switch (m_type) {
+            case SliderType.Default:
+                action?.Invoke(value);
+                valueTxt.text = $"{value.ToString("0.00")} {m_stringComplement}";
+                break;
+            case SliderType.Volume:
+                float result = Mathf.RoundToInt(value * 100);
+
+                action?.Invoke(value);
+                valueTxt.text = $"{(int)result} {m_stringComplement}";
+                break;
+            case SliderType.FPS:
+                valueTxt.text = value <= Singleton.Instance.SettingsManager.minMaxFPS.y ? value.ToString() : "Unlimited";
+                break;
+        }
     }
 
     private void OnTextValueChanged(string text) {
@@ -110,6 +131,8 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         thisCanvasGroup.DOKill();
         thisCanvasGroup.DOFade(0, 0.25f);
     }
+
+    public void OnPointerUp() { if (m_type == SliderType.FPS) action?.Invoke(slider.value); }
 }
 
-public enum SliderType { Volume, Gamma, FPS, ResolutionScale }
+public enum SliderType { Default, Volume, FPS }

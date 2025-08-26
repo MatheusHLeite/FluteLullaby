@@ -4,10 +4,10 @@ public class UI_SettingsAudio : MonoBehaviour {
     private SettingsManager manager;
 
     [Header("UI Components")]
-    [SerializeField] private UI_VolumeSlider slider_masterAudioVolume;
-    [SerializeField] private UI_VolumeSlider slider_musicAudioVolume;
-    [SerializeField] private UI_VolumeSlider slider_sfxAudioVolume;
-    [SerializeField] private UI_VolumeSlider slider_voiceChatAudioVolume;
+    [SerializeField] private UI_SliderSetting slider_masterAudioVolume;
+    [SerializeField] private UI_SliderSetting slider_musicAudioVolume;
+    [SerializeField] private UI_SliderSetting slider_sfxAudioVolume;
+    [SerializeField] private UI_SliderSetting slider_voiceChatAudioVolume;
     [SerializeField] private UI_Setting options_voiceOutputDevice;
 
     private void Awake() {

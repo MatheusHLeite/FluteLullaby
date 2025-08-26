@@ -311,9 +311,12 @@ public class Settings {
     public int anisotropicFilteringIndex;
     public int ambientOcclusionIndex;
     public int effectsQualityIndex;
+    public int postProcessingQualityIndex;
     public float resolutionScaleValue;
     public int hdrEnabledIndex;
     public int fpsLimitValue;
+
+    public int motionBlurEnabled;
 
     public Volume masterVolume;
     public Volume soundEffectsVolume;
@@ -321,7 +324,10 @@ public class Settings {
     public Volume voiceChatVolume;
     public int outputDeviceIndex;
 
+    public string savedBinds;
+
     public float mouseSensitivity;
+    public int invertAxisIndex;
 }
 
 public class Volume {

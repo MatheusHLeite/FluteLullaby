@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -13,11 +14,17 @@ public class SettingsManager : MonoBehaviour {
     [Header("Settings")]
     [SerializeField] private VolumeProfile m_globalVolume;
     private ColorAdjustments colorAdjustments;
+    private MotionBlur motionBlur;
 
     [Header("Audio")]
     [SerializeField] private AudioMixer m_audioMixer;
 
+    [Header("Bindable Inputs")]
+    [SerializeField] private KeyBind[] m_allKeyBinds;
+
     private SaveManager SaveManager;
+
+    public static Quality GlobalEffectsQuality;
 
     public const string MasterVolume = "MasterVolume";
     public const string MusicVolume = "MusicVolume";
@@ -34,17 +41,21 @@ public class SettingsManager : MonoBehaviour {
 
     private FieldInfo fiSoftShadows, fiSoftShadowQuality;
 
-    private string actualMicrophone;    
+    private string actualMicrophone;
+
+    #region General options string
+    public List<UIOption> enableOptions { get; private set; }
+    public List<UIOption> inverseEnableOptions { get; private set; }
+    #endregion
 
     #region Video options string    
     public List<UIOption> resolutionOptions { get; private set; }
     public List<RefreshRate> refreshRateOptions { get; private set; }
     public List<UIOption> displayModeOptions { get; private set; }
     public List<UIOption> antiAliasingOptions { get; private set; }
-    public List<UIOption> enableOptions { get; private set; }
-    public List<UIOption> inverseEnableOptions { get; private set; }
     public List<UIOption> qualityOptions { get; private set; }
-    
+    public List<UIOption> qualityPresetOptions { get; private set; }
+
     public Vector2 minMaxFPS { get; private set; }
     #endregion
 
@@ -56,6 +67,7 @@ public class SettingsManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnSettingsDataLoaded);
 
         if (m_globalVolume.TryGet(out ColorAdjustments ca)) colorAdjustments = ca;
+        if (m_globalVolume.TryGet(out MotionBlur mb)) motionBlur = mb;
         SaveManager = Singleton.Instance.SaveManager;
         minMaxFPS = new Vector2(30, 300);
 
@@ -72,15 +84,21 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("Disabled", 0)
         };        
         displayModeOptions = new List<UIOption>() {
-            CreateNewOption("Windowed", 0), //Modo janela
-            CreateNewOption("Fullscreen", 1), //tela cheia
-            CreateNewOption("Borderless Fullscreen", 2) //tela cheia em janela
+            CreateNewOption("Windowed", 0),
+            CreateNewOption("Fullscreen", 1),
+            CreateNewOption("Borderless Fullscreen", 2)
         };
         qualityOptions = new List<UIOption>() {
             CreateNewOption("Low", 3),
             CreateNewOption("Medium", 2),
             CreateNewOption("High", 1),
             CreateNewOption("Ultra", 0)
+        };
+        qualityPresetOptions = new List<UIOption> {
+            CreateNewOption("Best performance", 3),
+            CreateNewOption("Balanced", 2),
+            CreateNewOption("Good quality", 1),
+            CreateNewOption("Best quality", 0)
         };
         antiAliasingOptions = new List<UIOption>() {
             CreateNewOption("Disabled", 1),
@@ -103,6 +121,8 @@ public class SettingsManager : MonoBehaviour {
         qualityOptions.Clear();
         antiAliasingOptions.Clear();
     }
+
+    public KeyBind[] GetAllKeys() => m_allKeyBinds;
 
     private void InitializeMainVideoSettings() {
         resolutions = Screen.resolutions;
@@ -206,12 +226,17 @@ public class SettingsManager : MonoBehaviour {
         SetAmbientOcclusion(data.settings.ambientOcclusionIndex, true);
         SetResolutionScale(data.settings.resolutionScaleValue, true);
         SetGamma(data.settings.gammaValue, true);
+        SetPostProcessingQuality(data.settings.postProcessingQualityIndex, true);
+        SetMotionBlur(data.settings.motionBlurEnabled, true);
 
         SetVolume(data.settings.masterVolume.volume, data.settings.masterVolume.volumeMixer, true);
         SetVolume(data.settings.musicVolume.volume, data.settings.musicVolume.volumeMixer, true);
         SetVolume(data.settings.soundEffectsVolume.volume, data.settings.soundEffectsVolume.volumeMixer, true);
         SetVolume(data.settings.voiceChatVolume.volume, data.settings.voiceChatVolume.volumeMixer, true);
         SetOutputDevice(data.settings.outputDeviceIndex, true);
+
+        SetSensitivity(data.settings.mouseSensitivity, true);
+        SetInvertAxis(data.settings.invertAxisIndex, true);
 
         Singleton.Instance.GameEvents.OnSettingsDataLoaded?.Invoke(data);
     }
@@ -447,18 +472,20 @@ public class SettingsManager : MonoBehaviour {
 
         switch (indexValue) {
             case 0: // Ultra
-
+                GlobalEffectsQuality = Quality.Ultra;
                 break;
             case 1: // High
-
+                GlobalEffectsQuality = Quality.High;
                 break;
             case 2: // Medium
-
+                GlobalEffectsQuality = Quality.Medium;
                 break;
             case 3: // Low
-
+                GlobalEffectsQuality = Quality.Low;
                 break;
         }
+
+        Singleton.Instance.GameEvents.OnGlobalEffectsQualityChanged?.Invoke(GlobalEffectsQuality);
 
         if (!initialization && SaveManager.PlayerData.settings.effectsQualityIndex != index) {
             SaveManager.PlayerData.settings.effectsQualityIndex = index;
@@ -486,6 +513,41 @@ public class SettingsManager : MonoBehaviour {
     }
 
     private void SetResolution(int width, int height, FullScreenMode mode, RefreshRate refreshRate) => Screen.SetResolution(width, height, mode, refreshRate);
+
+    #region Post processing
+    public void SetPostProcessingQuality(int index, bool initialization = false) {
+        int indexValue = qualityOptions[index].value;
+
+        switch (indexValue) {
+            case 0: // Ultra
+                
+                break;
+            case 1: // High
+                
+                break;
+            case 2: // Medium
+                
+                break;
+            case 3: // Low
+                
+                break;
+        }
+
+        if (!initialization && SaveManager.PlayerData.settings.postProcessingQualityIndex != index) {
+            SaveManager.PlayerData.settings.motionBlurEnabled = index;
+            OnSettingsSaved();
+        }
+    } //Change to quality instead of Index
+
+    public void SetMotionBlur(int index, bool initialization = false) {
+        motionBlur.active = index == 0;
+
+        if (!initialization && SaveManager.PlayerData.settings.motionBlurEnabled != index) {
+            SaveManager.PlayerData.settings.motionBlurEnabled = index;
+            OnSettingsSaved();
+        }
+    }
+    #endregion
     #endregion
 
     #region Audio
@@ -529,6 +591,23 @@ public class SettingsManager : MonoBehaviour {
         }        
 
         UpdateMicrophoneList();
+    }
+    #endregion
+
+    #region Controls
+    public void SetSensitivity(float value, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnSensitivityChange?.Invoke(value);
+
+        if (!initialization && SaveManager.PlayerData.settings.mouseSensitivity != value) {
+            SaveManager.PlayerData.settings.mouseSensitivity = value;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetInvertAxis(int index, bool initialization = false)
+    {
+        //index == 0 - Disabled
+        //index == 1 - enabled
     }
     #endregion
 

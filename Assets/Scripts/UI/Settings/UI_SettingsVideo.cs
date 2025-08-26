@@ -19,9 +19,11 @@ public class UI_SettingsVideo : MonoBehaviour {
     [SerializeField] private UI_Setting hdrOptions;
     [SerializeField] private UI_Setting anisotropicFilteringOptions;
     [SerializeField] private UI_Setting ambientOcclusionOptions;
-    [SerializeField] private UI_FPSLimiterSlider fpsLimitSlider;
-    [SerializeField] private UI_GammaSlider gammaSlider;
-    [SerializeField] private UI_VolumeSlider resolutionScaleSlider;    
+    [SerializeField] private UI_SliderSetting fpsLimitSlider;
+    [SerializeField] private UI_SliderSetting gammaSlider;
+    [SerializeField] private UI_SliderSetting resolutionScaleSlider;
+    [SerializeField] private UI_Setting postProcessingOptions;
+    //Test to add Bloom and Film Grain options
     [SerializeField] private UI_Setting motionBlurOptions;
     [Space(10)]
     [SerializeField] private Button btn_apply;
@@ -69,7 +71,9 @@ public class UI_SettingsVideo : MonoBehaviour {
 
         List<UIOption> rrStringList = new List<UIOption>();
         for (int i = 0; i < manager.refreshRateOptions.Count; i++) {
-            string rrString = manager.refreshRateOptions[i].ToString();
+            RefreshRate rr = manager.refreshRateOptions[i];
+            float hz = (float)rr.numerator / rr.denominator;
+            string rrString = hz.ToString("0.00");
             rrStringList.Add(new UIOption() { text = rrString, value = i });
         }
 
@@ -86,6 +90,7 @@ public class UI_SettingsVideo : MonoBehaviour {
         shadowQualityOptions.SetupOptions(manager.qualityOptions, data.settings.shadowQualityIndex);
         ambientOcclusionOptions.SetupOptions(manager.qualityOptions, data.settings.ambientOcclusionIndex);
         effectsQualityOptions.SetupOptions(manager.qualityOptions, data.settings.effectsQualityIndex);
+        postProcessingOptions.SetupOptions(manager.qualityOptions, data.settings.postProcessingQualityIndex);
 
         hdrOptions.SetupOptions(!HDROutputSettings.main.available ? disabledHDR : manager.enableOptions, data.settings.hdrEnabledIndex);
         fpsLimitSlider.Setup(new Vector2(30, 301), data.settings.fpsLimitValue, data.settings.fpsLimitValue < 300 
@@ -96,7 +101,9 @@ public class UI_SettingsVideo : MonoBehaviour {
         vSyncOptions.SetupOptions(manager.inverseEnableOptions, data.settings.vSyncEnabledIndex);
 
         gammaSlider.Setup(new Vector2(0, 1), data.settings.gammaValue, null, false, false);
-        resolutionScaleSlider.Setup(new Vector2(0,2), data.settings.resolutionScaleValue, null, false);
+        resolutionScaleSlider.Setup(new Vector2(0.1f,2), data.settings.resolutionScaleValue, null, false);
+
+        motionBlurOptions.SetupOptions(manager.inverseEnableOptions, data.settings.motionBlurEnabled);
 
         if (!HDROutputSettings.main.available) hdrOptions.SetInactive();
 
@@ -105,7 +112,6 @@ public class UI_SettingsVideo : MonoBehaviour {
 
     private void SetupListeners() {
         presetQualityOptions.onValueChanged.AddListener(SetQualityPreset);
-
         resolutionOptions.onValueChanged.AddListener(SetApplyButtonActive);
         displayModeOptions.onValueChanged.AddListener(SetApplyButtonActive);
         refreshRateOptions.onValueChanged.AddListener(SetApplyButtonActive);        
@@ -130,6 +136,9 @@ public class UI_SettingsVideo : MonoBehaviour {
         ambientOcclusionOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         effectsQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
 
+        postProcessingOptions.onValueChanged.AddListener(i => manager.SetPostProcessingQuality(i));
+        motionBlurOptions.onValueChanged.AddListener(i => manager.SetMotionBlur(i));
+
         btn_apply.onClick.AddListener(OnSettingsApply);
         btn_apply.gameObject.SetActive(false);
 
@@ -141,7 +150,6 @@ public class UI_SettingsVideo : MonoBehaviour {
 
     private void TeardownListeners() {
         presetQualityOptions.onValueChanged.RemoveAllListeners();
-
         resolutionOptions.onValueChanged.RemoveAllListeners();
         displayModeOptions.onValueChanged.RemoveAllListeners();
         refreshRateOptions.onValueChanged.RemoveAllListeners();
@@ -153,9 +161,12 @@ public class UI_SettingsVideo : MonoBehaviour {
         anisotropicFilteringOptions.onValueChanged.RemoveAllListeners();
         ambientOcclusionOptions.onValueChanged.RemoveAllListeners();
         effectsQualityOptions.onValueChanged.RemoveAllListeners();
+        postProcessingOptions.onValueChanged.RemoveAllListeners();
+        motionBlurOptions.onValueChanged.RemoveAllListeners();
         fpsLimitSlider.RemoveAllListeners();
         gammaSlider.RemoveAllListeners();
         resolutionScaleSlider.RemoveAllListeners();
+
         btn_apply.onClick.RemoveAllListeners();
 
         onApply -= OnSettingsApply;

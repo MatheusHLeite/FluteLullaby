@@ -626,6 +626,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Escape"",
+                    ""type"": ""Button"",
+                    ""id"": ""cb03fb37-865e-4cbe-9a0e-6827b3098c3f"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1046,6 +1055,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""action"": ""PreviousTab"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f7461530-4311-4635-b77e-b745af50bce6"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Escape"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1146,6 +1166,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_UI_ScrollWheel = m_UI.FindAction("ScrollWheel", throwIfNotFound: true);
         m_UI_NextTab = m_UI.FindAction("NextTab", throwIfNotFound: true);
         m_UI_PreviousTab = m_UI.FindAction("PreviousTab", throwIfNotFound: true);
+        m_UI_Escape = m_UI.FindAction("Escape", throwIfNotFound: true);
     }
 
     ~@InputSystem_Actions()
@@ -1436,6 +1457,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_UI_ScrollWheel;
     private readonly InputAction m_UI_NextTab;
     private readonly InputAction m_UI_PreviousTab;
+    private readonly InputAction m_UI_Escape;
     public struct UIActions
     {
         private @InputSystem_Actions m_Wrapper;
@@ -1450,6 +1472,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         public InputAction @ScrollWheel => m_Wrapper.m_UI_ScrollWheel;
         public InputAction @NextTab => m_Wrapper.m_UI_NextTab;
         public InputAction @PreviousTab => m_Wrapper.m_UI_PreviousTab;
+        public InputAction @Escape => m_Wrapper.m_UI_Escape;
         public InputActionMap Get() { return m_Wrapper.m_UI; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1489,6 +1512,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @PreviousTab.started += instance.OnPreviousTab;
             @PreviousTab.performed += instance.OnPreviousTab;
             @PreviousTab.canceled += instance.OnPreviousTab;
+            @Escape.started += instance.OnEscape;
+            @Escape.performed += instance.OnEscape;
+            @Escape.canceled += instance.OnEscape;
         }
 
         private void UnregisterCallbacks(IUIActions instance)
@@ -1523,6 +1549,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @PreviousTab.started -= instance.OnPreviousTab;
             @PreviousTab.performed -= instance.OnPreviousTab;
             @PreviousTab.canceled -= instance.OnPreviousTab;
+            @Escape.started -= instance.OnEscape;
+            @Escape.performed -= instance.OnEscape;
+            @Escape.canceled -= instance.OnEscape;
         }
 
         public void RemoveCallbacks(IUIActions instance)
@@ -1620,5 +1649,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         void OnScrollWheel(InputAction.CallbackContext context);
         void OnNextTab(InputAction.CallbackContext context);
         void OnPreviousTab(InputAction.CallbackContext context);
+        void OnEscape(InputAction.CallbackContext context);
     }
 }

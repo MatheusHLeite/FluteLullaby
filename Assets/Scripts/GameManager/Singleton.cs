@@ -11,6 +11,7 @@ public class Singleton : MonoBehaviour {
     public VFXManager VFXManager { get; private set; }
     public InventoryManager InventoryManager { get; private set; }
     public SettingsManager SettingsManager { get; private set; }
+    public RebindManager RebindManager { get; private set; }
 
     private void Awake() {
         if (Instance) {
@@ -34,5 +35,6 @@ public class Singleton : MonoBehaviour {
         VFXManager = GetComponent<VFXManager>();
         InventoryManager = GetComponent<InventoryManager>();
         SettingsManager = GetComponent<SettingsManager>();
+        RebindManager = GetComponent<RebindManager>();
     }
 }

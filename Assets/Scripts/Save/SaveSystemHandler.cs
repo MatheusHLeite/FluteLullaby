@@ -75,24 +75,28 @@ public class PlayerSaveData {
             settings = new Settings() {
                 firstSetup = true,
                 mouseSensitivity = 2f,
+                invertAxisIndex = 0,
                 resolutionIndex = -1,
                 refreshRateIndex = -1,
                 displayModeIndex = 1,
 
                 qualityPresetIndex = 3,
                 textureQualityIndex = 3,
-                shadowQualityIndex = 2,
+                shadowQualityIndex = 2,                
+                effectsQualityIndex = 2,
+
+                postProcessingQualityIndex = 2,
+                motionBlurEnabled = 0,
+
+                anisotropicFilteringIndex = 1,
                 antiAliasingModeIndex = 2,
                 ambientOcclusionIndex = 2,
-                effectsQualityIndex = 2,
-                anisotropicFilteringIndex = 1,
-                hdrEnabledIndex = 0,
-
+                vSyncEnabledIndex = 0,
+                fpsLimitValue = -1,
                 resolutionScaleValue = 1,
                 gammaValue = 0.5f,
-                vSyncEnabledIndex = 0,
+                hdrEnabledIndex = 0,
 
-                fpsLimitValue = -1,
                 masterVolume = new Volume { volume = 1f, volumeMixer = VolumeMixer.Master },
                 soundEffectsVolume = new Volume { volume = .7f, volumeMixer = VolumeMixer.SFX },
                 musicVolume = new Volume { volume = .35f, volumeMixer = VolumeMixer.Music },

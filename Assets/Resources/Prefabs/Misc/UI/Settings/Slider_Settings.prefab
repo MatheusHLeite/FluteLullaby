@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1973916374469168968}
   - component: {fileID: 3584726294004621413}
   m_Layer: 0
-  m_Name: Slider_masterVolume
+  m_Name: Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -545,9 +545,9 @@ GameObject:
   - component: {fileID: 3992490360661599681}
   - component: {fileID: 5511510644453408707}
   - component: {fileID: 9030633343549019436}
-  - component: {fileID: 2793630403516112381}
+  - component: {fileID: 3817506271419160222}
   m_Layer: 0
-  m_Name: GammaSlider_Settings
+  m_Name: Slider_Settings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -640,7 +640,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2793630403516112381
+--- !u!114 &3817506271419160222
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -649,11 +649,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 5947066114752334827}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f05204eb0f2d90e448f064704d64b767, type: 3}
+  m_Script: {fileID: 11500000, guid: a5f5266e36d92984baba5ff65215041a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_stringComplement: '%'
-  m_type: 1
+  m_stringComplement: 
+  m_type: 0
   thisCanvasGroup: {fileID: 4982515510549968141}
 --- !u!1 &7197425695315348100
 GameObject:
@@ -855,14 +855,14 @@ MonoBehaviour:
   m_VerticalScrollbarEventHandler: {fileID: 0}
   m_LayoutGroup: {fileID: 0}
   m_ScrollSensitivity: 1
-  m_ContentType: 2
+  m_ContentType: 3
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 4
+  m_KeyboardType: 2
   m_LineType: 0
   m_HideMobileInput: 0
   m_HideSoftKeyboard: 0
-  m_CharacterValidation: 2
+  m_CharacterValidation: 3
   m_RegexValue: 
   m_GlobalPointSize: 22
   m_CharacterLimit: 0

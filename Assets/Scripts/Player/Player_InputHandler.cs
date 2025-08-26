@@ -71,6 +71,8 @@ public class Player_InputHandler : NetworkBehaviour {
         Input.Player.LastSlotUsed.performed += i => LastSlotUsed = true;
 
         Input.Enable();
+
+        Singleton.Instance.GameEvents.OnPlayerInputLoaded?.Invoke(Input);
     }
 
     private void RemoveInputListeners() {
