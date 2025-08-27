@@ -36,6 +36,8 @@ public class SettingsManager : MonoBehaviour {
     private string[] allDevices;
     private List<string> allResolutions;
 
+    private float[] distances = new float[32];
+
     private ScreenSpaceAmbientOcclusion m_ssao;
     private FieldInfo fiSettings, fiIntensity, fiRadius;
 
@@ -55,6 +57,7 @@ public class SettingsManager : MonoBehaviour {
     public List<UIOption> antiAliasingOptions { get; private set; }
     public List<UIOption> qualityOptions { get; private set; }
     public List<UIOption> qualityPresetOptions { get; private set; }
+    public List<UIOption> renderDistanceOptions { get; private set; }
 
     public Vector2 minMaxFPS { get; private set; }
     #endregion
@@ -105,6 +108,11 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("2x", 2),
             CreateNewOption("4x", 4),
             CreateNewOption("8x", 8)
+        };
+        renderDistanceOptions = new List<UIOption> {
+            CreateNewOption("Minimum", 0),
+            CreateNewOption("Average", 1),
+            CreateNewOption("Maximum", 2),
         };
 
         UpdateMicrophoneList();
@@ -215,12 +223,16 @@ public class SettingsManager : MonoBehaviour {
         SetResolution(data.settings.resolutionIndex, true);
         SetDisplayMode(data.settings.displayModeIndex, true);
         SetRefreshRate(data.settings.refreshRateIndex, true);
+
+        //[TODO] ANALIZE PLAYERS SPECS TO SET THE RECOMENDED SETTINGS
         SetQualityPreset(data.settings.qualityPresetIndex, true);
         SetTextureQuality(data.settings.textureQualityIndex, true);
-        SetShadowQuality(data.settings.shadowQualityIndex, true);        
+        SetShadowQuality(data.settings.shadowQualityIndex, true);
+        SetLightningQuality(data.settings.lightningQualityIndex, true);
         SetVSync(data.settings.vSyncEnabledIndex, true);
         SetAntiAliasing(data.settings.antiAliasingModeIndex, true);
         SetHDR(data.settings.hdrEnabledIndex, true);
+        SetRenderDistance(data.settings.renderDistanceIndex, true);
         SetFPSLimit(data.settings.fpsLimitValue, true);
         SetAnisotropicFiltering(data.settings.anisotropicFilteringIndex, true);
         SetAmbientOcclusion(data.settings.ambientOcclusionIndex, true);
@@ -236,6 +248,7 @@ public class SettingsManager : MonoBehaviour {
         SetOutputDevice(data.settings.outputDeviceIndex, true);
 
         SetSensitivity(data.settings.mouseSensitivity, true);
+        SetSprintToggle(data.settings.sprintToggleIndex, true);
         SetInvertAxis(data.settings.invertAxisIndex, true);
 
         Singleton.Instance.GameEvents.OnSettingsDataLoaded?.Invoke(data);
@@ -382,6 +395,32 @@ public class SettingsManager : MonoBehaviour {
         }
     } //Change to quality instead of Index
 
+    public void SetLightningQuality(int index, bool initialization = false) {
+        int indexValue = qualityOptions[index].value;
+
+        //[TODO] Add this when adding volumetric lightning - Pack
+
+        switch (indexValue)  {
+            case 0: //Ultra
+
+                break;
+            case 1: //High
+
+                break;
+            case 2: //Medium
+
+                break;
+            case 3: //Low
+
+                break;
+        }
+
+        if (!initialization && SaveManager.PlayerData.settings.lightningQualityIndex != index) {
+            SaveManager.PlayerData.settings.lightningQualityIndex = index;
+            OnSettingsSaved();
+        }
+    } //Change to quality instead of Index
+
     public void SetVSync(int index, bool initialization = false) {
         int indexValue = inverseEnableOptions[index].value;
         QualitySettings.vSyncCount = indexValue;
@@ -411,6 +450,50 @@ public class SettingsManager : MonoBehaviour {
             OnSettingsSaved();
         }
     } //Change to bool instead of Index
+
+    public void SetRenderDistance(int index, bool initialization = false) {
+        //index = 0 minmun //index = 1 Average // index = 2 maximm 
+
+        Camera cam = Camera.main; //[TODO] check on player spawned event
+       
+        float enemyDistance = 160;
+        float effectsDistance = 100;
+        float natureDistance = 230;
+        float propsDistance = 200;
+
+        switch (index) {
+            case 0:
+                enemyDistance = 160;
+                effectsDistance = 100;
+                natureDistance = 230;
+                propsDistance = 200;
+                break;
+            case 1:
+                enemyDistance = 310;
+                effectsDistance = 200;
+                natureDistance = 660;
+                propsDistance = 600;
+                break;
+            case 2:
+                enemyDistance = 500;
+                effectsDistance = 400;
+                natureDistance = 1500;
+                propsDistance = 1200;
+                break;
+        }
+
+        distances[LayerMask.NameToLayer("Enemy")] = enemyDistance;
+        distances[LayerMask.NameToLayer("Effect")] = effectsDistance;
+        distances[LayerMask.NameToLayer("Nature")] = natureDistance;
+        distances[LayerMask.NameToLayer("Prop")] = propsDistance;
+
+        cam.layerCullDistances = distances;
+
+        if (!initialization && SaveManager.PlayerData.settings.renderDistanceIndex != index) {
+            SaveManager.PlayerData.settings.renderDistanceIndex = index;
+            OnSettingsSaved();
+        }
+    }
 
     public void SetFPSLimit(float value, bool initialization = false) { 
         Application.targetFrameRate = (int)value >= minMaxFPS.x && (int)value <= minMaxFPS.y ? (int)value : -1;
@@ -516,6 +599,7 @@ public class SettingsManager : MonoBehaviour {
 
     #region Post processing
     public void SetPostProcessingQuality(int index, bool initialization = false) {
+        //[TODO] Add this when finishing post processing
         int indexValue = qualityOptions[index].value;
 
         switch (indexValue) {
@@ -596,7 +680,7 @@ public class SettingsManager : MonoBehaviour {
 
     #region Controls
     public void SetSensitivity(float value, bool initialization = false) {
-        Singleton.Instance.GameEvents.OnSensitivityChange?.Invoke(value);
+        Singleton.Instance.GameEvents.OnSensitivityChanged?.Invoke(value);
 
         if (!initialization && SaveManager.PlayerData.settings.mouseSensitivity != value) {
             SaveManager.PlayerData.settings.mouseSensitivity = value;
@@ -604,10 +688,24 @@ public class SettingsManager : MonoBehaviour {
         }
     }
 
-    public void SetInvertAxis(int index, bool initialization = false)
-    {
+    public void SetSprintToggle(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnSprintToggleChanged?.Invoke(index);
         //index == 0 - Disabled
         //index == 1 - enabled
+
+        if (!initialization && SaveManager.PlayerData.settings.sprintToggleIndex != index) {
+            SaveManager.PlayerData.settings.sprintToggleIndex = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetInvertAxis(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnInvertAxisChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.invertAxisIndex != index) {
+            SaveManager.PlayerData.settings.invertAxisIndex = index;
+            OnSettingsSaved();
+        }
     }
     #endregion
 

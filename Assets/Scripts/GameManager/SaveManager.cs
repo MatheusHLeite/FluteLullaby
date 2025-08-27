@@ -18,7 +18,7 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnItemCollected.AddListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.AddListener(OnItemSplit);
-        Singleton.Instance.GameEvents.OnSensitivityChange.AddListener(OnSensitivityChanged);
+        Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
 
         StartCoroutine(LoadPlayerData());
     }
@@ -29,7 +29,7 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnItemCollected.RemoveListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.RemoveListener(OnItemSplit);
-        Singleton.Instance.GameEvents.OnSensitivityChange.RemoveListener(OnSensitivityChanged);
+        Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
     }
     #endregion
 
@@ -306,6 +306,7 @@ public class Settings {
     public int qualityPresetIndex;
     public int textureQualityIndex;
     public int shadowQualityIndex;
+    public int lightningQualityIndex;
     public int antiAliasingModeIndex;
     public float gammaValue;
     public int anisotropicFilteringIndex;
@@ -314,6 +315,7 @@ public class Settings {
     public int postProcessingQualityIndex;
     public float resolutionScaleValue;
     public int hdrEnabledIndex;
+    public int renderDistanceIndex;
     public int fpsLimitValue;
 
     public int motionBlurEnabled;
@@ -328,6 +330,7 @@ public class Settings {
 
     public float mouseSensitivity;
     public int invertAxisIndex;
+    public int sprintToggleIndex;
 }
 
 public class Volume {

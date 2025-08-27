@@ -16,6 +16,8 @@ public class Player_MovementSystem : NetworkBehaviour {
     [Header("Debug")]
     [SerializeField] private bool m_unlimitedSprint = false;
 
+    private bool _sprintToggle;
+
     #region Variables
     #region Private references
     private Rigidbody _rb;
@@ -143,6 +145,8 @@ public class Player_MovementSystem : NetworkBehaviour {
     public override void OnNetworkSpawn()  {
         if (IsOwner) {
             _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
+
+            Singleton.Instance.GameEvents.OnSprintToggleChanged.AddListener(OnSprintToggleChanged);
             return; 
         }
 
@@ -151,10 +155,19 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
 
     public override void OnNetworkDespawn() {
+        if (IsOwner) {
+            Singleton.Instance.GameEvents.OnSprintToggleChanged.RemoveListener(OnSprintToggleChanged);
+            return;
+        }
+
         isCrouched_NV.OnValueChanged -= OnCrouchStateChanged;
     }
 
     private void OnCrouchStateChanged(bool oldValue, bool newValue) => Animation.OnCrouch(newValue);
+
+    private void OnSprintToggleChanged(int i) {
+        _sprintToggle = i == 1;
+    }
     #endregion
 
     #region Movement

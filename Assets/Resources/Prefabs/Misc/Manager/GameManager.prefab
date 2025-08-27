@@ -280,7 +280,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_globalVolume: {fileID: 11400000, guid: 62bf76e20e5e7fe438e62246bdf6f9fb, type: 2}
   m_audioMixer: {fileID: 24100000, guid: b069e6acee9aa1741a1ba714d0b98585, type: 2}
-  m_allKeyBinds: []
+  m_allKeyBinds:
+  - m_actionName: Attack
+    m_actionReference: {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Zoom
+    m_actionReference: {fileID: -4335538016855242775, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Sprint
+    m_actionReference: {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Jump
+    m_actionReference: {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Crouch
+    m_actionReference: {fileID: 711658690693808886, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Interact
+    m_actionReference: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Reload
+    m_actionReference: {fileID: -7309710167851340314, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - m_actionName: Drop item
+    m_actionReference: {fileID: 9206334317042808333, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &-7083226056749652639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -293,7 +309,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 811cdace0fee32c4c9c6da5afd7f6015, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputActionsAsset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &6569613439342767934
 MonoBehaviour:
   m_ObjectHideFlags: 0

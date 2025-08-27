@@ -20,16 +20,19 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private PopUp popUp;
     private UI_SettingsControls settingsControl;
+    private Countdown countdown;
 
     private string bodyText;
     private KeyBind key;
 
-    public void Setup(KeyBind key, PopUp popUp, UI_SettingsControls settingsControl) {
+    public void Setup(KeyBind key, UI_SettingsControls settingsControl) {
         Singleton.Instance.GameEvents.OnBindsUpdated.AddListener(UpdateBinds);
 
         this.settingsControl = settingsControl;
-        this.popUp = popUp;
         this.key = key;
+
+        popUp = settingsControl.GetPopUp();
+        countdown = settingsControl.GetCountdown();
 
         bodyText = string.Format(PopUpBody, key.m_actionName);
 
@@ -54,12 +57,16 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     }
 
     private void OnRebindButtonClick() {
-        popUp.Setup(PopUpTitle, bodyText, "", "", null, null);
+        popUp.Setup(PopUpTitle, bodyText, "", "", null, null, true, true);
         popUp.OpenPopUp();
+
+        float time = 7;
+
+        countdown.SetCountdown(time);
 
         Singleton.Instance.RebindManager.StartRebinding(
             key, OnRebound, () => popUp.ClosePopUp(),
-            settingsControl.RefreshConflictsUI);
+            settingsControl.RefreshConflictsUI, time);
     }
 
     private void OnRebound(string keyName) {

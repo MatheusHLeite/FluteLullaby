@@ -15,11 +15,11 @@ TagManager:
   - PlayerBody
   - Ground
   - FirstPersonElement
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Structure
+  - Enemy
+  - Nature
+  - Prop
+  - Effect
   - 
   - 
   - 

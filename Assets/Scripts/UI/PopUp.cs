@@ -11,6 +11,7 @@ public class PopUp : MonoBehaviour {
     [SerializeField] private GameObject titleHolder;
     [SerializeField] private TMP_Text txt_title;
     [SerializeField] private TMP_Text txt_body;
+    [SerializeField] private GameObject countdownHolder;
     [SerializeField] private Button btn_accept;
     [SerializeField] private Button btn_cancel;
     
@@ -34,7 +35,7 @@ public class PopUp : MonoBehaviour {
     }
 
     public void Setup(string titleMessage, string bodyMessage, string acceptButtonText, string cancelButtonText, 
-        UnityAction acceptAction, UnityAction cancelAction, bool shouldClosePopUp = true) {
+        UnityAction acceptAction, UnityAction cancelAction, bool shouldClosePopUp = true, bool hasCountdown = false) {
         titleHolder.gameObject.SetActive(titleMessage != string.Empty);
 
         txt_title.SetText(titleMessage);
@@ -45,6 +46,8 @@ public class PopUp : MonoBehaviour {
 
         txt_accept.SetText(acceptButtonText);
         txt_cancel.SetText(cancelButtonText);
+
+        countdownHolder.SetActive(hasCountdown);
 
         if (acceptAction != null) {
             btn_accept.onClick.RemoveAllListeners();            

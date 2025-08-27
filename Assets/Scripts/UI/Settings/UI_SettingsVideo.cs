@@ -13,17 +13,18 @@ public class UI_SettingsVideo : MonoBehaviour {
     [SerializeField] private UI_Setting presetQualityOptions;
     [SerializeField] private UI_Setting textureQualityOptions;
     [SerializeField] private UI_Setting shadowQualityOptions;
+    [SerializeField] private UI_Setting lightningQualityOptions;
     [SerializeField] private UI_Setting effectsQualityOptions;
     [SerializeField] private UI_Setting vSyncOptions;
     [SerializeField] private UI_Setting antiAliasingOptions;
     [SerializeField] private UI_Setting hdrOptions;
+    [SerializeField] private UI_Setting renderDistanceOptions;
     [SerializeField] private UI_Setting anisotropicFilteringOptions;
     [SerializeField] private UI_Setting ambientOcclusionOptions;
     [SerializeField] private UI_SliderSetting fpsLimitSlider;
     [SerializeField] private UI_SliderSetting gammaSlider;
     [SerializeField] private UI_SliderSetting resolutionScaleSlider;
     [SerializeField] private UI_Setting postProcessingOptions;
-    //Test to add Bloom and Film Grain options
     [SerializeField] private UI_Setting motionBlurOptions;
     [Space(10)]
     [SerializeField] private Button btn_apply;
@@ -88,11 +89,13 @@ public class UI_SettingsVideo : MonoBehaviour {
         presetQualityOptions.SetupOptions(manager.qualityOptions, data.settings.qualityPresetIndex);
         textureQualityOptions.SetupOptions(manager.qualityOptions, data.settings.textureQualityIndex);
         shadowQualityOptions.SetupOptions(manager.qualityOptions, data.settings.shadowQualityIndex);
+        lightningQualityOptions.SetupOptions(manager.qualityOptions, data.settings.lightningQualityIndex);
         ambientOcclusionOptions.SetupOptions(manager.qualityOptions, data.settings.ambientOcclusionIndex);
         effectsQualityOptions.SetupOptions(manager.qualityOptions, data.settings.effectsQualityIndex);
         postProcessingOptions.SetupOptions(manager.qualityOptions, data.settings.postProcessingQualityIndex);
 
         hdrOptions.SetupOptions(!HDROutputSettings.main.available ? disabledHDR : manager.enableOptions, data.settings.hdrEnabledIndex);
+        renderDistanceOptions.SetupOptions(manager.renderDistanceOptions, data.settings.renderDistanceIndex);
         fpsLimitSlider.Setup(new Vector2(30, 301), data.settings.fpsLimitValue, data.settings.fpsLimitValue < 300 
             ? data.settings.fpsLimitValue.ToString() : "Unlimited");
 
@@ -122,19 +125,22 @@ public class UI_SettingsVideo : MonoBehaviour {
 
         textureQualityOptions.onValueChanged.AddListener(i => manager.SetTextureQuality(i));
         shadowQualityOptions.onValueChanged.AddListener(i => manager.SetShadowQuality(i));
+        lightningQualityOptions.onValueChanged.AddListener(i => manager.SetLightningQuality(i));
         antiAliasingOptions.onValueChanged.AddListener(i => manager.SetAntiAliasing(i));
-        hdrOptions.onValueChanged.AddListener(i => manager.SetHDR(i));
         anisotropicFilteringOptions.onValueChanged.AddListener(i => manager.SetAnisotropicFiltering(i));
         ambientOcclusionOptions.onValueChanged.AddListener(i => manager.SetAmbientOcclusion(i));
         effectsQualityOptions.onValueChanged.AddListener(i => manager.SetEffectQuality(i));
 
         textureQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         shadowQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
+        lightningQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         antiAliasingOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
-        hdrOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         anisotropicFilteringOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         ambientOcclusionOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
         effectsQualityOptions.onValueChanged.AddListener(OnQualitySettingsChanged);
+
+        hdrOptions.onValueChanged.AddListener(i => manager.SetHDR(i));
+        renderDistanceOptions.onValueChanged.AddListener(i => manager.SetRenderDistance(i));
 
         postProcessingOptions.onValueChanged.AddListener(i => manager.SetPostProcessingQuality(i));
         motionBlurOptions.onValueChanged.AddListener(i => manager.SetMotionBlur(i));
@@ -155,9 +161,11 @@ public class UI_SettingsVideo : MonoBehaviour {
         refreshRateOptions.onValueChanged.RemoveAllListeners();
         textureQualityOptions.onValueChanged.RemoveAllListeners();
         shadowQualityOptions.onValueChanged.RemoveAllListeners();
+        lightningQualityOptions.onValueChanged.RemoveAllListeners();
         vSyncOptions.onValueChanged.RemoveAllListeners();
         antiAliasingOptions.onValueChanged.RemoveAllListeners();
         hdrOptions.onValueChanged.RemoveAllListeners();
+        renderDistanceOptions.onValueChanged.RemoveAllListeners();
         anisotropicFilteringOptions.onValueChanged.RemoveAllListeners();
         ambientOcclusionOptions.onValueChanged.RemoveAllListeners();
         effectsQualityOptions.onValueChanged.RemoveAllListeners();
@@ -181,6 +189,7 @@ public class UI_SettingsVideo : MonoBehaviour {
         Quality qualityPreset = Quality.Ultra;
         int textureQuality = 0;
         int shadowQuality = 0;
+        int lightningQuality = 0;
         int antiAliasingQuality = 0;
         int hdrEnabled = 0;
         int anisotropicFiltering = 0;
@@ -206,6 +215,7 @@ public class UI_SettingsVideo : MonoBehaviour {
             case Quality.Low:
                 textureQuality = 0;
                 shadowQuality = 0;
+                lightningQuality = 0;
                 antiAliasingQuality = 0;
                 hdrEnabled = 0;
                 anisotropicFiltering = 0;
@@ -215,6 +225,7 @@ public class UI_SettingsVideo : MonoBehaviour {
             case Quality.Medium:
                 textureQuality = 2;
                 shadowQuality = 1;
+                lightningQuality = 1;
                 antiAliasingQuality = 1;
                 hdrEnabled = 0;
                 anisotropicFiltering = 0;
@@ -224,6 +235,7 @@ public class UI_SettingsVideo : MonoBehaviour {
             case Quality.High:
                 textureQuality = 3;
                 shadowQuality = 2;
+                lightningQuality = 2;
                 antiAliasingQuality = 2;
                 hdrEnabled = 0;
                 anisotropicFiltering = 1;
@@ -233,6 +245,7 @@ public class UI_SettingsVideo : MonoBehaviour {
             case Quality.Ultra:
                 textureQuality = 3;
                 shadowQuality = 3;
+                lightningQuality = 3;
                 antiAliasingQuality = 3;
                 hdrEnabled = 1;
                 anisotropicFiltering = 1;
@@ -243,6 +256,7 @@ public class UI_SettingsVideo : MonoBehaviour {
 
         textureQualityOptions.UpdateIndexWithoutNotify(textureQuality);
         shadowQualityOptions.UpdateIndexWithoutNotify(shadowQuality);
+        lightningQualityOptions.UpdateIndexWithoutNotify(lightningQuality);
         antiAliasingOptions.UpdateIndexWithoutNotify(antiAliasingQuality);
         if (HDROutputSettings.main.available) hdrOptions.UpdateIndexWithoutNotify(hdrEnabled);
         anisotropicFilteringOptions.UpdateIndexWithoutNotify(anisotropicFiltering);
@@ -251,6 +265,7 @@ public class UI_SettingsVideo : MonoBehaviour {
 
         manager.SetTextureQuality(textureQuality);
         manager.SetShadowQuality(shadowQuality);
+        manager.SetLightningQuality(lightningQuality);
         manager.SetAntiAliasing(antiAliasingQuality);
         if (HDROutputSettings.main.available) manager.SetHDR(hdrEnabled);
         manager.SetAnisotropicFiltering(anisotropicFiltering);

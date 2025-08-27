@@ -63,11 +63,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     }
 
     public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
-        m_mouseSensitivity = playerParameters.m_mouseSensitivity;
         m_sensitivityMultiplier = playerParameters.m_sensitivityMultiplier;
         m_maxPositiveLookAngle = playerParameters.m_maxPositiveLookAngle;
         m_maxNegativeLookAngle = playerParameters.m_maxNegativeLookAngle;
-        m_invertCamera = playerParameters.m_invertCamera;
         m_defaultFov = playerParameters.m_defaultFov;
         m_zoomFOV = playerParameters.m_zoomFOV;
         m_zoomStepTime = playerParameters.m_zoomStepTime;
@@ -85,7 +83,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         if (!IsOwner) 
             m_playerCamera.gameObject.SetActive(false);        
         else {
-            Singleton.Instance.GameEvents.OnSensitivityChange.AddListener(OnSensitivityChanged);              
+            Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
+            Singleton.Instance.GameEvents.OnInvertAxisChanged.AddListener(CheckOptions);
         }                  
     }
 
@@ -93,13 +92,18 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         base.OnNetworkDespawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSensitivityChange.RemoveListener(OnSensitivityChanged);
+            Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
+            Singleton.Instance.GameEvents.OnInvertAxisChanged.RemoveListener(CheckOptions);
         }
     }
     #endregion
 
     private void OnSensitivityChanged(float value) {
         m_mouseSensitivity = value;
+    }
+
+    private void CheckOptions(int i) {
+        m_invertCamera = i == 1;
     }
 
     public void SetCameraGameObjectActive(bool active) {
