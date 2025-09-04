@@ -661,6 +661,7 @@ GameObject:
   - component: {fileID: 539735126977481674}
   - component: {fileID: 2950792846850592492}
   - component: {fileID: 4996587127200844063}
+  - component: {fileID: 3061870329174944487}
   m_Layer: 5
   m_Name: pfb_UI_PopUp
   m_TagString: Untagged
@@ -757,6 +758,22 @@ MonoBehaviour:
   countdownHolder: {fileID: 7800930623054923733}
   btn_accept: {fileID: 8324120422411892627}
   btn_cancel: {fileID: 9185055815598195007}
+--- !u!114 &3061870329174944487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3241258460780074543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d8414ee4e6fefb47b06981ca695cddb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  smallSizeMultiplier: 0.85
+  normalSizeMultiplier: 1
+  bigSizeMultiplier: 1.125
+  hugeSizeMultiplier: 1.275
 --- !u!1 &3672826361300373020
 GameObject:
   m_ObjectHideFlags: 0

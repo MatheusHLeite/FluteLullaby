@@ -17,6 +17,7 @@ MonoBehaviour:
   m_collectibleItemPrefab: {fileID: 888951278089668794, guid: 71236474c341ee34083157d638c4ebb5, type: 3}
   m_onHandItemPrefab: {fileID: 0}
   m_description: A box of .38 caliber rounds. Enough to keep your revolver talking.
+  weaponType: 1
   m_itemType: 4
   id: c17622cb-502a-4f4f-bb8e-862b6157fae6
-  m_weapon: 0
+  m_weapon: 1

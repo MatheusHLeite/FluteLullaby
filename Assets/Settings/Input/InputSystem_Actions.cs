@@ -440,6 +440,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SkipDialogue"",
+                    ""type"": ""Button"",
+                    ""id"": ""22760108-0c0f-4604-ac3a-dac920566f2a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -462,6 +471,39 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Inventory"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""41cd30f7-1974-4df1-8d1d-1f1e3d5bebb0"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""SkipDialogue"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""515f78f7-b3bf-49d5-91a3-b54919775e21"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""SkipDialogue"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""87c1fb65-73e0-4e8f-8c6d-9aef00d419d7"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""SkipDialogue"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1088,6 +1130,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Menu = asset.FindActionMap("Menu", throwIfNotFound: true);
         m_Menu_Pause = m_Menu.FindAction("Pause", throwIfNotFound: true);
         m_Menu_Inventory = m_Menu.FindAction("Inventory", throwIfNotFound: true);
+        m_Menu_SkipDialogue = m_Menu.FindAction("SkipDialogue", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1329,12 +1372,14 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private List<IMenuActions> m_MenuActionsCallbackInterfaces = new List<IMenuActions>();
     private readonly InputAction m_Menu_Pause;
     private readonly InputAction m_Menu_Inventory;
+    private readonly InputAction m_Menu_SkipDialogue;
     public struct MenuActions
     {
         private @InputSystem_Actions m_Wrapper;
         public MenuActions(@InputSystem_Actions wrapper) { m_Wrapper = wrapper; }
         public InputAction @Pause => m_Wrapper.m_Menu_Pause;
         public InputAction @Inventory => m_Wrapper.m_Menu_Inventory;
+        public InputAction @SkipDialogue => m_Wrapper.m_Menu_SkipDialogue;
         public InputActionMap Get() { return m_Wrapper.m_Menu; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1350,6 +1395,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Inventory.started += instance.OnInventory;
             @Inventory.performed += instance.OnInventory;
             @Inventory.canceled += instance.OnInventory;
+            @SkipDialogue.started += instance.OnSkipDialogue;
+            @SkipDialogue.performed += instance.OnSkipDialogue;
+            @SkipDialogue.canceled += instance.OnSkipDialogue;
         }
 
         private void UnregisterCallbacks(IMenuActions instance)
@@ -1360,6 +1408,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Inventory.started -= instance.OnInventory;
             @Inventory.performed -= instance.OnInventory;
             @Inventory.canceled -= instance.OnInventory;
+            @SkipDialogue.started -= instance.OnSkipDialogue;
+            @SkipDialogue.performed -= instance.OnSkipDialogue;
+            @SkipDialogue.canceled -= instance.OnSkipDialogue;
         }
 
         public void RemoveCallbacks(IMenuActions instance)
@@ -1570,6 +1621,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     {
         void OnPause(InputAction.CallbackContext context);
         void OnInventory(InputAction.CallbackContext context);
+        void OnSkipDialogue(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

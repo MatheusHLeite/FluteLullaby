@@ -6,7 +6,7 @@ public class Weapon_Revolver : Weapon_Firearm {
 
         AudioSystem.PlayShotSFX(Weapons.Revolver);
 
-        Physics.Raycast(ray, out hit, m_range); 
+        Physics.Raycast(ray, out hit, m_range, ~layerToIgnore); 
 
         if (hit.collider != null) {
             if (hit.collider.TryGetComponent(out Enemy enemy)) 
@@ -14,6 +14,9 @@ public class Weapon_Revolver : Weapon_Firearm {
 
             if (hit.collider.TryGetComponent(out Player_BodyPart player)) 
                 player.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
+
+            if (hit.collider.TryGetComponent(out NPC_Health npc))
+                npc.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
 
             Singleton.Instance.GameEvents.OnShotHit?.Invoke(hit);
         }  

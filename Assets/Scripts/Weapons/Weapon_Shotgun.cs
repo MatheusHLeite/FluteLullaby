@@ -17,17 +17,18 @@ public class Weapon_Shotgun : Weapon_Firearm {
         AudioSystem.PlayShotSFX(Weapons.Shotgun);
 
         for (int i = 0; i < pelletCount; i++) {
-            Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, GetSpreadDirection(), out hit, m_range);
+            Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, GetSpreadDirection(), out hit, m_range, ~layerToIgnore);
 
             if (hit.collider != null) {
-                if (hit.collider.TryGetComponent(out Enemy enemy)) {
-                    enemy.TakeDamage(m_damage / pelletCount);
-                }
+                if (hit.collider.TryGetComponent(out Enemy enemy)) 
+                    enemy.TakeDamage(m_damage / pelletCount);                
                     
-                if (hit.collider.TryGetComponent(out Player_BodyPart player)) {
-                    player.TakeDamage(m_damage / pelletCount, hit.point, ray.direction, m_impact); 
-                }             
-                    
+                if (hit.collider.TryGetComponent(out Player_BodyPart player)) 
+                    player.TakeDamage(m_damage / pelletCount, hit.point, ray.direction, m_impact);                 
+
+                if (hit.collider.TryGetComponent(out NPC_Health npc))
+                    npc.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
+
                 Singleton.Instance.GameEvents.OnShotHit?.Invoke(hit);
             }
         }

@@ -3,9 +3,10 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Interactor : NetworkBehaviour, IInteractable {
+    [FoldoutGroup("Visual")][SerializeField] private string m_screenShowcaseName;
     [FoldoutGroup("Visual")] [SerializeField] private Material m_outlineMaterial;
-    [FoldoutGroup("Visual")][SerializeField] private GameObject m_thirdPersonVisual;
-    [FoldoutGroup("Visual")][SerializeField] private GameObject m_onGroundVisual;
+    [FoldoutGroup("Visual")] [SerializeField] private GameObject m_thirdPersonVisual;
+    [FoldoutGroup("Visual")] [SerializeField] private GameObject m_onGroundVisual;
 
     private float m_outlineWidth = 1.075f;
 
@@ -67,6 +68,8 @@ public class Interactor : NetworkBehaviour, IInteractable {
     }
 
     public virtual void OnHoverOverItem(bool isOnTarget) {
+        if (!string.IsNullOrEmpty(m_screenShowcaseName))Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke(isOnTarget ? m_screenShowcaseName : "");
+
         propBlock.SetFloat("_OutlineScale", isOnTarget ? m_outlineWidth : 0);
         for (int i = 0; i < m_itemVisual.Length; i++)        
             m_itemVisual[i].SetPropertyBlock(propBlock);                

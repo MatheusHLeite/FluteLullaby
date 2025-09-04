@@ -48,7 +48,13 @@ public class GameEvents : MonoBehaviour {
     #region Settings
     public UnityEvent<float> OnSensitivityChanged { get; private set; } = new();
     public UnityEvent<int> OnInvertAxisChanged { get; private set; } = new();
-    public UnityEvent<int> OnSprintToggleChanged { get; private set; } = new(); 
+    public UnityEvent<int> OnCameraBobEnabledChanged { get; private set; } = new();
+    public UnityEvent<int> OnPlayerIndicatorChanged { get; private set; } = new();
+    public UnityEvent<int> OnUISizeChanged { get; private set; } = new();
+    public UnityEvent<int> OnSprintToggleChanged { get; private set; } = new();
+    public UnityEvent<int> OnDamageNumbersEnabledChanged { get; private set; } = new();
+    public UnityEvent<int> OnSubtitleTypeChanged { get; private set; } = new();
+    public UnityEvent<int> OnFontSizeChanged { get; private set; } = new();
     public UnityEvent<string> OnMicrophoneDeviceSwitch { get; private set; } = new();
     public UnityEvent<Quality> OnGlobalEffectsQualityChanged { get; private set; } = new();
     public UnityEvent<InputSystem_Actions> OnPlayerInputLoaded { get; private set; } = new();
@@ -58,6 +64,7 @@ public class GameEvents : MonoBehaviour {
     #region Interaction
     public UnityEvent<bool, Weapons> OnWeaponReload { get; set; } = new();
     public UnityEvent<string> OnHoverOverItem { get; set; } = new();
+    public UnityEvent OnInteractionReset { get; set; } = new();
     public UnityEvent OnHit { get; private set; } = new();
     public UnityEvent OnKill { get; private set; } = new();
     public UnityEvent<RaycastHit> OnShotHit { get; private set; } = new();

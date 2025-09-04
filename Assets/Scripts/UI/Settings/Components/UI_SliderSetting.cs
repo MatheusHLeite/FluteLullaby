@@ -10,10 +10,11 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
     [Header("Setup")]
     [SerializeField] protected string m_stringComplement = "";
     [SerializeField] protected SliderType m_type;
-    [SerializeField] private CanvasGroup thisCanvasGroup;
 
-    protected Slider slider;
-    protected TMP_InputField valueTxt;
+    [Header("UI")]
+    [SerializeField] protected Slider slider;
+    [SerializeField] protected TMP_InputField valueTxt;
+    [SerializeField] private CanvasGroup thisCanvasGroup;
 
     private int minValue;
     private int maxValue;
@@ -28,10 +29,11 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
         thisCanvasGroup.alpha = 0;
     }
 
-    public void Setup(Vector2 minMaxValues, float value, string txtValue = null, bool wholeNumbers = true, bool hasText = true) {
-        slider = GetComponentInChildren<Slider>();
-        valueTxt = GetComponentInChildren<TMP_InputField>();
+    public Slider GetSlider() => slider;
 
+    public TMP_InputField GetInputField() => valueTxt;
+
+    public void Setup(Vector2 minMaxValues, float value, string txtValue = null, bool wholeNumbers = true, bool hasText = true) {
         string stringValue = !string.IsNullOrEmpty(txtValue) ? txtValue : value.ToString("0.00");
 
         slider.wholeNumbers = wholeNumbers;

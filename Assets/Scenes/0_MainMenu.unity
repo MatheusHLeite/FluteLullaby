@@ -404,18 +404,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: -7083226056749652639, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
-      propertyPath: key.m_keyName
-      value: h
-      objectReference: {fileID: 0}
-    - target: {fileID: -7083226056749652639, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
-      propertyPath: key.m_actionReference
-      value: 
-      objectReference: {fileID: -4335538016855242775, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-    - target: {fileID: 1985180835361119820, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
-      propertyPath: value
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 2298118058184944170, guid: 815725f09b7c05d42a0a37d452ecf812, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -500,37 +488,6 @@ Transform:
   m_Children:
   - {fileID: 1327109907}
   - {fileID: 27453984}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &293621820
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 293621821}
-  m_Layer: 0
-  m_Name: hud display options - position elements on screen
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &293621821
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 293621820}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 714.28375, y: 483.11603, z: -3.8651133}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &596030688
@@ -1242,7 +1199,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1601449208}
   m_Layer: 0
-  m_Name: 'add lightning options - '
+  m_Name: add lightning options -  and VOLUMETRIC LIGHT PACK
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1304,4 +1261,3 @@ SceneRoots:
   - {fileID: 1892903691}
   - {fileID: 255176818}
   - {fileID: 1601449208}
-  - {fileID: 293621821}

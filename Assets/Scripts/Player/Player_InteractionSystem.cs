@@ -9,6 +9,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     [SerializeField] private Transform m_playerCamera;
     [SerializeField] private float m_interactionRadius;
     [SerializeField] private float m_interactionDistance;
+    [SerializeField] private LayerMask m_interactionLayer;
 
     #region Private variables 
     private IInteractable _actualInteractable;
@@ -38,7 +39,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
         base.OnNetworkSpawn();
 
         if (IsOwner) {
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);            
+            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
+            Singleton.Instance.GameEvents.OnInteractionReset.AddListener(OnInteractionReset);
         }
     }
 
@@ -47,6 +49,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
 
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
+            Singleton.Instance.GameEvents.OnInteractionReset.RemoveListener(OnInteractionReset);
         }
     }
     #endregion
@@ -65,7 +68,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         _target = m_playerCamera.position + (m_playerCamera.forward * m_interactionDistance);
         if (Physics.Raycast(m_playerCamera.position, m_playerCamera.forward, out _hit, m_interactionDistance))
             _target = _hit.point;        
-        result = Physics.OverlapSphere(_target, m_interactionRadius);
+        result = Physics.OverlapSphere(_target, m_interactionRadius, m_interactionLayer);
 
         newInteractable = result.Length > 0 ? NearestObject(result, _target).GetComponent<IInteractable>() : null;
 
@@ -80,6 +83,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
             _lastInteractable = _actualInteractable;
         }
     }
+
+    public void OnInteractionReset() { _lastInteractable = null; }
 
     private Collider NearestObject(Collider[] colliders, Vector3 hit) {
         nearestInteractionObject = null;

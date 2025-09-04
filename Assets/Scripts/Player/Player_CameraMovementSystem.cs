@@ -84,7 +84,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
             m_playerCamera.gameObject.SetActive(false);        
         else {
             Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
-            Singleton.Instance.GameEvents.OnInvertAxisChanged.AddListener(CheckOptions);
+            Singleton.Instance.GameEvents.OnInvertAxisChanged.AddListener(CheckInvertCameraEnabled);
+            Singleton.Instance.GameEvents.OnCameraBobEnabledChanged.AddListener(CheckCameraBalanceEnabled);
         }                  
     }
 
@@ -93,7 +94,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
-            Singleton.Instance.GameEvents.OnInvertAxisChanged.RemoveListener(CheckOptions);
+            Singleton.Instance.GameEvents.OnInvertAxisChanged.RemoveListener(CheckInvertCameraEnabled);
+            Singleton.Instance.GameEvents.OnCameraBobEnabledChanged.RemoveListener(CheckCameraBalanceEnabled);
         }
     }
     #endregion
@@ -102,8 +104,12 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         m_mouseSensitivity = value;
     }
 
-    private void CheckOptions(int i) {
+    private void CheckInvertCameraEnabled(int i) {
         m_invertCamera = i == 1;
+    }
+
+    private void CheckCameraBalanceEnabled(int i) {
+        m_cameraBalance = i == 1;
     }
 
     public void SetCameraGameObjectActive(bool active) {
@@ -150,6 +156,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     }
 
     private void ResetCameraBalance() {
+        if (!m_cameraBalance) return;
+
         _zRotation = Mathf.Lerp(_zRotation, 0, Time.deltaTime * m_cameraZRotationTime);
         Vector3 localEA = new Vector3(_pitch, 0, -_zRotation);
 

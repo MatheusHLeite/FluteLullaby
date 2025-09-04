@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85e8d22a11ce0374d9e9ca99c1dc1f9e, type: 3}
+  m_Name: 'Dialogue [Gigdi] [0]'
+  m_EditorClassIdentifier: 
+  m_speaker: Gigdi
+  m_dialogues:
+  - m_actualSpeaker: 0
+    m_speakerMood: 2
+    m_dialogue: "To s\xF3 de marola"
+    m_answers: []
+  - m_actualSpeaker: 0
+    m_speakerMood: 2
+    m_dialogue: ". . . eu n\xE3o fumo. . . cigarro"
+    m_answers: []
+  id: 50349f0f-defb-4091-8a3b-1706ae31f6e9

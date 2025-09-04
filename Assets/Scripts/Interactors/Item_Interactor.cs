@@ -30,9 +30,9 @@ public class Item_Interactor : Interactor {
     }
 
     public override void OnHoverOverItem(bool isOnTarget) {
-        base.OnHoverOverItem(isOnTarget);
-
         Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke(isOnTarget ? m_item.m_itemName : "");
+
+        base.OnHoverOverItem(isOnTarget);
     }
 
     public override void Interact(Player_InteractionSystem interactor) {

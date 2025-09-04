@@ -17,7 +17,7 @@ MonoBehaviour:
   m_collectibleItemPrefab: {fileID: 8447772049309928926, guid: e89ff9355f3b088458e1fae5e16afe8c, type: 3}
   m_onHandItemPrefab: {fileID: 0}
   m_description: A handful of 12-gauge shells. Loud, messy, and extremely effective.
-  weaponType: 1
+  weaponType: 2
   m_itemType: 4
   id: 08183d2d-277a-41a2-9174-c020a176527c
-  m_weapon: 1
+  m_weapon: 2

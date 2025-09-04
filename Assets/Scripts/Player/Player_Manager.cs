@@ -28,4 +28,6 @@ public class Player_Manager : NetworkBehaviour {
 
         Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke();
     }
+
+    public Camera GetPlayerCamera() => PlayerCameraMovementSystem.GetPlayerCamera;
 }

@@ -320,6 +320,8 @@ public class Settings {
 
     public int motionBlurEnabled;
 
+    public int colorblindMode;
+
     public Volume masterVolume;
     public Volume soundEffectsVolume;
     public Volume musicVolume;
@@ -331,6 +333,14 @@ public class Settings {
     public float mouseSensitivity;
     public int invertAxisIndex;
     public int sprintToggleIndex;
+
+    public Language language;
+    public int playerIndicatorMode;
+    public int hudSize;
+    public int cameraBobEnabled;
+    public int damageIndicatorEnabled;
+    public int subtitleType;
+    public int fontSize;
 }
 
 public class Volume {

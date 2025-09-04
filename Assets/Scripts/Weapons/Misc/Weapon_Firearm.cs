@@ -7,6 +7,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     [SerializeField] private ParticleSystem smokeFX;
     [SerializeField] private Animator armsAnimator;
 
+    protected int layerToIgnore;
+
     #region Protected variables
     protected float m_damage;
     protected float m_range;
@@ -56,6 +58,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     public virtual void SetupWeapon(Item_SO item, Player_CombatSystem combat) {
         weapon = item as LongRangeWeapon_SO;
         FirearmWeaponData data = Singleton.Instance.SaveManager.GetLongRangeWeaponFromInventory(item.id).firearmData;
+
+        layerToIgnore = LayerMask.GetMask("NPCVisual");
 
         CombatSystem = combat;
         CameraMovement = combat.GetComponent<Player_CameraMovementSystem>();

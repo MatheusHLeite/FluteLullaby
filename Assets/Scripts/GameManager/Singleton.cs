@@ -12,6 +12,7 @@ public class Singleton : MonoBehaviour {
     public InventoryManager InventoryManager { get; private set; }
     public SettingsManager SettingsManager { get; private set; }
     public RebindManager RebindManager { get; private set; }
+    public DialogueManager DialogueManager { get; private set; }
 
     private void Awake() {
         if (Instance) {
@@ -36,5 +37,6 @@ public class Singleton : MonoBehaviour {
         InventoryManager = GetComponent<InventoryManager>();
         SettingsManager = GetComponent<SettingsManager>();
         RebindManager = GetComponent<RebindManager>();
+        DialogueManager = GetComponent<DialogueManager>();
     }
 }

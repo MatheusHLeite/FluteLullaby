@@ -1,8 +1,9 @@
 using Sirenix.OdinInspector;
-using System;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour {
     [Header("Setup")]
@@ -77,13 +78,21 @@ public interface IInteractable {
     void Interact(Player_InteractionSystem interactor);
 }
 
+public enum Weapons { None, Revolver, Shotgun }
+
+public enum Language { English, Portuguese, Spanish }
+
 public enum ItemType { MeleeWeapon, Firearm, PuzzlePiece, Collectible, Ammo }
 
 public enum BodyPart { UpperBody, LowerBody, Head, Arm, Leg }
 
-public enum Weapons { None, Revolver, Shotgun }
-[Flags]
 public enum GameState { Resumed, Paused, InventoryOpened }
+
+public enum VolumeMixer { Master, Music, SFX, VoiceChat }
+
+public enum Quality { Low, Medium, High, Ultra }
+
+public enum Size { Small, Normal, Big }
 
 [System.Serializable]
 public struct CollectableItems {
@@ -111,5 +120,16 @@ public struct MovementAnimationParameters : INetworkSerializable {
         serializer.SerializeValue(ref m_moveY);
         serializer.SerializeValue(ref m_isGrounded);
     }
+}
+
+public struct UIOption {
+    public string text;
+    public int value;
+}
+
+[System.Serializable]
+public struct UISliderOption {
+    public Slider slider;
+    public TMP_Text text;
 }
 #endregion

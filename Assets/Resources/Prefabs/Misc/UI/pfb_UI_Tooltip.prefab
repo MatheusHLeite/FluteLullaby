@@ -966,6 +966,7 @@ GameObject:
   - component: {fileID: 6104478925184160565}
   - component: {fileID: 8774422510835375626}
   - component: {fileID: 7003840014073062210}
+  - component: {fileID: 4759008673603357004}
   m_Layer: 5
   m_Name: pfb_UI_Tooltip
   m_TagString: Untagged
@@ -1103,6 +1104,22 @@ MonoBehaviour:
   txt_itemType: {fileID: 4947081018578128010}
   btn_split: {fileID: 5605474751617878703}
   m_multiplier: 0.0275
+--- !u!114 &4759008673603357004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8380056561835234506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d8414ee4e6fefb47b06981ca695cddb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  smallSizeMultiplier: 0.85
+  normalSizeMultiplier: 1
+  bigSizeMultiplier: 1.125
+  hugeSizeMultiplier: 1.275
 --- !u!1 &8721074294519054338
 GameObject:
   m_ObjectHideFlags: 0

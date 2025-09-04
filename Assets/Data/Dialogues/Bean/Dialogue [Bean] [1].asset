@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85e8d22a11ce0374d9e9ca99c1dc1f9e, type: 3}
+  m_Name: 'Dialogue [Bean] [1]'
+  m_EditorClassIdentifier: 
+  m_speaker: Bean
+  m_dialogues:
+  - m_actualSpeaker: 1
+    m_speakerMood: 0
+    m_dialogue: Eu vou te fazer uma pergunta, se responder corretamente, vou te dar
+      uma beijoca dahora. . . . .
+    m_answers: []
+  - m_actualSpeaker: 1
+    m_speakerMood: 2
+    m_dialogue: Tinha dois cachorros, o pete e o repete
+    m_answers: []
+  - m_actualSpeaker: 1
+    m_speakerMood: 1
+    m_dialogue: o pete morreu
+    m_answers: []
+  - m_actualSpeaker: 1
+    m_speakerMood: 0
+    m_dialogue: quem sobrou?
+    m_answers:
+    - m_optionText: repete
+      m_nextDialogue: {fileID: 11400000}
+      m_onSelected:
+        m_PersistentCalls:
+          m_Calls: []
+    - m_optionText: o pet idiota
+      m_nextDialogue: {fileID: 11400000, guid: 74bc61b3d2efd6c4b8239e49fb4de520, type: 2}
+      m_onSelected:
+        m_PersistentCalls:
+          m_Calls: []
+    - m_optionText: Labubu de bobbie goods
+      m_nextDialogue: {fileID: 11400000, guid: 92602e53b5fb95544a5262d03bd92de9, type: 2}
+      m_onSelected:
+        m_PersistentCalls:
+          m_Calls: []
+  id: 36ee6f13-f873-4ac3-98a4-f5261b0c390c

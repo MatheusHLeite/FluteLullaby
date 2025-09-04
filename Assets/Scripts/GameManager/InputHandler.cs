@@ -7,6 +7,7 @@ public class InputHandler : MonoBehaviour {
     public bool Inventory { get; private set; }
     public bool NextTab { get; private set; }
     public bool PreviousTab { get; private set; }
+    public bool SkipDialogue { get; private set; }
 
     private void OnEnable() {
         if (Input == null) AddInputListeners();        
@@ -23,6 +24,7 @@ public class InputHandler : MonoBehaviour {
         Input.Menu.Inventory.performed += i => Inventory = true;
         Input.UI.NextTab.performed += i => NextTab = true;
         Input.UI.PreviousTab.performed += i => PreviousTab = true;
+        Input.Menu.SkipDialogue.performed += i => SkipDialogue = true;
 
         Input.Enable();
     }
@@ -32,6 +34,7 @@ public class InputHandler : MonoBehaviour {
         Input.Menu.Inventory.performed -= i => Inventory = true;
         Input.UI.NextTab.performed -= i => NextTab = true;
         Input.UI.PreviousTab.performed -= i => PreviousTab = true;
+        Input.Menu.SkipDialogue.performed -= i => SkipDialogue = true;
 
         Input.Disable();
         Input = null;
@@ -42,5 +45,6 @@ public class InputHandler : MonoBehaviour {
         Inventory = false;
         NextTab = false;
         PreviousTab = false;
+        SkipDialogue = false;
     }
 }

@@ -654,6 +654,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_stringComplement: 
   m_type: 0
+  slider: {fileID: 3584726294004621413}
+  valueTxt: {fileID: 4879902027438983112}
   thisCanvasGroup: {fileID: 4982515510549968141}
 --- !u!1 &7197425695315348100
 GameObject:

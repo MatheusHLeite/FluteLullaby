@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -8,13 +8,10 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.UI;
 
 public class SettingsManager : MonoBehaviour {
     [Header("Settings")]
     [SerializeField] private VolumeProfile m_globalVolume;
-    private ColorAdjustments colorAdjustments;
-    private MotionBlur motionBlur;
 
     [Header("Audio")]
     [SerializeField] private AudioMixer m_audioMixer;
@@ -22,9 +19,13 @@ public class SettingsManager : MonoBehaviour {
     [Header("Bindable Inputs")]
     [SerializeField] private KeyBind[] m_allKeyBinds;
 
+    private ColorAdjustments colorAdjustments;
+    private MotionBlur motionBlur;
+
     private SaveManager SaveManager;
 
     public static Quality GlobalEffectsQuality;
+    public static Language GameLanguage;
 
     public const string MasterVolume = "MasterVolume";
     public const string MusicVolume = "MusicVolume";
@@ -45,9 +46,20 @@ public class SettingsManager : MonoBehaviour {
 
     private string actualMicrophone;
 
+    private Colorblindness colorblind;
+
+    public bool HDRSupport {  get; private set; }
+
     #region General options string
     public List<UIOption> enableOptions { get; private set; }
     public List<UIOption> inverseEnableOptions { get; private set; }
+    #endregion
+
+    #region General options string
+    public List<UIOption> languageOptions { get; private set; } = new List<UIOption>();
+    public List<UIOption> playerIndicatorOptions { get; private set; }
+    public List<UIOption> sizeOptions { get; private set; }
+    public List<UIOption> subtitlesOptions { get; private set; }
     #endregion
 
     #region Video options string    
@@ -58,6 +70,7 @@ public class SettingsManager : MonoBehaviour {
     public List<UIOption> qualityOptions { get; private set; }
     public List<UIOption> qualityPresetOptions { get; private set; }
     public List<UIOption> renderDistanceOptions { get; private set; }
+    public List<UIOption> colorblindModeOptions { get; private set; }
 
     public Vector2 minMaxFPS { get; private set; }
     #endregion
@@ -66,9 +79,13 @@ public class SettingsManager : MonoBehaviour {
     public List<UIOption> outputDevices { get; private set; } = new List<UIOption>();
     #endregion
 
+    #region Initialization and Gets
     private void Awake() {        
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnSettingsDataLoaded);
 
+        HDRSupport = CheckHDR();
+
+        colorblind = GetComponent<Colorblindness>();
         if (m_globalVolume.TryGet(out ColorAdjustments ca)) colorAdjustments = ca;
         if (m_globalVolume.TryGet(out MotionBlur mb)) motionBlur = mb;
         SaveManager = Singleton.Instance.SaveManager;
@@ -114,6 +131,49 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("Average", 1),
             CreateNewOption("Maximum", 2),
         };
+        colorblindModeOptions = new List<UIOption> {
+            CreateNewOption("No filter", 0),
+            CreateNewOption("Protanopia", 1),
+            CreateNewOption("Protanomaly", 2),
+            CreateNewOption("Deuteranopia", 3),
+            CreateNewOption("Deuteranomaly", 4),
+            CreateNewOption("Tritanopia", 5),
+            CreateNewOption("Tritanomaly", 6),
+            CreateNewOption("Achromatopsia", 7),
+            CreateNewOption("Achromatomaly", 8),
+        };
+
+        Language[] allLanguages = (Language[])Enum.GetValues(typeof(Language));
+
+        for (int i = 0; i < allLanguages.Length; i++) {
+            languageOptions.Add(CreateNewOption(allLanguages[i].ToString(), i));
+        }
+
+        /*[TODO]  After localization
+         raw text = English - original lang = English
+        raw text = Portuguese - original lang = Português (PT-BR)
+        raw text = Spanish - original lang = Español
+        raw text = French - original lang = Français
+        raw text = Russian - original lang = Русский
+        raw text = Chinese - original lang = 中文 (简体)
+        */
+
+        playerIndicatorOptions = new List<UIOption> {
+            CreateNewOption("Full", 0),
+            CreateNewOption("Name", 1),
+            CreateNewOption("Indicator", 2),
+            CreateNewOption("None", 3)
+        };
+        sizeOptions = new List<UIOption> {
+            CreateNewOption("Small", 0),
+            CreateNewOption("Normal", 1),
+            CreateNewOption("Big", 2)
+        };
+        subtitlesOptions = new List<UIOption>
+        {
+            CreateNewOption("Default", 0),
+            CreateNewOption("Closed Captions", 1)
+        };
 
         UpdateMicrophoneList();
     }
@@ -131,6 +191,10 @@ public class SettingsManager : MonoBehaviour {
     }
 
     public KeyBind[] GetAllKeys() => m_allKeyBinds;
+
+    private UIOption CreateNewOption(string text, int value) {
+        return new UIOption() { text = text, value = value };
+    }
 
     private void InitializeMainVideoSettings() {
         resolutions = Screen.resolutions;
@@ -209,9 +273,68 @@ public class SettingsManager : MonoBehaviour {
             outputDevices.Add(CreateNewOption(allDevices[i], i));
     }
 
-    private UIOption CreateNewOption(string text, int value) {
-        return new UIOption() { text = text, value = value };
+    private void CheckPlayerLanguage(PlayerSaveData data) {
+        SystemLanguage systemLanguage = Application.systemLanguage;
+
+        int languageIndex;
+
+        switch (systemLanguage) {
+            case SystemLanguage.English:
+                languageIndex = 0;
+                break;
+            case SystemLanguage.Portuguese:
+                languageIndex = 1;
+                break;
+            case SystemLanguage.Spanish:
+                languageIndex = 2;
+                break;
+            /*case SystemLanguage.French:
+                languageIndex = 2;
+                break;
+            case SystemLanguage.Russian:
+                languageIndex = 2;
+                break;
+            case SystemLanguage.ChineseSimplified:
+                languageIndex = 2;
+                break;*/
+            default:
+                languageIndex = 0;
+                break;
+        }
+
+        data.settings.language = (Language)languageIndex;
     }
+
+    private void DetectSpecsAndSetQuality(PlayerSaveData data) {
+        print("Player is using " + SystemInfo.graphicsDeviceName);
+
+        int vram = SystemInfo.graphicsMemorySize;
+        int ram = SystemInfo.systemMemorySize;
+        int cpuThreads = SystemInfo.processorCount;
+
+        data.settings.qualityPresetIndex = EvaluateQualityPreset(ram, vram, cpuThreads);
+    }
+
+    private int EvaluateQualityPreset(int ram, int vram, int cpuThreads) {
+        if (ram >= 16000 && vram >= 6000 && cpuThreads >= 8)
+            return 3;
+        else if (ram >= 8000 && vram >= 3000 && cpuThreads >= 4)
+            return 2;
+        else if (ram >= 4000 && vram >= 1500 && cpuThreads >= 2)
+            return 1;
+        else
+            return 0;
+    }
+
+    private bool CheckHDR() {
+        HDROutputSettings hdrSettings = HDROutputSettings.main;
+
+        if (hdrSettings == null) 
+            return false;
+
+        return hdrSettings.available;
+    }
+    #endregion
 
     private void OnSettingsDataLoaded(PlayerSaveData data) {
         urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
@@ -223,23 +346,17 @@ public class SettingsManager : MonoBehaviour {
         SetResolution(data.settings.resolutionIndex, true);
         SetDisplayMode(data.settings.displayModeIndex, true);
         SetRefreshRate(data.settings.refreshRateIndex, true);
-
-        //[TODO] ANALIZE PLAYERS SPECS TO SET THE RECOMENDED SETTINGS
-        SetQualityPreset(data.settings.qualityPresetIndex, true);
-        SetTextureQuality(data.settings.textureQualityIndex, true);
-        SetShadowQuality(data.settings.shadowQualityIndex, true);
-        SetLightningQuality(data.settings.lightningQualityIndex, true);
         SetVSync(data.settings.vSyncEnabledIndex, true);
-        SetAntiAliasing(data.settings.antiAliasingModeIndex, true);
-        SetHDR(data.settings.hdrEnabledIndex, true);
-        SetRenderDistance(data.settings.renderDistanceIndex, true);
+
+        SetQualityPreset(data.settings.qualityPresetIndex, true);
+
         SetFPSLimit(data.settings.fpsLimitValue, true);
-        SetAnisotropicFiltering(data.settings.anisotropicFilteringIndex, true);
-        SetAmbientOcclusion(data.settings.ambientOcclusionIndex, true);
         SetResolutionScale(data.settings.resolutionScaleValue, true);
         SetGamma(data.settings.gammaValue, true);
-        SetPostProcessingQuality(data.settings.postProcessingQualityIndex, true);
         SetMotionBlur(data.settings.motionBlurEnabled, true);
+        SetColorBlindMode(data.settings.colorblindMode, true);
+
+        SetHDR(data.settings.hdrEnabledIndex, true);
 
         SetVolume(data.settings.masterVolume.volume, data.settings.masterVolume.volumeMixer, true);
         SetVolume(data.settings.musicVolume.volume, data.settings.musicVolume.volumeMixer, true);
@@ -251,12 +368,23 @@ public class SettingsManager : MonoBehaviour {
         SetSprintToggle(data.settings.sprintToggleIndex, true);
         SetInvertAxis(data.settings.invertAxisIndex, true);
 
+        SetLanguage((int)data.settings.language, true);
+        SetPlayerIndicatorMode(data.settings.playerIndicatorMode, true);
+        SetHUDSize(data.settings.hudSize, true);
+        SetCameraBobEnabled(data.settings.cameraBobEnabled, true);
+        SetDamageNumbersEnabled(data.settings.damageIndicatorEnabled, true);
+        SetSubtitleType(data.settings.subtitleType, true);
+        SetFontSize(data.settings.fontSize, true);
+
         Singleton.Instance.GameEvents.OnSettingsDataLoaded?.Invoke(data);
     }
 
     #region Settings setup
     private void SetupFirstSettings(PlayerSaveData data) {
         data.settings.firstSetup = false;
+
+        DetectSpecsAndSetQuality(data);
+        CheckPlayerLanguage(data);
 
         int defaultResolutionIndex = allResolutions.IndexOf($"{Screen.currentResolution.width} x {Screen.currentResolution.height}");
         int defaultRefreshRateIndex = refreshRateOptions.FindIndex(o => o.ToString() == Screen.currentResolution.refreshRateRatio.ToString());
@@ -442,8 +570,11 @@ public class SettingsManager : MonoBehaviour {
     } 
 
     public void SetHDR(int index, bool initialization = false) {
+        if (!HDRSupport) return;
+
         int indexValue = enableOptions[index].value;
-        urpAsset.supportsHDR = indexValue == 1;
+
+        HDROutputSettings.main.RequestHDRModeChange(indexValue == 1);
 
         if (!initialization && SaveManager.PlayerData.settings.hdrEnabledIndex != index) {
             SaveManager.PlayerData.settings.hdrEnabledIndex = index;
@@ -597,25 +728,33 @@ public class SettingsManager : MonoBehaviour {
 
     private void SetResolution(int width, int height, FullScreenMode mode, RefreshRate refreshRate) => Screen.SetResolution(width, height, mode, refreshRate);
 
-    #region Post processing
     public void SetPostProcessingQuality(int index, bool initialization = false) {
-        //[TODO] Add this when finishing post processing
         int indexValue = qualityOptions[index].value;
+
+        UpscalingFilterSelection upscalingFilter = UpscalingFilterSelection.Auto;
+        int hdrEnabled = 0;
 
         switch (indexValue) {
             case 0: // Ultra
-                
+                upscalingFilter = UpscalingFilterSelection.STP;
+                hdrEnabled = 1;
                 break;
             case 1: // High
-                
+                upscalingFilter = UpscalingFilterSelection.STP;
+                hdrEnabled = 1;
                 break;
             case 2: // Medium
-                
+                upscalingFilter = UpscalingFilterSelection.FSR;
+                hdrEnabled = 0;
                 break;
             case 3: // Low
-                
+                upscalingFilter = UpscalingFilterSelection.Point;
+                hdrEnabled = 0;
                 break;
         }
+
+        urpAsset.supportsHDR = hdrEnabled == 1;
+        urpAsset.upscalingFilter = upscalingFilter;
 
         if (!initialization && SaveManager.PlayerData.settings.postProcessingQualityIndex != index) {
             SaveManager.PlayerData.settings.motionBlurEnabled = index;
@@ -631,7 +770,15 @@ public class SettingsManager : MonoBehaviour {
             OnSettingsSaved();
         }
     }
-    #endregion
+
+    public void SetColorBlindMode(int index, bool initialization = false) {
+        colorblind.SetColorBlindnessFilter(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.colorblindMode != index) {
+            SaveManager.PlayerData.settings.colorblindMode = index;
+            OnSettingsSaved();
+        }
+    }
     #endregion
 
     #region Audio
@@ -709,22 +856,74 @@ public class SettingsManager : MonoBehaviour {
     }
     #endregion
 
+    #region General
+    public void SetLanguage(int index, bool initialization = false) {
+        GameLanguage = (Language)index;
+
+        print("Game language set to " + GameLanguage.ToString());
+
+        if (!initialization && SaveManager.PlayerData.settings.language != (Language)index) {
+            SaveManager.PlayerData.settings.language = (Language)index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetPlayerIndicatorMode(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnPlayerIndicatorChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.playerIndicatorMode != index) {
+            SaveManager.PlayerData.settings.playerIndicatorMode = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetHUDSize(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnUISizeChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.hudSize != index) {
+            SaveManager.PlayerData.settings.hudSize = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetCameraBobEnabled(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnCameraBobEnabledChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.cameraBobEnabled != index) {
+            SaveManager.PlayerData.settings.cameraBobEnabled = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetDamageNumbersEnabled(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnDamageNumbersEnabledChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.damageIndicatorEnabled != index) {
+            SaveManager.PlayerData.settings.damageIndicatorEnabled = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetSubtitleType(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnSubtitleTypeChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.subtitleType != index) {
+            SaveManager.PlayerData.settings.subtitleType = index;
+            OnSettingsSaved();
+        }
+    }
+
+    public void SetFontSize(int index, bool initialization = false) {
+        Singleton.Instance.GameEvents.OnFontSizeChanged?.Invoke(index);
+
+        if (!initialization && SaveManager.PlayerData.settings.fontSize != index) {
+            SaveManager.PlayerData.settings.fontSize = index;
+            OnSettingsSaved();
+        }
+    }
+    #endregion
+
     private void OnSettingsSaved() {
         SaveSystemHandler.SaveData(SaveManager.PlayerData);
     }
 }
-
-public struct UIOption {
-    public string text;
-    public int value;
-}
-
-[System.Serializable]
-public struct UISliderOption {
-    public Slider slider;
-    public TMP_Text text;
-}
-
-public enum VolumeMixer { Master, Music, SFX, VoiceChat }
-
-public enum Quality { Low, Medium, High, Ultra }

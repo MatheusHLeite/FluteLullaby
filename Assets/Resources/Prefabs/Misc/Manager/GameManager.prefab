@@ -130,6 +130,8 @@ GameObject:
   - component: {fileID: 6569613439342767934}
   - component: {fileID: 6152729137983085424}
   - component: {fileID: 2436691046570829008}
+  - component: {fileID: 7626948230465159475}
+  - component: {fileID: -7106299170615028422}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -179,7 +181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 810390217
+  GlobalObjectIdHash: 2489532751
   InScenePlacedSourceGlobalObjectIdHash: 810390217
   DeferredDespawnTick: 0
   Ownership: 1
@@ -346,6 +348,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f77938d16dd02774eb6035d6f70e60ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7626948230465159475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcdee695cf57f3545af7d3a3c6663677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  volumes:
+  - {fileID: 1279809082049261701}
+--- !u!114 &-7106299170615028422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27da3635721b82d4aa26ef4a3f9a3823, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_audioMixer: {fileID: -8043069621835560869, guid: b069e6acee9aa1741a1ba714d0b98585, type: 2}
+  m_outlineMaterial: {fileID: 2100000, guid: 3dd6c2228bd03e243ae32058fabf4073, type: 2}
+  m_characterBean:
+    m_character: 1
+    m_characterVoices:
+    - m_talkerMood: 0
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+    - m_talkerMood: 1
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+    - m_talkerMood: 2
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+  m_characterOther:
+    m_character: 0
+    m_characterVoices:
+    - m_talkerMood: 0
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+    - m_talkerMood: 1
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+    - m_talkerMood: 2
+      m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
 --- !u!1 &3816262137598194366
 GameObject:
   m_ObjectHideFlags: 0
