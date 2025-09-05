@@ -14,7 +14,7 @@ public class SaveManager : MonoBehaviour {
         initialized = true;
 
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnWeaponAmmoConsumed);
-        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(LoadData);
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnItemCollected.AddListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.AddListener(OnItemSplit);
@@ -25,7 +25,7 @@ public class SaveManager : MonoBehaviour {
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnWeaponAmmoConsumed);
-        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(LoadData);
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnItemCollected.RemoveListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.RemoveListener(OnItemSplit);
@@ -39,7 +39,13 @@ public class SaveManager : MonoBehaviour {
 
     private IEnumerator LoadPlayerData() {
         yield return new WaitUntil(() => SteamClient.IsValid || !GameNetworkManager.IsSteam);
+        yield return new WaitForEndOfFrame();
+
         LoadData();
+    }
+
+    private void OnPlayerLoaded(Player_Manager player = default) {
+        StartCoroutine(LoadPlayerData());
     }
 
     private void LoadData() {

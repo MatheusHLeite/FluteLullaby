@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour {
     }
     #endregion
 
-    private void OnPlayerLoaded() {
+    private void OnPlayerLoaded(Player_Manager player) {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }

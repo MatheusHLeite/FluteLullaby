@@ -2431,6 +2431,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   m_playerParameters: {fileID: 11400000, guid: 2c6417c7de601b74d82dd9e71149a3fa, type: 2}
+  m_playerCamera: {fileID: 3387822892132135912}
 --- !u!114 &7343019806427741575
 MonoBehaviour:
   m_ObjectHideFlags: 0

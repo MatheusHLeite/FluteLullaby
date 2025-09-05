@@ -19,7 +19,7 @@ public class InventoryManager : MonoBehaviour {
         _itemsOnSlots = null;
     }
 
-    private void OnPlayerSpawned() {
+    private void OnPlayerSpawned(Player_Manager player) {
         _itemsOnSlots = new bool[UI_InventoryManager._quickSlots.Count];
 
         PlayerSaveData data = Singleton.Instance.SaveManager.PlayerData;

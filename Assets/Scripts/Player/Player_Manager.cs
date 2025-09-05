@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Player_Manager : NetworkBehaviour {
     [SerializeField] private PlayerParameters_SO m_playerParameters;
+    [SerializeField] private Camera m_playerCamera;
 
     private Player_CameraMovementSystem PlayerCameraMovementSystem;
     private Player_MovementSystem PlayerMovementSystem;
@@ -26,8 +27,8 @@ public class Player_Manager : NetworkBehaviour {
         PlayerMovementSystem.SetPlayerParameters(m_playerParameters);
         PlayerHealthSystem.SetPlayerParameters(m_playerParameters);
 
-        Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke();
+        Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke(this);
     }
 
-    public Camera GetPlayerCamera() => PlayerCameraMovementSystem.GetPlayerCamera;
+    public Camera GetPlayerCamera() => m_playerCamera;
 }

@@ -189,6 +189,8 @@ public class UI_SettingsVideo : MonoBehaviour {
     }
 
     public void SetQualityPreset(int index) {
+        manager.SetQualityPreset(index);
+
         if (index == -1) {
             return;
         }

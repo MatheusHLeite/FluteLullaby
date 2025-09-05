@@ -9,7 +9,7 @@ public class GameEvents : MonoBehaviour {
 
     #region Data
     public UnityEvent<PlayerSaveData> OnDataLoaded { get; private set; } = new();
-    public UnityEvent OnPlayerLoaded { get; private set; } = new();
+    public UnityEvent<Player_Manager> OnPlayerLoaded { get; private set; } = new();
     public UnityEvent<ItemData> OnItemSaved { get; private set; } = new();
     public UnityEvent<ItemData> OnItemUpdated { get; private set; } = new();
     public UnityEvent<LongRangeWeapon_SO, int, int, int> OnAmmoUpdated { get; private set; } = new();

@@ -150,8 +150,7 @@ public class Player_MovementSystem : NetworkBehaviour {
             return; 
         }
 
-        isCrouched_NV.OnValueChanged += OnCrouchStateChanged;
-        GetComponent<CapsuleCollider>().enabled = false;        
+        isCrouched_NV.OnValueChanged += OnCrouchStateChanged;      
     }
 
     public override void OnNetworkDespawn() {

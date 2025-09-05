@@ -15,7 +15,7 @@ public class Weapon_Revolver : Weapon_Firearm {
             if (hit.collider.TryGetComponent(out Player_BodyPart player)) 
                 player.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
 
-            if (hit.collider.TryGetComponent(out NPC_Health npc))
+            if (hit.collider.TryGetComponent(out NPC_HealthHandler npc))
                 npc.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
 
             Singleton.Instance.GameEvents.OnShotHit?.Invoke(hit);

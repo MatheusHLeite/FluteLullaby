@@ -47,7 +47,11 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
 
     private List<GameObject> optionsCreated = new List<GameObject>();
 
+    private Camera playerCamera;
+
     protected virtual void Awake() {
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(i => playerCamera = i.GetPlayerCamera());
+
         quickText = m_quickTextHolder.transform.GetComponentInChildren<TMP_Text>();
         m_verticalLayout = m_optionContainer.GetComponent<VerticalLayout3D>();
         input = Singleton.Instance.InputHandler;
@@ -58,6 +62,8 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
     }
 
     protected virtual void OnDestroy() {
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(i => playerCamera = i.GetPlayerCamera());
+
         if (outlineInstance) Destroy(outlineInstance);
     }
 
@@ -93,10 +99,13 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
     }
 
     public void StopImmediately() {
-        StopAllCoroutines();
+        OnHoverOverItem(false);
         Destroy(m_base);
 
         disabled = true;
+
+        StopAllCoroutines();
+        ResetInteraction();        
     }
 
     public virtual void OnHoverOverItem(bool isOnTarget) {
@@ -129,7 +138,7 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
         dialogueIndex = 0;
         onDialogue = true;
 
-        Vector3 rot = Camera.main.transform.position - quickText.transform.position; //[TODO] Add camera instance on events
+        Vector3 rot = playerCamera.transform.position - quickText.transform.position;
         m_quickTextHolder.transform.rotation = Quaternion.LookRotation(rot);
         m_optionContainer.transform.rotation = Quaternion.LookRotation(rot);
 
@@ -290,12 +299,12 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
     }
 
     private void HandleTextVisual() {
-        if (Camera.main == null) return;
+        if (playerCamera == null) return;
 
-        Vector3 direction = Camera.main.transform.position - quickText.transform.position; //[TODO] Add camera instance on events
+        Vector3 direction = playerCamera.transform.position - quickText.transform.position;
         Quaternion targetRotation = Quaternion.LookRotation(direction);
 
-        Vector3 optionDirection = Camera.main.transform.position - m_optionContainer.transform.position; //[TODO] Add camera instance on events
+        Vector3 optionDirection = playerCamera.transform.position - m_optionContainer.transform.position; 
         Quaternion optionTargetRotation = Quaternion.LookRotation(optionDirection);
 
         m_quickTextHolder.transform.rotation = Quaternion.Lerp(

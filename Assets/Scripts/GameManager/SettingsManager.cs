@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Rendering;
@@ -18,6 +17,8 @@ public class SettingsManager : MonoBehaviour {
 
     [Header("Bindable Inputs")]
     [SerializeField] private KeyBind[] m_allKeyBinds;
+
+    private Camera playerCamera;
 
     private ColorAdjustments colorAdjustments;
     private MotionBlur motionBlur;
@@ -80,7 +81,8 @@ public class SettingsManager : MonoBehaviour {
     #endregion
 
     #region Initialization and Gets
-    private void Awake() {        
+    private void Awake() {
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(i => playerCamera = i.GetPlayerCamera());
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnSettingsDataLoaded);
 
         HDRSupport = CheckHDR();
@@ -179,6 +181,7 @@ public class SettingsManager : MonoBehaviour {
     }
 
     private void OnDestroy() {
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(i => playerCamera = i.GetPlayerCamera());
         Singleton.Instance.GameEvents.OnDataLoaded.RemoveListener(OnSettingsDataLoaded);
 
         enableOptions.Clear();
@@ -312,7 +315,7 @@ public class SettingsManager : MonoBehaviour {
         int ram = SystemInfo.systemMemorySize;
         int cpuThreads = SystemInfo.processorCount;
 
-        data.settings.qualityPresetIndex = EvaluateQualityPreset(ram, vram, cpuThreads);
+        //data.settings.qualityPresetIndex = EvaluateQualityPreset(ram, vram, cpuThreads);
     }
 
     private int EvaluateQualityPreset(int ram, int vram, int cpuThreads) {
@@ -349,6 +352,18 @@ public class SettingsManager : MonoBehaviour {
         SetVSync(data.settings.vSyncEnabledIndex, true);
 
         SetQualityPreset(data.settings.qualityPresetIndex, true);
+
+        if (data.settings.qualityPresetIndex == -1) {
+            SetTextureQuality(data.settings.textureQualityIndex);
+            SetShadowQuality(data.settings.shadowQualityIndex);
+            SetLightningQuality(data.settings.lightningQualityIndex);
+            SetAntiAliasing(data.settings.antiAliasingModeIndex);
+            SetAnisotropicFiltering(data.settings.anisotropicFilteringIndex);
+            SetAmbientOcclusion(data.settings.ambientOcclusionIndex);
+            SetEffectQuality(data.settings.effectsQualityIndex);
+            SetRenderDistance(data.settings.renderDistanceIndex);
+            SetPostProcessingQuality(data.settings.postProcessingQualityIndex);
+        }
 
         SetFPSLimit(data.settings.fpsLimitValue, true);
         SetResolutionScale(data.settings.resolutionScaleValue, true);
@@ -585,7 +600,7 @@ public class SettingsManager : MonoBehaviour {
     public void SetRenderDistance(int index, bool initialization = false) {
         //index = 0 minmun //index = 1 Average // index = 2 maximm 
 
-        Camera cam = Camera.main; //[TODO] check on player spawned event
+        Camera cam = playerCamera != null ? playerCamera : Camera.main;
        
         float enemyDistance = 160;
         float effectsDistance = 100;
@@ -925,5 +940,7 @@ public class SettingsManager : MonoBehaviour {
 
     private void OnSettingsSaved() {
         SaveSystemHandler.SaveData(SaveManager.PlayerData);
+
+        print(SaveManager.PlayerData.settings.qualityPresetIndex);
     }
 }

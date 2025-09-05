@@ -1,6 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class NPCVisualBehavior : MonoBehaviour {
+public class NPC_VisualBehavior : MonoBehaviour {
     [Header("Setup")]
     [SerializeField] private Transform m_head;
     [SerializeField] private Transform[] m_eyes;
@@ -13,6 +15,7 @@ public class NPCVisualBehavior : MonoBehaviour {
     [SerializeField] private float maxRotationAngle = 48f;
 
     private Transform playerCamera;
+    private List<Player_Manager> players = new List<Player_Manager>();
 
     private bool isDead;
 
@@ -45,18 +48,39 @@ public class NPCVisualBehavior : MonoBehaviour {
         SphereCollider collider = gameObject.AddComponent<SphereCollider>();
         collider.isTrigger = true;
         collider.radius = lookRange;
+
+        StartCoroutine(CheckCamera());
     }
 
     private void OnTriggerEnter(Collider other) {
-        if (other.TryGetComponent(out Player_Manager player)) {
-            playerCamera = player.GetPlayerCamera().transform;
+        if (other.TryGetComponent(out Player_BodyPart playerBodyPart)) {
+            if (playerBodyPart.transform.root.TryGetComponent(out Player_Manager player) && !players.Contains(player)) {
+                players.Add(player);
+                CheckPlayers();
+            }            
         }
     }
 
     private void OnTriggerExit(Collider other) {
-        if (other.TryGetComponent(out Player_Manager player)) {
-            playerCamera = null;
+        if (other.TryGetComponent(out Player_BodyPart playerBodyPart))  {
+            if (playerBodyPart.transform.root.TryGetComponent(out Player_Manager player) && players.Contains(player)) {
+                players.Remove(player);
+            }
         }
+    }
+
+    private IEnumerator CheckCamera() {
+        while (true) {
+            int randomDelay = Random.Range(5, 10);
+            yield return new WaitForSeconds(randomDelay);
+
+            CheckPlayers();
+        }
+    }
+
+    private void CheckPlayers() {
+        if (players.Count > 0) playerCamera = players[Random.Range(0, players.Count)].transform;
+        else playerCamera = null;
     }
 
     private void HandleVariables() {

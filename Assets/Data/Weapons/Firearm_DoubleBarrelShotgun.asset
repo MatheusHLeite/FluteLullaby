@@ -25,5 +25,5 @@ MonoBehaviour:
   m_maxAmmo: 2
   m_range: 30
   m_recoilForce: 135
-  m_impactForce: 220
+  m_impactForce: 170
   m_ammo: {fileID: 11400000, guid: 20a81a40735b486469897699f72fdd0c, type: 2}
