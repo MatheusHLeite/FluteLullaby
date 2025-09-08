@@ -1,8 +1,8 @@
 using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class NPC_VisualBehavior : MonoBehaviour {
+public class NPC_VisualBehavior : NetworkBehaviour {
     [Header("Setup")]
     [SerializeField] private Transform m_head;
     [SerializeField] private Transform[] m_eyes;
@@ -15,8 +15,6 @@ public class NPC_VisualBehavior : MonoBehaviour {
     [SerializeField] private float maxRotationAngle = 48f;
 
     private Transform playerCamera;
-    private List<Player_Manager> players = new List<Player_Manager>();
-
     private bool isDead;
 
     private Quaternion initialRotation;
@@ -33,6 +31,22 @@ public class NPC_VisualBehavior : MonoBehaviour {
     private Quaternion eyeTargetRotation;
     private Quaternion limitedEyeRotation;
 
+    private Coroutine playerCheckRoutine;
+
+    private NetworkList<ulong> playersIds = new NetworkList<ulong>();
+    private NetworkVariable<ulong> selectedPlayerId = new NetworkVariable<ulong>(
+    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public override void OnNetworkSpawn() {
+        playersIds.OnListChanged += OnPlayersListChanged;
+        selectedPlayerId.OnValueChanged += OnSelectedPlayerChanged;
+    }
+
+    public override void OnNetworkDespawn() { 
+        playersIds.OnListChanged -= OnPlayersListChanged;
+        selectedPlayerId.OnValueChanged -= OnSelectedPlayerChanged;
+    }
+
     void Start() {
         initialRotation = m_head.rotation;
         initialForward = initialRotation * Vector3.forward;
@@ -48,39 +62,91 @@ public class NPC_VisualBehavior : MonoBehaviour {
         SphereCollider collider = gameObject.AddComponent<SphereCollider>();
         collider.isTrigger = true;
         collider.radius = lookRange;
+    }
 
-        StartCoroutine(CheckCamera());
+    private void OnPlayersListChanged(NetworkListEvent<ulong> changeEvent) {
+        if (!IsServer) return;
+
+        if (playersIds.Count > 0 && playerCheckRoutine == null) 
+            playerCheckRoutine = StartCoroutine(CheckCamera());
+        if (playersIds.Count <= 0 && playerCheckRoutine != null) {
+            StopCoroutine(playerCheckRoutine);
+            playerCheckRoutine = null;
+        }
+
+        CheckPlayersList();
+    }
+
+    private void OnSelectedPlayerChanged(ulong previousId, ulong newId) {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(newId, out var netObj))
+            playerCamera = netObj.GetComponent<Player_Manager>().GetPlayerCamera().transform;
+        else
+            playerCamera = null;
     }
 
     private void OnTriggerEnter(Collider other) {
-        if (other.TryGetComponent(out Player_BodyPart playerBodyPart)) {
-            if (playerBodyPart.transform.root.TryGetComponent(out Player_Manager player) && !players.Contains(player)) {
-                players.Add(player);
-                CheckPlayers();
-            }            
-        }
+        if (other.TryGetComponent(out Player_Manager player))
+            OnPlayerEnterTrigger(player);
     }
 
     private void OnTriggerExit(Collider other) {
-        if (other.TryGetComponent(out Player_BodyPart playerBodyPart))  {
-            if (playerBodyPart.transform.root.TryGetComponent(out Player_Manager player) && players.Contains(player)) {
-                players.Remove(player);
-            }
+        if (other.TryGetComponent(out Player_Manager player))
+            OnPlayerExitTrigger(player);
+    }
+
+    private void OnPlayerEnterTrigger(Player_Manager player) {
+        if (IsServer) {
+            if (!playersIds.Contains(player.NetworkObjectId))
+                playersIds.Add(player.NetworkObjectId);
+            return;
         }
+
+        AddPlayerServerRpc(player.NetworkObjectId);
+    }
+
+    private void OnPlayerExitTrigger(Player_Manager player) {
+        if (IsServer) {
+            if (playersIds.Contains(player.NetworkObjectId))
+                playersIds.Remove(player.NetworkObjectId);
+            return;
+        }
+
+        RemovePlayerServerRpc(player.NetworkObjectId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void AddPlayerServerRpc(ulong playerId) {
+        if (!playersIds.Contains(playerId))
+            playersIds.Add(playerId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RemovePlayerServerRpc(ulong playerId) {
+        if (playersIds.Contains(playerId))
+            playersIds.Remove(playerId);
     }
 
     private IEnumerator CheckCamera() {
-        while (true) {
+        while (playersIds.Count > 0) {
             int randomDelay = Random.Range(5, 10);
             yield return new WaitForSeconds(randomDelay);
 
-            CheckPlayers();
+            CheckPlayersList();
         }
     }
 
-    private void CheckPlayers() {
-        if (players.Count > 0) playerCamera = players[Random.Range(0, players.Count)].transform;
-        else playerCamera = null;
+    private void CheckPlayersList() {
+        if (playersIds.Count > 0)
+            selectedPlayerId.Value = playersIds[Random.Range(0, playersIds.Count)];
+        else
+            selectedPlayerId.Value = 0;
+
+        //if (playersIds.Count > 0) {
+        //    var randomId = playersIds[Random.Range(0, playersIds.Count)];
+        //    if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(randomId, out var netObj))            
+        //        playerCamera = netObj.GetComponent<Player_Manager>().GetPlayerCamera().transform;            
+        //}
+        //else playerCamera = null;
     }
 
     private void HandleVariables() {
