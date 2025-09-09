@@ -1977,6 +1977,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 165222357}
+  - component: {fileID: 165222359}
   - component: {fileID: 165222358}
   m_Layer: 14
   m_Name: NPC_TestBoy
@@ -2014,6 +2015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85ec9ab66d9794b42bcd0662d7701ab0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   m_head: {fileID: 1348840378}
   m_eyes:
   - {fileID: 591536478}
@@ -2027,6 +2029,31 @@ MonoBehaviour:
   rotationSpeed: 3.75
   maxEyeRotationAngle: 105
   maxRotationAngle: 48
+--- !u!114 &165222359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165222356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3680087418
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &178672530
 GameObject:
   m_ObjectHideFlags: 0
@@ -15499,6 +15526,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1079554772}
+  - component: {fileID: 1079554774}
   - component: {fileID: 1079554773}
   m_Layer: 14
   m_Name: NPC_TestBoy
@@ -15536,6 +15564,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85ec9ab66d9794b42bcd0662d7701ab0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   m_head: {fileID: 2652730741164304646}
   m_eyes:
   - {fileID: 1661223267}
@@ -15547,6 +15576,31 @@ MonoBehaviour:
   rotationSpeed: 3.75
   maxEyeRotationAngle: 105
   maxRotationAngle: 48
+--- !u!114 &1079554774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1079554771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 901917117
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1084186988
 GameObject:
   m_ObjectHideFlags: 0
@@ -16284,12 +16338,7 @@ MonoBehaviour:
   m_screenShowcaseName: Talk to Gigdi
   m_dialogue: {fileID: 11400000, guid: 39d7a8c4596d22a478d65b12f695d63b, type: 2}
   m_upperHead: {fileID: 4892013968431624900}
-  m_itemVisual:
-  - {fileID: 527257471}
-  - {fileID: 1021701989}
-  - {fileID: 811145045}
-  - {fileID: 1480145629}
-  - {fileID: 1641958111}
+  m_itemVisual: []
   m_optionButtonPrefab: {fileID: 7770156777128510978, guid: f5ddeb8be78ca9744b779d67c8c301da, type: 3}
   m_optionContainer: {fileID: 1869682234464492936}
   m_base: {fileID: 6953798023343086128}
@@ -24856,12 +24905,7 @@ MonoBehaviour:
   m_screenShowcaseName: Talk to Bean
   m_dialogue: {fileID: 11400000, guid: eedd36c3242eb2a4c8260b18f6242363, type: 2}
   m_upperHead: {fileID: 527257473}
-  m_itemVisual:
-  - {fileID: 8837408430221967715}
-  - {fileID: 386399001876319722}
-  - {fileID: 1130874634}
-  - {fileID: 1097682946}
-  - {fileID: 1011458052}
+  m_itemVisual: []
   m_optionButtonPrefab: {fileID: 7770156777128510978, guid: f5ddeb8be78ca9744b779d67c8c301da, type: 3}
   m_optionContainer: {fileID: 1869682236095020046}
   m_base: {fileID: 6953798024942189494}

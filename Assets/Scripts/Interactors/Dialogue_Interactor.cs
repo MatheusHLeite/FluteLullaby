@@ -13,8 +13,8 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
     [SerializeField] private Transform m_upperHead;
 
     [Header("Visuals")]
-    [SerializeField] private Renderer[] m_itemVisual;    
-
+    [SerializeField] private Renderer[] m_itemVisual;
+    
     [Header("Options UI")]
     [FoldoutGroup("Setup")][SerializeField] private DialogueOptionSelection m_optionButtonPrefab;
     [FoldoutGroup("Setup")][SerializeField] private Transform m_optionContainer;
@@ -74,6 +74,10 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
 
     private void SetMaterials() {
         propBlock = new MaterialPropertyBlock();
+
+        if (m_itemVisual.Length <= 0) {
+            m_itemVisual = GetComponentsInChildren<Renderer>();
+        }
 
         outlineWidth = 1.05f;
         Material material = Singleton.Instance.DialogueManager.GetOutlineMaterial();

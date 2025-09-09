@@ -315,7 +315,7 @@ public class SettingsManager : MonoBehaviour {
         int ram = SystemInfo.systemMemorySize;
         int cpuThreads = SystemInfo.processorCount;
 
-        //data.settings.qualityPresetIndex = EvaluateQualityPreset(ram, vram, cpuThreads);
+        data.settings.qualityPresetIndex = EvaluateQualityPreset(ram, vram, cpuThreads);
     }
 
     private int EvaluateQualityPreset(int ram, int vram, int cpuThreads) {

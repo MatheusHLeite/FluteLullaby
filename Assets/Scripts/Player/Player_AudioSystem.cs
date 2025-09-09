@@ -3,24 +3,21 @@ using UnityEngine;
 
 public class Player_AudioSystem : NetworkBehaviour {
     [Header("AudioSources")]    
-    public AudioSource m_shootAudioSource;
-    public AudioSource m_voiceChatSource;
+    public AudioSource m_shootAudioSource;    
     [Space(10)]
     public AudioClip[] m_revolverShotSounds;
     public AudioClip[] m_shotgunShotSounds;
 
-    private string connectedDevice;
-
     public override void OnNetworkSpawn() {
         if (!IsOwner) return;
 
-        Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.AddListener(OnMicrophoneDeviceSwitch);
+        
     }
 
     public override void OnNetworkDespawn() {
         if (!IsOwner) return;
 
-        Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.RemoveListener(OnMicrophoneDeviceSwitch);
+        
     }
 
     internal void PlayShotSFX(Weapons weapon) => RequestShootSoundServerRpc(weapon);
@@ -48,12 +45,5 @@ public class Player_AudioSystem : NetworkBehaviour {
         }
 
         m_shootAudioSource.PlayOneShot(clip);
-    }
-
-    private void OnMicrophoneDeviceSwitch(string device) {
-        if (!string.IsNullOrEmpty(connectedDevice)) Microphone.End(connectedDevice);
-        m_voiceChatSource.clip = Microphone.Start(device, true, 10, 44100);
-
-        connectedDevice = device;
     }
 }
