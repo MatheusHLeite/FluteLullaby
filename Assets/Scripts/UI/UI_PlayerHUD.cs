@@ -19,12 +19,16 @@ public class UI_PlayerHUD : MonoBehaviour {
     
     [Header("Crosshair")]
     [SerializeField] private Animator m_crosshairAnimator;
+    [SerializeField] private CrosshairType[] m_crosshairs;
+    [SerializeField] private GameObject m_defaultCrosshair;
 
     private CinemachineImpulseSource impulseSource;
 
     private int _killCount;
     private int _deathCount;
     private bool m_staminaFull;
+
+    private int crosshairType;
 
     private void Awake() {
         m_ammo.gameObject.SetActive(false);
@@ -48,22 +52,56 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
-
-        
     }
 
     private void Start() {
         impulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
+    private void OnCrosshairTypeChanged(int index) {
+        crosshairType = index;
+    }
+
     private void OnWeaponChanged(Weapon_Firearm weapon) {
+        Weapons weaponType = Weapons.None;
+
         if (weapon == null || (weapon != null && weapon.GetItem().m_itemType != ItemType.Firearm)) {
             m_ammo.gameObject.SetActive(false);
+        }
+        else {
+            if (!m_ammo.gameObject.activeSelf) m_ammo.gameObject.SetActive(true);
+            m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
+
+            weaponType = weapon.GetItem().weaponType;
+        }
+        
+        CheckCrosshair(weaponType);
+    }
+
+    private void CheckCrosshair(Weapons weapon) {
+        if (weapon == Weapons.None) {
+            SelectCrosshair(weapon);
+            m_defaultCrosshair.gameObject.SetActive(true);
             return;
         }
 
-        if (!m_ammo.gameObject.activeSelf) m_ammo.gameObject.SetActive(true);
-        m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
+        m_defaultCrosshair.gameObject.SetActive(false);
+        SelectCrosshair(weapon);
+    }
+
+    private void SelectCrosshair(Weapons weapon) {
+        for (int i = 0; i < m_crosshairs.Length; i++) {
+            for (int c = 0; c < m_crosshairs[i].m_crosshairs.Length; c++) {
+                m_crosshairs[i].m_crosshairs[c].SetActive(false);
+            }
+        }
+
+        for (int i = 0; i < m_crosshairs.Length; i++) {
+            if (weapon == m_crosshairs[i].m_weapon) {
+                m_crosshairs[i].m_crosshairs[crosshairType].SetActive(true);
+                break;
+            }
+        }
     }
 
     private void OnAmmoSpent(LongRangeWeapon_SO weapon, int currentAmmo, int maxAmmo, int remainingAmmo) {
@@ -162,4 +200,10 @@ public class UI_PlayerHUD : MonoBehaviour {
     private void SetSelectedActionText(string text) {
         m_selectedActionIndicator.text = text;
     }
+}
+
+[System.Serializable]
+public struct CrosshairType {
+    public Weapons m_weapon;
+    public GameObject[] m_crosshairs;
 }

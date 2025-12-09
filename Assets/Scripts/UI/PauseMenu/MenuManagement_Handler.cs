@@ -39,10 +39,18 @@ public class MenuManagement_Handler : MonoBehaviour {
     private const string AcceptMessage = "Accept";
     private const string CancelMessage = "Cancel";
 
+    public bool lockInputs {  get; private set; }
+
     private void Awake() {
         Input = Singleton.Instance.InputHandler;
 
+        Singleton.Instance.GameEvents.LockNavigationInputs.AddListener(b => lockInputs = b);
+
         SetupButtons();
+    }
+
+    private void OnDestroy() {
+        Singleton.Instance.GameEvents.LockNavigationInputs.RemoveListener(b => lockInputs = b);
     }
 
     private void Start() {      
@@ -132,6 +140,8 @@ public class MenuManagement_Handler : MonoBehaviour {
     }
 
     private void HandleInputs() {
+        if (lockInputs) return;
+
         if (Input.Pause) {
             if (!windowOpened) {
                 OpenMainPauseMenu();

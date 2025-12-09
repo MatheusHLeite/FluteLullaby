@@ -9,7 +9,6 @@ public class UI_SettingsVideo : MonoBehaviour {
     [Header("UI Components")]
     [SerializeField] private UI_Setting resolutionOptions;
     [SerializeField] private UI_Setting displayModeOptions;
-    [SerializeField] private UI_Setting refreshRateOptions;
     [SerializeField] private UI_Setting presetQualityOptions;
     [SerializeField] private UI_Setting textureQualityOptions;
     [SerializeField] private UI_Setting shadowQualityOptions;
@@ -71,21 +70,12 @@ public class UI_SettingsVideo : MonoBehaviour {
     private void OnSettingsDataLoaded(PlayerSaveData data) {
         manager = Singleton.Instance.SettingsManager;        
 
-        List<UIOption> rrStringList = new List<UIOption>();
-        for (int i = 0; i < manager.refreshRateOptions.Count; i++) {
-            RefreshRate rr = manager.refreshRateOptions[i];
-            float hz = (float)rr.numerator / rr.denominator;
-            string rrString = hz.ToString("0.00");
-            rrStringList.Add(new UIOption() { text = rrString, value = i });
-        }
-
         List<UIOption> disabledHDR = new List<UIOption>() {
             new UIOption() { text = "Disabled", value = 0 }
         };
 
-        resolutionOptions.SetupOptions(manager.resolutionOptions, data.settings.resolutionIndex);        
-        refreshRateOptions.SetupOptions(rrStringList, data.settings.refreshRateIndex);
         displayModeOptions.SetupOptions(manager.displayModeOptions, data.settings.displayModeIndex);
+        resolutionOptions.SetupOptions(manager.resolutionOptions, data.settings.resolutionIndex);
 
         presetQualityOptions.SetupOptions(manager.qualityOptions, data.settings.qualityPresetIndex);
         textureQualityOptions.SetupOptions(manager.qualityOptions, data.settings.textureQualityIndex);
@@ -116,11 +106,10 @@ public class UI_SettingsVideo : MonoBehaviour {
         SetupListeners();
     }
 
-    private void SetupListeners() {
+    private void SetupListeners() {       
         presetQualityOptions.onValueChanged.AddListener(SetQualityPreset);
         resolutionOptions.onValueChanged.AddListener(SetApplyButtonActive);
-        displayModeOptions.onValueChanged.AddListener(SetApplyButtonActive);
-        refreshRateOptions.onValueChanged.AddListener(SetApplyButtonActive);        
+        displayModeOptions.onValueChanged.AddListener(SetApplyButtonActive);   
         vSyncOptions.onValueChanged.AddListener(i => manager.SetVSync(i));
         fpsLimitSlider.AddListener(i => manager.SetFPSLimit(i));
         gammaSlider.AddListener(i => manager.SetGamma(i));
@@ -164,7 +153,6 @@ public class UI_SettingsVideo : MonoBehaviour {
         presetQualityOptions.onValueChanged.RemoveAllListeners();
         resolutionOptions.onValueChanged.RemoveAllListeners();
         displayModeOptions.onValueChanged.RemoveAllListeners();
-        refreshRateOptions.onValueChanged.RemoveAllListeners();
         textureQualityOptions.onValueChanged.RemoveAllListeners();
         shadowQualityOptions.onValueChanged.RemoveAllListeners();
         lightningQualityOptions.onValueChanged.RemoveAllListeners();
@@ -208,18 +196,10 @@ public class UI_SettingsVideo : MonoBehaviour {
         int postProcessing = 0;
 
         switch (index) {
-            case 0:
-                qualityPreset = Quality.Low;
-                break;
-            case 1:
-                qualityPreset = Quality.Medium;
-                break;
-            case 2:
-                qualityPreset = Quality.High;
-                break;
-            case 3:
-                qualityPreset = Quality.Ultra;
-                break;
+            case 0: qualityPreset = Quality.Low; break;
+            case 1: qualityPreset = Quality.Medium; break;
+            case 2: qualityPreset = Quality.High; break;
+            case 3: qualityPreset = Quality.Ultra; break;
         }
 
         switch (qualityPreset) {
@@ -306,10 +286,9 @@ public class UI_SettingsVideo : MonoBehaviour {
         hasChangesToApply = true;
     }
 
-    private void OnSettingsApply() {
+    private void OnSettingsApply() {        
         manager.SetResolution(resolutionOptions.GetSettingsIndex());
         manager.SetDisplayMode(displayModeOptions.GetSettingsIndex());
-        manager.SetRefreshRate(refreshRateOptions.GetSettingsIndex());
 
         OnSettingsClosed();
     }
@@ -319,7 +298,6 @@ public class UI_SettingsVideo : MonoBehaviour {
 
         resolutionOptions.SetSpecificIndex(data.settings.resolutionIndex);
         displayModeOptions.SetSpecificIndex(data.settings.displayModeIndex);
-        refreshRateOptions.SetSpecificIndex(data.settings.refreshRateIndex);
 
         OnSettingsClosed();
     }

@@ -58,7 +58,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<string> OnMicrophoneDeviceSwitch { get; private set; } = new();
     public UnityEvent<Quality> OnGlobalEffectsQualityChanged { get; private set; } = new();
     public UnityEvent<InputSystem_Actions> OnPlayerInputLoaded { get; private set; } = new();
-    public UnityEvent OnBindsUpdated { get; private set; } = new();
+    public UnityEvent<bool> OnBindsUpdated { get; private set; } = new();
     #endregion
 
     #region Interaction
@@ -67,6 +67,8 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent OnInteractionReset { get; set; } = new();
     public UnityEvent OnHit { get; private set; } = new();
     public UnityEvent OnKill { get; private set; } = new();
-    public UnityEvent<RaycastHit> OnShotHit { get; private set; } = new();
+    public UnityEvent<Vector3, RaycastHit, Vector3> OnShot { get; private set; } = new();
     #endregion
+
+    public UnityEvent<bool> LockNavigationInputs { get; set; } = new(); 
 }

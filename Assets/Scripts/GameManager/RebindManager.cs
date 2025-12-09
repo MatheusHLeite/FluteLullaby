@@ -1,13 +1,31 @@
-using Sirenix.OdinInspector;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
 
 public class RebindManager : MonoBehaviour {
     private InputSystem_Actions inputActions;
     private InputActionRebindingExtensions.RebindingOperation rebindingOperation;
 
-    #region Initialization
+    private InputAction currentAction;
+    private InputControl currentBinding;
+    private int currentBindingIndex;
+
+    public bool OnRebinding { get; private set; }
+
+    private const string KeyboardExclude = "Keyboard/escape";
+    private const string AnyKeyExclude = "Keyboard/anyKey";
+
+    private UnityAction currentOnRebinded;
+    private UnityAction currentOnComplete;
+
+    private string oldBindingPath;
+    public List<(InputAction action, int index, string displayName)> conflictingBindings { get; private set; }
+
+    private List<UI_KeyBinder> allBinders;
+
+    #region Initialization and misc
     private void Awake() {
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(LoadBinds);
         Singleton.Instance.GameEvents.OnPlayerInputLoaded.AddListener(OnPlayerInputLoaded);
@@ -21,56 +39,172 @@ public class RebindManager : MonoBehaviour {
     private void OnPlayerInputLoaded(InputSystem_Actions input) {
         inputActions = input;
     }
+
+    public void OnKeyBinderListSet(List<UI_KeyBinder> allBinders) {
+        this.allBinders = allBinders;
+    }    
+
+    public InputAction GetInputAction(string mapActionName) {
+        return inputActions?.FindAction(mapActionName);
+    }
+
+    private string NormalizePath(string path) {
+        if (string.IsNullOrEmpty(path)) return "";
+        if (path.StartsWith("/")) path = path.Substring(1);
+        return path.Replace("<", "").Replace(">", "");
+    }
+
+    private UI_KeyBinder FindKeyBinderForAction(string actionName) {
+        return allBinders.FirstOrDefault(b => b.GetKey().m_actionReference.action.name == actionName);
+    }
+
+    private void Print(string message, string color = "white") { Debug.Log($"<color={color}>{message}</color>"); }
     #endregion
 
-    public void StartRebinding(KeyBind keyBind, UnityAction<string> onRebinded, UnityAction onCancel, UnityAction onKeyAlreadyBound, float time) {
-        var action = inputActions.FindAction("Player/" + keyBind.m_actionReference.action.name, true);
+    #region Main
+    public void StartRebinding(UI_KeyBinder keyBinder, UnityAction onKeyAlreadyBound, UnityAction onRebinded, UnityAction onComplete, float time) {
+        KeyBind keyBind = keyBinder.GetKey();
+        var action = inputActions.FindAction($"{keyBind.m_actionReference.action.actionMap.name}/{keyBind.m_actionReference.action.name}", true);
+
+        currentOnRebinded = onRebinded;
+        currentOnComplete = onComplete;
+
+        OnRebinding = true;
 
         rebindingOperation?.Cancel();
         rebindingOperation?.Dispose();
 
         action.Disable();
 
-        print("Waiting player input...");
+        Print("Waiting player input...", "green");
 
         int bindingIndex = 0;
 
+        oldBindingPath = action.bindings[bindingIndex].effectivePath;
+        conflictingBindings = new List<(InputAction, int, string)>();
+
         rebindingOperation = action.PerformInteractiveRebinding(bindingIndex)
-            .WithCancelingThrough("Keyboard/escape")
-            .WithControlsExcluding("Keyboard/anyKey")
+            .WithCancelingThrough(KeyboardExclude)
+            .WithControlsExcluding(AnyKeyExclude)
             .WithTimeout(time)
             .OnMatchWaitForAnother(.1f)
             .OnComplete(operation => {
-                var newBinding = operation.selectedControl;
+                currentBinding = operation.selectedControl;
+                currentAction = action;
+                currentBindingIndex = bindingIndex;
 
-                //Adicionar um return e abrir um pop up se a tecla ja existir nas ações
+                operation.Dispose();
 
-                action.ApplyBindingOverride(bindingIndex, newBinding.path);
+                if (CheckConflicts()) {
+                    onKeyAlreadyBound?.Invoke();
+                    currentAction.RemoveBindingOverride(currentBindingIndex);
+                    return;
+                }
 
+                currentAction.ApplyBindingOverride(currentBindingIndex, currentBinding.path);
                 SaveBinds();
 
-                OnOperationComplete(action, operation, "New key binded: " + newBinding.name);
-                onRebinded?.Invoke(GetBindingName(newBinding));
+                Print("New key binded: " + currentBinding.displayName, "green");
+
+                onRebinded?.Invoke();
+
+                OnOperationComplete(onComplete);
             }).OnCancel(operation => {
-                OnOperationComplete(action, operation, "Key not changed, keeping the original: " + action.bindings[bindingIndex].effectivePath);
-                onCancel?.Invoke();
+                currentAction = action;
+                operation.Dispose();
+
+                CancelRebind("Key not changed, keeping the original: " + action.bindings[bindingIndex].effectivePath,
+                    onComplete);
             })
             .Start();
     }
 
-    private string GetBindingName(InputControl control) {
-        if (control.device is Mouse) 
-            return control.shortDisplayName;
+    public void CancelRebind(string reason, UnityAction onComplete = default) {
+        currentAction.RemoveBindingOverride(currentBindingIndex);
+        OnOperationComplete(onComplete);
+        Print(reason, "red");
 
-        if (control.device is Keyboard) 
-            return control.displayName;
-
-        return string.IsNullOrEmpty(control.shortDisplayName)
-            ? control.displayName
-            : control.shortDisplayName;
+        conflictingBindings.Clear();
+        oldBindingPath = null;
+        currentOnRebinded = null;
+        currentOnComplete = null;
     }
 
-    [Button]
+    private void OnOperationComplete(UnityAction onComplete) {
+        currentAction.Enable();
+        inputActions.Enable();
+
+        OnRebinding = false;
+        rebindingOperation = null;
+
+        Singleton.Instance.GameEvents.LockNavigationInputs?.Invoke(false);
+
+        onComplete?.Invoke();
+    }
+
+    public void ForceRebind() {
+        if (conflictingBindings.Count == 0) return;
+
+        foreach (var (otherAction, i, _) in conflictingBindings) {
+            if (conflictingBindings.Count == 1 && !string.IsNullOrEmpty(oldBindingPath)) {
+                otherAction.ApplyBindingOverride(i, oldBindingPath);
+                Print($"Swapped binding on {otherAction.name} to {oldBindingPath}", "yellow");
+            }
+            else {
+                otherAction.ApplyBindingOverride(i, "");
+                Print($"Unbound conflicting binding on {otherAction.name} at index {i}", "yellow");
+            }
+
+            var conflictBinder = FindKeyBinderForAction(otherAction.name);
+            if (conflictBinder != null) {
+                conflictBinder.UpdateKeyDisplay();
+                Print($"Manually updated UI for conflicting action {otherAction.name}", "blue");
+            }
+        }
+
+        currentAction.ApplyBindingOverride(currentBindingIndex, currentBinding.path);
+        SaveBinds();
+
+        currentOnRebinded?.Invoke();
+
+        Print($"Key overwritten with {currentBinding.displayName}", "green");
+
+        OnOperationComplete(currentOnComplete);
+
+        conflictingBindings.Clear();
+        oldBindingPath = null;
+        currentOnRebinded = null;
+        currentOnComplete = null;
+    }
+
+    private bool CheckConflicts() {
+        conflictingBindings.Clear();
+        var rebindableActions = new HashSet<string>(allBinders.Select(b => b.GetKey().m_actionReference.action.name));
+
+        foreach (var map in inputActions.asset.actionMaps) {
+            foreach (var otherAction in map.actions) {
+                if (!rebindableActions.Contains(otherAction.name)) continue;
+
+                for (int i = 0; i < otherAction.bindings.Count; i++) {
+                    string effPath = otherAction.bindings[i].effectivePath;
+                    if (string.IsNullOrEmpty(effPath)) continue;
+
+                    if (otherAction == currentAction && i == currentBindingIndex) continue;
+
+                    if (NormalizePath(effPath) == NormalizePath(currentBinding.path)) {
+                        var control = InputSystem.FindControls<InputControl>(effPath).FirstOrDefault();
+                        string displayName = control == null ? "Unknown" : (control.device is Mouse ? control.shortDisplayName : control.displayName);
+                        conflictingBindings.Add((otherAction, i, displayName));
+                        Print($"Conflict: {currentBinding.path} already bound at {otherAction.name} (current key: {displayName})", "red");
+                    }
+                }
+            }
+        }
+        return conflictingBindings.Count > 0;
+    }
+    #endregion
+
+    #region Data management
     public void ResetToDefault() {
         PlayerSaveData data = Singleton.Instance.SaveManager.PlayerData;
         data.settings.savedBinds = string.Empty;
@@ -78,47 +212,9 @@ public class RebindManager : MonoBehaviour {
         SaveSystemHandler.SaveData(data);
 
         inputActions.RemoveAllBindingOverrides();
-        Singleton.Instance.GameEvents.OnBindsUpdated?.Invoke();
+        Singleton.Instance.GameEvents.OnBindsUpdated?.Invoke(true);
     }
 
-    private void OnOperationComplete(InputAction action, InputActionRebindingExtensions.RebindingOperation operation, string message) {
-        operation.Dispose();
-        action.Enable();
-
-        inputActions.Enable();
-
-        print(message);
-
-        rebindingOperation = null;
-    }
-
-    /// <summary>
-    /// [TODO] Update method
-    /// Prompt: Tenho essa função para rebindar teclas no meu jogo Unity:
-    ///     copiar func StartRebinding
-    ///     
-    /// Porém preciso que quando o jogador pressionar uma tecla que já esta bindada em outra ação,
-    /// ele retorne e não binde a tecla, porém de a opção de dar overwrite naquela tecla, mudando também, a outra ação
-    ///
-    /// </summary>
-    bool IsKeyAlreadyBound(string newPath, InputAction ignoreAction = null, int ignoreBindingIndex = -1) {
-        var map = inputActions.asset.FindActionMap("Player");
-
-        foreach (var action in map.actions)
-        {
-            for (int i = 0; i < action.bindings.Count; i++)
-            {
-                if (action == ignoreAction && i == ignoreBindingIndex)
-                    continue;
-
-                if (action.bindings[i].effectivePath == newPath)
-                    return true;
-            }
-        }
-        return false;
-    }  //[TODO] Update method
-
-    #region Data management
     private void SaveBinds() {
         PlayerSaveData data = Singleton.Instance.SaveManager.PlayerData;
         data.settings.savedBinds = inputActions.SaveBindingOverridesAsJson();
@@ -131,6 +227,7 @@ public class RebindManager : MonoBehaviour {
         if (string.IsNullOrEmpty(rebinds)) return;
 
         inputActions.LoadBindingOverridesFromJson(rebinds);
+        Singleton.Instance.GameEvents.OnBindsUpdated?.Invoke(false);
     }
     #endregion
 }

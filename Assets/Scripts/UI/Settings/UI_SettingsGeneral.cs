@@ -1,14 +1,7 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class UI_SettingsGeneral : MonoBehaviour {
     private SettingsManager manager;
-
-    [Header("Screens")]
-    [SerializeField] private GameObject m_defaultGeneralSettingsScreen;
-    [SerializeField] private GameObject m_crosshairSettingsScreen;
-    [SerializeField] private GameObject m_crosshairPreviewScreen;
 
     [Header("UI Components")]
     [SerializeField] private UI_Setting languageOptions;
@@ -18,18 +11,8 @@ public class UI_SettingsGeneral : MonoBehaviour {
     [SerializeField] private UI_Setting damageNumbersOptions;
     [SerializeField] private UI_Setting subtitlesOptions;
     [SerializeField] private UI_Setting fontSizeOptions;
-    [SerializeField] private Button m_openDefaultGeneralSettingsButton;
-    [SerializeField] private Button m_openCrosshairSettingsButton;
-
-    private ScrollRect thisSR;
-    private RectTransform thisRT;
 
     private void Awake() {
-        thisSR = GetComponent<ScrollRect>();
-        thisRT = GetComponent<RectTransform>();
-
-        SwitchBetweenScreens();
-
         Singleton.Instance.GameEvents.OnSettingsDataLoaded.AddListener(OnSettingsDataLoaded);
     }
 
@@ -37,22 +20,6 @@ public class UI_SettingsGeneral : MonoBehaviour {
         Singleton.Instance.GameEvents.OnSettingsDataLoaded.RemoveListener(OnSettingsDataLoaded);
 
         TeardownListeners();
-    }
-
-    private void SwitchBetweenScreens(bool isDefaultScreen = true) {
-        StartCoroutine(OnScreenSwitch(isDefaultScreen));
-    }
-
-    private IEnumerator OnScreenSwitch(bool isDefaultScreen = true) {
-        m_defaultGeneralSettingsScreen.SetActive(isDefaultScreen);
-        m_crosshairSettingsScreen.SetActive(!isDefaultScreen);
-        m_crosshairPreviewScreen.SetActive(!isDefaultScreen);
-
-        thisSR.verticalNormalizedPosition = 1f;
-
-        yield return new WaitForEndOfFrame();
-
-        LayoutRebuilder.ForceRebuildLayoutImmediate(thisRT);
     }
 
     private void OnSettingsDataLoaded(PlayerSaveData data) {
@@ -77,9 +44,6 @@ public class UI_SettingsGeneral : MonoBehaviour {
         damageNumbersOptions.onValueChanged.AddListener(i => manager.SetDamageNumbersEnabled(i));
         subtitlesOptions.onValueChanged.AddListener(i => manager.SetSubtitleType(i));
         fontSizeOptions.onValueChanged.AddListener(i => manager.SetFontSize(i));
-        
-        m_openDefaultGeneralSettingsButton.onClick.AddListener(() => SwitchBetweenScreens(true));
-        m_openCrosshairSettingsButton.onClick.AddListener(() => SwitchBetweenScreens(false));
     }
 
     private void TeardownListeners() {
@@ -90,8 +54,5 @@ public class UI_SettingsGeneral : MonoBehaviour {
         damageNumbersOptions.onValueChanged.RemoveAllListeners();
         subtitlesOptions.onValueChanged.RemoveAllListeners();
         fontSizeOptions.onValueChanged.RemoveAllListeners();
-
-        m_openDefaultGeneralSettingsButton.onClick.RemoveAllListeners();
-        m_openCrosshairSettingsButton.onClick.RemoveAllListeners();
     }
 }

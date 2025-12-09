@@ -10,6 +10,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     protected int layerToIgnore;
 
     #region Protected variables
+    protected Transform weaponMuzzle;
+
     protected float m_damage;
     protected float m_range;
     protected float m_impact;
@@ -83,6 +85,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
         Singleton.Instance.GameEvents.OnItemCollected.AddListener((item, i, o, b) => OnAmmoCollected());
         Singleton.Instance.GameEvents.OnItemDropped.AddListener(i => OnAmmoCollected());
+
+        weaponMuzzle = muzzleFlash.transform;
     }
 
     private void OnDestroy() {
@@ -137,6 +141,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
 
         animator.SetTrigger(Shoot);
         AnimationSystem.OnShot();
+
+        Fire();
     }
 
     public virtual void CallReload() {

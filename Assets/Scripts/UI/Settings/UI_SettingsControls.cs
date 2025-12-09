@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,8 @@ public class UI_SettingsControls : MonoBehaviour {
     [SerializeField] private PopUp m_popUp;
     [SerializeField] private Countdown m_countdown;
 
+    private List<UI_KeyBinder> allBinders = new List<UI_KeyBinder>();
+
     private void Awake() {
         Singleton.Instance.GameEvents.OnSettingsDataLoaded.AddListener(OnSettingsDataLoaded);
     }
@@ -29,7 +32,10 @@ public class UI_SettingsControls : MonoBehaviour {
     }
 
     public PopUp GetPopUp() => m_popUp;
+
     public Countdown GetCountdown() => m_countdown;
+
+    public List<UI_KeyBinder> GetAllBinders() => allBinders;
 
     private void OnSettingsDataLoaded(PlayerSaveData data) {
         manager = Singleton.Instance.SettingsManager;
@@ -39,7 +45,11 @@ public class UI_SettingsControls : MonoBehaviour {
         for (int i = 0; i < allKeys.Length; i++) {
             UI_KeyBinder newKey = Instantiate(Prefab_keyBinder, m_keyRebinderHolder);
             newKey.Setup(allKeys[i], this);
+
+            allBinders.Add(newKey);
         }
+
+        Singleton.Instance.RebindManager.OnKeyBinderListSet(allBinders);
 
         sensitivitySlider.Setup(new Vector2(0.01f, 18f), data.settings.mouseSensitivity, null, false, true);
         invertAxisOptions.SetupOptions(manager.enableOptions, data.settings.invertAxisIndex);
@@ -67,8 +77,7 @@ public class UI_SettingsControls : MonoBehaviour {
     public void RefreshConflictsUI() {
         //bool onConflicted = false;
 
-        m_popUp.Setup("Warning", "One or more keys are being overwitten, it can cause gameplay issues!", "Okay", "", null, null);
-        m_popUp.OpenPopUp();
+        
 
         /*InputSystem_Actions actionAsset = Singleton.Instance.RebindManager.GetInputAsset();
         var conflicts = RebindUtils.FindConflictingBindings(actionAsset);

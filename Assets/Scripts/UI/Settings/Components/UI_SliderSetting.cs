@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using DG.Tweening;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -15,6 +16,10 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
     [SerializeField] protected Slider slider;
     [SerializeField] protected TMP_InputField valueTxt;
     [SerializeField] private CanvasGroup thisCanvasGroup;
+
+    [Header("Snap")]
+    [SerializeField] private bool m_snap;
+    [SerializeField] [ShowIf("m_snap")] private int steps = 5;
 
     private int minValue;
     private int maxValue;
@@ -73,6 +78,14 @@ public class UI_SliderSetting : MonoBehaviour, IPointerEnterHandler, IPointerExi
     }
 
     private void OnSliderChange(float value) {
+        if (m_snap) {
+            float stepSize = (slider.maxValue - slider.minValue) / (steps - 1);
+            float snappedValue = Mathf.Round(value / stepSize) * stepSize;
+            slider.SetValueWithoutNotify(snappedValue);
+
+            value = snappedValue;
+        }        
+
         switch (m_type) {
             case SliderType.Default:
                 action?.Invoke(value);

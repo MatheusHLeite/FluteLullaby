@@ -17,6 +17,7 @@ public class Player_MovementSystem : NetworkBehaviour {
     [SerializeField] private bool m_unlimitedSprint = false;
 
     private bool _sprintToggle;
+    bool sprintButton;
 
     #region Variables
     #region Private references
@@ -172,10 +173,17 @@ public class Player_MovementSystem : NetworkBehaviour {
     #region Movement
     private void HandleMovement() {
         if (!m_playerCanMove) return;
+        
+        if (_sprintToggle) {
+            if (Input.Sprint && movementInput.magnitude > 0) sprintButton = true;
+            else if (movementInput.magnitude <= 0 || !canSprint) sprintButton = false;
+        }
+        else
+            sprintButton = Input.Sprint;
 
         movementInput = new Vector3(Input.MoveInput.x, 0, Input.MoveInput.y);
         canSprint = m_enableSprint && _sprintRemaining > 0f && !_sprintOnCooldown && !IsCrouched;
-        sprintFlag = Input.Sprint && IsGrounded && (canSprint || m_unlimitedSprint);
+        sprintFlag = sprintButton && IsGrounded && (canSprint || m_unlimitedSprint);
         speedMultiplierBase = sprintFlag ? m_sprintSpeed : m_walkSpeed;
         speedMultiplier = IsCrouched ? m_crouchSpeed : speedMultiplierBase;
 

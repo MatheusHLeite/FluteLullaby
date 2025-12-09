@@ -1,4 +1,5 @@
 using Steamworks;
+using System.Collections;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
@@ -30,7 +31,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnPlayerDie.AddListener(OnPlayerDie);
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
-            Singleton.Instance.GameEvents.OnShotHit.AddListener(OnWeaponHit);
+            Singleton.Instance.GameEvents.OnShot.AddListener(OnShot);
 
             m_indicatorHolder.gameObject.SetActive(false);
             SetBodyVisible(false);
@@ -51,8 +52,50 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
-            Singleton.Instance.GameEvents.OnShotHit.RemoveListener(OnWeaponHit); 
+            Singleton.Instance.GameEvents.OnShot.RemoveListener(OnShot);
         }
+    }
+
+    private void OnShot(Vector3 initialPoint, RaycastHit targetPos, Vector3 direction) {
+        TrailRenderer newTrail = Singleton.Instance.VFXManager.GetShotTrail();
+        newTrail.transform.position = initialPoint;
+        newTrail.transform.rotation = Quaternion.LookRotation(direction);
+        newTrail.gameObject.SetActive(true);
+
+        StartCoroutine(NewTrail(newTrail));
+
+        if (targetPos.point != Vector3.zero) {
+            OnWeaponHit(targetPos);
+        }
+    }
+
+    private void OnWeaponHit(RaycastHit hit) {
+        if (hit.collider.GetComponent<Player_BodyPart>() || hit.collider.GetComponent<Enemy>()) return;
+
+        GameObject newDecal = Singleton.Instance.VFXManager.GetShotDecal();
+        newDecal.transform.position = hit.point;
+        newDecal.transform.rotation = Quaternion.LookRotation(hit.normal);
+        newDecal.SetActive(true);
+
+        Singleton.Instance.VFXManager.ReturnShotDecal(newDecal);
+    }
+
+    private IEnumerator NewTrail(TrailRenderer trail) {
+        float time = 0;
+        float newScale = 1;
+        Vector3 scale = Vector3.one;
+        trail.transform.localScale = Vector3.one;
+
+        while (time < 1) {
+            trail.transform.position += trail.transform.forward * 90f * Time.deltaTime;
+            trail.transform.localScale = Vector3.Lerp(trail.transform.localScale, scale, time / Time.deltaTime);
+            time += Time.deltaTime / trail.time;
+            newScale -= Time.deltaTime / trail.time;
+            scale = new Vector3(newScale, newScale, newScale);
+            yield return null;
+        }
+
+        Singleton.Instance.VFXManager.ReturnTrail(trail);
     }
 
     private void OnPlayerIndicatorChanged(int index) {
@@ -89,17 +132,6 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     [ServerRpc(RequireOwnership = false)]
     private void SubmitNameServerRpc(string name) {
         PlayerName.Value = name;
-    }
-
-    private void OnWeaponHit(RaycastHit hit) {
-        if (hit.collider.GetComponent<Player_BodyPart>() || hit.collider.GetComponent<Enemy>()) return;
-
-        GameObject newDecal = Singleton.Instance.VFXManager.GetShotDecal();
-        newDecal.transform.position = hit.point;
-        newDecal.transform.rotation = Quaternion.LookRotation(hit.normal);
-        newDecal.SetActive(true);
-
-        Singleton.Instance.VFXManager.ReturnShotDecal(newDecal);
     }
 
     private void OnPlayerDie(Vector3 point, Vector3 dir, float impact) {

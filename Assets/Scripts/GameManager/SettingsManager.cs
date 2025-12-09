@@ -36,9 +36,10 @@ public class SettingsManager : MonoBehaviour {
     private UniversalRenderPipelineAsset urpAsset;
     private Resolution[] resolutions;
     private string[] allDevices;
-    private List<string> allResolutions;
 
     private float[] distances = new float[32];
+
+    private UniversalAdditionalCameraData cameraData;
 
     private ScreenSpaceAmbientOcclusion m_ssao;
     private FieldInfo fiSettings, fiIntensity, fiRadius;
@@ -48,6 +49,10 @@ public class SettingsManager : MonoBehaviour {
     private string actualMicrophone;
 
     private Colorblindness colorblind;
+
+    private Display currentDisplay;
+    private Resolution currentResolution;
+    private FullScreenMode currentScreenMode;
 
     public bool HDRSupport {  get; private set; }
 
@@ -65,7 +70,6 @@ public class SettingsManager : MonoBehaviour {
 
     #region Video options string    
     public List<UIOption> resolutionOptions { get; private set; }
-    public List<RefreshRate> refreshRateOptions { get; private set; }
     public List<UIOption> displayModeOptions { get; private set; }
     public List<UIOption> antiAliasingOptions { get; private set; }
     public List<UIOption> qualityOptions { get; private set; }
@@ -82,7 +86,7 @@ public class SettingsManager : MonoBehaviour {
 
     #region Initialization and Gets
     private void Awake() {
-        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(i => playerCamera = i.GetPlayerCamera());
+        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnDataLoaded.AddListener(OnSettingsDataLoaded);
 
         HDRSupport = CheckHDR();
@@ -144,22 +148,6 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("Achromatopsia", 7),
             CreateNewOption("Achromatomaly", 8),
         };
-
-        Language[] allLanguages = (Language[])Enum.GetValues(typeof(Language));
-
-        for (int i = 0; i < allLanguages.Length; i++) {
-            languageOptions.Add(CreateNewOption(allLanguages[i].ToString(), i));
-        }
-
-        /*[TODO]  After localization
-         raw text = English - original lang = English
-        raw text = Portuguese - original lang = Português (PT-BR)
-        raw text = Spanish - original lang = Español
-        raw text = French - original lang = Français
-        raw text = Russian - original lang = Русский
-        raw text = Chinese - original lang = 中文 (简体)
-        */
-
         playerIndicatorOptions = new List<UIOption> {
             CreateNewOption("Full", 0),
             CreateNewOption("Name", 1),
@@ -177,17 +165,31 @@ public class SettingsManager : MonoBehaviour {
             CreateNewOption("Closed Captions", 1)
         };
 
+        Language[] allLanguages = (Language[])Enum.GetValues(typeof(Language));
+
+        for (int i = 0; i < allLanguages.Length; i++) {
+            languageOptions.Add(CreateNewOption(allLanguages[i].ToString(), i));
+        }
+
+        /*[TODO]  After localization
+         raw text = English - original lang = English
+        raw text = Portuguese - original lang = Português (PT-BR)
+        raw text = Spanish - original lang = Español
+        raw text = French - original lang = Français
+        raw text = Russian - original lang = Русский
+        raw text = Chinese - original lang = 中文 (简体)
+        */
+
         UpdateMicrophoneList();
     }
 
     private void OnDestroy() {
-        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(i => playerCamera = i.GetPlayerCamera());
+        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnDataLoaded.RemoveListener(OnSettingsDataLoaded);
 
         enableOptions.Clear();
         inverseEnableOptions.Clear();
         resolutionOptions.Clear();
-        refreshRateOptions.Clear();
         displayModeOptions.Clear();
         qualityOptions.Clear();
         antiAliasingOptions.Clear();
@@ -199,14 +201,31 @@ public class SettingsManager : MonoBehaviour {
         return new UIOption() { text = text, value = value };
     }
 
+    private void OnPlayerLoaded(Player_Manager player) {
+        PlayerSaveData data = SaveManager.PlayerData;
+
+        playerCamera = player.GetPlayerCamera();
+        playerCamera.TryGetComponent(out cameraData);
+
+        SetSensitivity(data.settings.mouseSensitivity, true);
+        SetSprintToggle(data.settings.sprintToggleIndex, true);
+        SetInvertAxis(data.settings.invertAxisIndex, true);
+        SetPlayerIndicatorMode(data.settings.playerIndicatorMode, true);
+        SetCameraBobEnabled(data.settings.cameraBobEnabled, true);
+        SetDamageNumbersEnabled(data.settings.damageIndicatorEnabled, true);
+
+        Singleton.Instance.GameEvents.OnSettingsDataLoaded?.Invoke(data);
+    }
+
     private void InitializeMainVideoSettings() {
         resolutions = Screen.resolutions;
-        allResolutions = resolutions.Select(r => $"{r.width} x {r.height}").Distinct().ToList();
+        List<string> allResolutions = resolutions
+            .Select(r => $"{r.width} x {r.height} @ {r.refreshRateRatio:0.00} Hz")
+            .ToList();
 
         resolutionOptions = new List<UIOption>();
         for (int i = 0; i < allResolutions.Count; i++)
             resolutionOptions.Add(CreateNewOption(allResolutions[i], i));
-        refreshRateOptions = resolutions.Select(r => r.refreshRateRatio).Distinct().ToList();
     }
 
     private void InitializeShadowSettings() {
@@ -233,38 +252,6 @@ public class SettingsManager : MonoBehaviour {
 
         fiIntensity = st.GetField("Intensity", BindingFlags.Instance | BindingFlags.NonPublic);
         fiRadius = st.GetField("Radius", BindingFlags.Instance | BindingFlags.NonPublic);
-    }
-
-    static bool TryGetRendererFeature<T>(ScriptableRenderer renderer, out T feature)
-        where T : ScriptableRendererFeature {
-        var maybeTry = typeof(ScriptableRenderer).GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(m => m.Name == "TryGetRendererFeature" && m.IsGenericMethodDefinition);
-        if (maybeTry != null) {
-            var g = maybeTry.MakeGenericMethod(typeof(T));
-            object[] args = { null };
-            bool ok = (bool)g.Invoke(renderer, args);
-            feature = (T)args[0];
-            if (ok && feature) return true;
-        }
-
-        var prop = typeof(ScriptableRenderer).GetProperty("rendererFeatures",
-            BindingFlags.Public | BindingFlags.Instance);
-        if (prop != null) {
-            var list = (List<ScriptableRendererFeature>)prop.GetValue(renderer);
-            feature = list.OfType<T>().FirstOrDefault();
-            if (feature) return true;
-        }
-
-        var fld = typeof(ScriptableRenderer).GetField("m_RendererFeatures",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-        if (fld != null) {
-            var list = (List<ScriptableRendererFeature>)fld.GetValue(renderer);
-            feature = list.OfType<T>().FirstOrDefault();
-            if (feature) return true;
-        }
-
-        feature = null;
-        return false;
     }
 
     private void UpdateMicrophoneList() {
@@ -348,7 +335,8 @@ public class SettingsManager : MonoBehaviour {
 
         SetResolution(data.settings.resolutionIndex, true);
         SetDisplayMode(data.settings.displayModeIndex, true);
-        SetRefreshRate(data.settings.refreshRateIndex, true);
+        ApplyResolution();
+
         SetVSync(data.settings.vSyncEnabledIndex, true);
 
         SetQualityPreset(data.settings.qualityPresetIndex, true);
@@ -379,15 +367,9 @@ public class SettingsManager : MonoBehaviour {
         SetVolume(data.settings.voiceChatVolume.volume, data.settings.voiceChatVolume.volumeMixer, true);
         SetOutputDevice(data.settings.outputDeviceIndex, true);
 
-        SetSensitivity(data.settings.mouseSensitivity, true);
-        SetSprintToggle(data.settings.sprintToggleIndex, true);
-        SetInvertAxis(data.settings.invertAxisIndex, true);
-
         SetLanguage((int)data.settings.language, true);
-        SetPlayerIndicatorMode(data.settings.playerIndicatorMode, true);
+
         SetHUDSize(data.settings.hudSize, true);
-        SetCameraBobEnabled(data.settings.cameraBobEnabled, true);
-        SetDamageNumbersEnabled(data.settings.damageIndicatorEnabled, true);
         SetSubtitleType(data.settings.subtitleType, true);
         SetFontSize(data.settings.fontSize, true);
 
@@ -396,16 +378,18 @@ public class SettingsManager : MonoBehaviour {
 
     #region Settings setup
     private void SetupFirstSettings(PlayerSaveData data) {
-        data.settings.firstSetup = false;
+        Resolution current = Screen.currentResolution;
+
+        int defaultResolutionIndex = Array.FindIndex(resolutions, r =>
+            r.width == current.width &&
+            r.height == current.height &&
+            Mathf.Approximately((float)r.refreshRateRatio.value, (float)current.refreshRateRatio.value));
 
         DetectSpecsAndSetQuality(data);
         CheckPlayerLanguage(data);
 
-        int defaultResolutionIndex = allResolutions.IndexOf($"{Screen.currentResolution.width} x {Screen.currentResolution.height}");
-        int defaultRefreshRateIndex = refreshRateOptions.FindIndex(o => o.ToString() == Screen.currentResolution.refreshRateRatio.ToString());
-
+        data.settings.firstSetup = false;
         data.settings.resolutionIndex = defaultResolutionIndex;
-        data.settings.refreshRateIndex = defaultRefreshRateIndex;
         data.settings.fpsLimitValue = (int)Screen.currentResolution.refreshRateRatio.value;
 
         SaveSystemHandler.SaveData(data);
@@ -413,10 +397,12 @@ public class SettingsManager : MonoBehaviour {
     #endregion
 
     #region Video settings
-    public void SetResolution(int index, bool initialization = false) { 
-        SetResolution(resolutions[index].width, resolutions[index].height, Screen.fullScreenMode, Screen.currentResolution.refreshRateRatio);
-
+    public void SetResolution(int index, bool initialization = false) {
+        currentResolution = resolutions[index];
+       
         if (!initialization && SaveManager.PlayerData.settings.resolutionIndex != index) {
+            ApplyResolution();
+
             SaveManager.PlayerData.settings.resolutionIndex = index;
             OnSettingsSaved();
         }
@@ -425,32 +411,17 @@ public class SettingsManager : MonoBehaviour {
     public void SetDisplayMode(int index, bool initialization = false) {
         int indexValue = displayModeOptions[index].value;
 
-        FullScreenMode screenMode = FullScreenMode.ExclusiveFullScreen;
-        switch (indexValue) {
-            case 0:
-                screenMode = FullScreenMode.Windowed;
-                break;
-            case 1:
-                screenMode = FullScreenMode.ExclusiveFullScreen;
-                break;
-            case 2:
-                screenMode = FullScreenMode.FullScreenWindow;
-                break;
-        }
-
-        Screen.fullScreenMode = screenMode;
+        currentScreenMode = indexValue switch {
+            0 => FullScreenMode.Windowed,
+            1 => FullScreenMode.ExclusiveFullScreen,
+            2 => FullScreenMode.FullScreenWindow,
+            _ => FullScreenMode.ExclusiveFullScreen
+        };
 
         if (!initialization && SaveManager.PlayerData.settings.displayModeIndex != index) {
+            ApplyResolution();
+
             SaveManager.PlayerData.settings.displayModeIndex = index;
-            OnSettingsSaved();
-        }
-    }
-
-    public void SetRefreshRate(int index, bool initialization = false) { 
-        SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, Screen.fullScreenMode, refreshRateOptions[index]);
-
-        if (!initialization && SaveManager.PlayerData.settings.refreshRateIndex != index) {
-            SaveManager.PlayerData.settings.refreshRateIndex = index;
             OnSettingsSaved();
         }
     }
@@ -576,7 +547,14 @@ public class SettingsManager : MonoBehaviour {
 
     public void SetAntiAliasing(int index, bool initialization = false) {
         int indexValue = antiAliasingOptions[index].value;
-        urpAsset.msaaSampleCount = indexValue;
+
+        //urpAsset.msaaSampleCount = indexValue;
+        cameraData.antialiasing = AntialiasingMode.TemporalAntiAliasing;
+
+        // AntialiasingMode.None
+        // AntialiasingMode.FastApproximateAntialiasing (FXAA)
+        // AntialiasingMode.SubpixelMorphologicalAntiAliasing (SMAA)
+        // AntialiasingMode.TemporalAntiAliasing (TAA)
 
         if (!initialization && SaveManager.PlayerData.settings.antiAliasingModeIndex != index) {
             SaveManager.PlayerData.settings.antiAliasingModeIndex = index;
@@ -741,8 +719,6 @@ public class SettingsManager : MonoBehaviour {
         }
     }
 
-    private void SetResolution(int width, int height, FullScreenMode mode, RefreshRate refreshRate) => Screen.SetResolution(width, height, mode, refreshRate);
-
     public void SetPostProcessingQuality(int index, bool initialization = false) {
         int indexValue = qualityOptions[index].value;
 
@@ -794,6 +770,8 @@ public class SettingsManager : MonoBehaviour {
             OnSettingsSaved();
         }
     }
+
+    private void ApplyResolution() => Screen.SetResolution(currentResolution.width, currentResolution.height, currentScreenMode);
     #endregion
 
     #region Audio
@@ -852,8 +830,6 @@ public class SettingsManager : MonoBehaviour {
 
     public void SetSprintToggle(int index, bool initialization = false) {
         Singleton.Instance.GameEvents.OnSprintToggleChanged?.Invoke(index);
-        //index == 0 - Disabled
-        //index == 1 - enabled
 
         if (!initialization && SaveManager.PlayerData.settings.sprintToggleIndex != index) {
             SaveManager.PlayerData.settings.sprintToggleIndex = index;
@@ -940,7 +916,37 @@ public class SettingsManager : MonoBehaviour {
 
     private void OnSettingsSaved() {
         SaveSystemHandler.SaveData(SaveManager.PlayerData);
+    }
 
-        print(SaveManager.PlayerData.settings.qualityPresetIndex);
+    static bool TryGetRendererFeature<T>(ScriptableRenderer renderer, out T feature)
+        where T : ScriptableRendererFeature {
+        var maybeTry = typeof(ScriptableRenderer).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(m => m.Name == "TryGetRendererFeature" && m.IsGenericMethodDefinition);
+        if (maybeTry != null) {
+            var g = maybeTry.MakeGenericMethod(typeof(T));
+            object[] args = { null };
+            bool ok = (bool)g.Invoke(renderer, args);
+            feature = (T)args[0];
+            if (ok && feature) return true;
+        }
+
+        var prop = typeof(ScriptableRenderer).GetProperty("rendererFeatures",
+            BindingFlags.Public | BindingFlags.Instance);
+        if (prop != null) {
+            var list = (List<ScriptableRendererFeature>)prop.GetValue(renderer);
+            feature = list.OfType<T>().FirstOrDefault();
+            if (feature) return true;
+        }
+
+        var fld = typeof(ScriptableRenderer).GetField("m_RendererFeatures",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        if (fld != null) {
+            var list = (List<ScriptableRendererFeature>)fld.GetValue(renderer);
+            feature = list.OfType<T>().FirstOrDefault();
+            if (feature) return true;
+        }
+
+        feature = null;
+        return false;
     }
 }

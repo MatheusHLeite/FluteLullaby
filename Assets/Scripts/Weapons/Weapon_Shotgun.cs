@@ -14,10 +14,11 @@ public class Weapon_Shotgun : Weapon_Firearm {
     protected override void Fire() {
         OnShot();
 
-        AudioSystem.PlayShotSFX(Weapons.Shotgun);
+        AudioSystem.CallPlayShotSFX(Weapons.Shotgun);
 
         for (int i = 0; i < pelletCount; i++) {
-            Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, GetSpreadDirection(), out hit, m_range, ~layerToIgnore);
+            Vector3 direction = GetSpreadDirection();
+            Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, direction, out hit, m_range, ~layerToIgnore);
 
             if (hit.collider != null) {
                 if (hit.collider.TryGetComponent(out Enemy enemy)) 
@@ -28,9 +29,9 @@ public class Weapon_Shotgun : Weapon_Firearm {
 
                 if (hit.collider.TryGetComponent(out NPC_HealthHandler npc))
                     npc.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
-
-                Singleton.Instance.GameEvents.OnShotHit?.Invoke(hit);
             }
+
+            Singleton.Instance.GameEvents.OnShot?.Invoke(weaponMuzzle.position, hit, direction);
         }
     }
 

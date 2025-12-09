@@ -1,3 +1,4 @@
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,6 +8,20 @@ public class Player_AudioSystem : NetworkBehaviour {
     [Space(10)]
     public AudioClip[] m_revolverShotSounds;
     public AudioClip[] m_shotgunShotSounds;
+
+    private void Awake() {
+        PreloadClips(m_revolverShotSounds);
+        PreloadClips(m_shotgunShotSounds);
+    }
+
+    private void PreloadClips(AudioClip[] clips) {
+        foreach (var clip in clips) {
+            if (clip == null) continue;
+
+            if (!clip.preloadAudioData)
+                clip.LoadAudioData();
+        }
+    }
 
     public override void OnNetworkSpawn() {
         if (!IsOwner) return;
@@ -20,13 +35,37 @@ public class Player_AudioSystem : NetworkBehaviour {
         
     }
 
-    internal void PlayShotSFX(Weapons weapon) => RequestShootSoundServerRpc(weapon);
- 
-    [ServerRpc]
-    void RequestShootSoundServerRpc(Weapons weapon, ServerRpcParams rpcParams = default) => PlayShootSoundClientRpc(weapon);
+    public void CallPlayShotSFX(Weapons weapon) {
+        PlayShotSFX(weapon);
+        RequestShootSoundServerRpc(weapon);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestShootSoundServerRpc(Weapons weapon, ServerRpcParams rpc = default) {
+        ulong senderClientId = rpc.Receive.SenderClientId;
+
+        var targets = NetworkManager.Singleton.ConnectedClientsIds
+            .Where(id => id != senderClientId)
+            .ToArray();
+
+        if (targets.Length == 0)
+            return;
+
+        var sendParams = new ClientRpcParams {
+            Send = new ClientRpcSendParams {
+                TargetClientIds = targets
+            }
+        };
+
+        PlayShootSoundClientRpc(weapon, sendParams);
+    }
 
     [ClientRpc]
-    void PlayShootSoundClientRpc(Weapons weapon) {
+    private void PlayShootSoundClientRpc(Weapons weapon, ClientRpcParams rpcParams = default) {
+        PlayShotSFX(weapon);
+    }
+
+    private void PlayShotSFX(Weapons weapon) {
         m_shootAudioSource.pitch = Random.Range(0.9f, 1.4f);
         AudioClip clip;
 

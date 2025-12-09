@@ -1,5 +1,4 @@
 using Sirenix.OdinInspector;
-using Steamworks;
 using System.Collections;
 using UnityEngine;
 
@@ -14,18 +13,16 @@ public class SaveManager : MonoBehaviour {
         initialized = true;
 
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnWeaponAmmoConsumed);
-        Singleton.Instance.GameEvents.OnPlayerLoaded.AddListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnItemCollected.AddListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.AddListener(OnItemSplit);
         Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
 
-        StartCoroutine(LoadPlayerData());
+        LoadData();
     }
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnWeaponAmmoConsumed);
-        Singleton.Instance.GameEvents.OnPlayerLoaded.RemoveListener(OnPlayerLoaded);
         Singleton.Instance.GameEvents.OnItemCollected.RemoveListener(OnNewItemAdded);
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.RemoveListener(OnItemSplit);
@@ -37,20 +34,14 @@ public class SaveManager : MonoBehaviour {
     [Button]
     private void DeletePlayerData() => SaveSystemHandler.DeletePlayerData();
 
-    private IEnumerator LoadPlayerData() {
-        yield return new WaitUntil(() => SteamClient.IsValid || !GameNetworkManager.IsSteam);
-        yield return new WaitForEndOfFrame();
-
-        LoadData();
-    }
-
-    private void OnPlayerLoaded(Player_Manager player = default) {
+    private void LoadData() {
+        PlayerData = SaveSystemHandler.LoadData();
         StartCoroutine(LoadPlayerData());
     }
 
-    private void LoadData() {
-        PlayerData = SaveSystemHandler.LoadData();
-        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(PlayerData); 
+    private IEnumerator LoadPlayerData() {        
+        yield return new WaitForEndOfFrame();
+        Singleton.Instance.GameEvents.OnDataLoaded?.Invoke(PlayerData);
     }
     #endregion
 
@@ -307,7 +298,6 @@ public class Settings {
 
     public int resolutionIndex;
     public int displayModeIndex;
-    public int refreshRateIndex;
     public int vSyncEnabledIndex;
     public int qualityPresetIndex;
     public int textureQualityIndex;

@@ -79,7 +79,6 @@ public class PlayerSaveData {
                 sprintToggleIndex = 0,
 
                 resolutionIndex = -1, //System handle this
-                refreshRateIndex = -1, //System handle this
                 displayModeIndex = 1,
                 vSyncEnabledIndex = 0,
 

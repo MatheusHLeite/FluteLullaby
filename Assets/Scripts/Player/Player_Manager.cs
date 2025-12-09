@@ -17,8 +17,6 @@ public class Player_Manager : NetworkBehaviour {
     }
 
     private IEnumerator LoadPlayer() {
-        yield return new WaitForEndOfFrame();
-
         PlayerCameraMovementSystem = GetComponent<Player_CameraMovementSystem>();
         PlayerMovementSystem = GetComponent<Player_MovementSystem>();
         PlayerHealthSystem = GetComponent<Player_HealthSystem>();
@@ -26,6 +24,8 @@ public class Player_Manager : NetworkBehaviour {
         PlayerCameraMovementSystem.SetPlayerParameters(m_playerParameters);
         PlayerMovementSystem.SetPlayerParameters(m_playerParameters);
         PlayerHealthSystem.SetPlayerParameters(m_playerParameters);
+
+        yield return new WaitForEndOfFrame();
 
         Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke(this);
     }

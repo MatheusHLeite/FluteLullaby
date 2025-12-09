@@ -4,12 +4,19 @@ using UnityEngine;
 public class Player_CameraMovementSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Transform m_playerCameraHolder;
+    [SerializeField] private Transform m_weaponsHolder;
     [SerializeField] private Camera m_playerCamera;
+
+    [Header("Sway")]
+    [SerializeField] private float swayIntensity = 0.075f;
+    [SerializeField] private float swaySmoothness = 4f;
+    [SerializeField] private float swayMovementIntensity = 0.01f;
+    [SerializeField] private float swayMovementSpeed = 14f;
 
     #region Parameters
     private bool m_cameraCanMove;
     private bool m_enableZoom;
-    #endregion
+    #endregion 
 
     #region Private references
     private Player_InputHandler Input;
@@ -38,7 +45,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     private float _pitch;
     private float _zRotation;
 
-    private Vector3 originalPosition;
+    private Quaternion originalRotation;
+    private Vector3 initialPosition;
+    private float counter;
     #endregion
 
     #region Public variables
@@ -59,7 +68,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         Movement = GetComponent<Player_MovementSystem>();
         HealthSystem = GetComponent<Player_HealthSystem>();
 
-        originalPosition = m_playerCamera.transform.localPosition;
+        originalRotation = m_weaponsHolder.transform.localRotation;
+        initialPosition = m_weaponsHolder.transform.localPosition;
     }
 
     public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
@@ -75,7 +85,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         m_playerCamera.fieldOfView = m_defaultFov;
     }
     #endregion
-
+    //TROCAR DE ARMA FAZ A TELA MEXER
     #region Network Initialization
     public override void OnNetworkSpawn() {
         base.OnNetworkSpawn();
@@ -122,6 +132,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
             return;
         }
 
+        HandleWeaponSway();
+
         _yaw = transform.localEulerAngles.y + (Input.LookInput.x * m_sensitivityMultiplier) * m_mouseSensitivity;
 
         _pitch += m_invertCamera ? m_mouseSensitivity * (Input.LookInput.y * m_sensitivityMultiplier) : m_mouseSensitivity * (-Input.LookInput.y * m_sensitivityMultiplier);
@@ -132,6 +144,29 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         
         transform.localEulerAngles = new Vector3(0, _yaw, 0);
         m_playerCameraHolder.localEulerAngles = new Vector3(_pitch, 0, m_cameraBalance  ? -_zRotation: 0);
+    }
+
+    private void HandleWeaponSway() {
+        Quaternion rotX = Quaternion.AngleAxis(-Input.LookInput.y * swayIntensity, Vector3.right);
+        Quaternion rotY = Quaternion.AngleAxis(-Input.LookInput.x * swayIntensity, Vector3.up);
+
+        Quaternion finalRot = originalRotation * rotX * rotY;
+        Vector3 finalPos;        
+
+        if (Mathf.Abs(Input.MoveInput.x) > 0.1f || Mathf.Abs(Input.MoveInput.y) > 0.1f) {
+            counter += Time.deltaTime * swayMovementSpeed;
+            float offsetY = Mathf.Cos(counter) * swayMovementIntensity;
+            float offsetX = Mathf.Cos(counter / 2) * swayMovementIntensity;
+
+            finalPos = initialPosition + new Vector3(offsetX, offsetY, 0);
+        }
+        else {
+            finalPos = initialPosition;
+            counter = 0f;
+        }
+
+        m_weaponsHolder.transform.localRotation = Quaternion.Slerp(m_weaponsHolder.transform.localRotation, finalRot, Time.deltaTime * swaySmoothness);
+        m_weaponsHolder.transform.localPosition = Vector3.Lerp(m_weaponsHolder.transform.localPosition, finalPos, Time.deltaTime * swayMovementSpeed);
     }
 
     private void HandleCameraZoom() {
