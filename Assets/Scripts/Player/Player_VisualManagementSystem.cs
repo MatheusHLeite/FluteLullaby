@@ -70,7 +70,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     }
 
     private void OnWeaponHit(RaycastHit hit) {
-        if (hit.collider.GetComponent<Player_BodyPart>() || hit.collider.GetComponent<Enemy>()) return;
+        if (hit.collider.GetComponent<Damagable_BodyPart>() || hit.collider.GetComponent<Enemy>()) return;
 
         GameObject newDecal = Singleton.Instance.VFXManager.GetShotDecal();
         newDecal.transform.position = hit.point;

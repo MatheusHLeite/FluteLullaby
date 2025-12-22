@@ -14,6 +14,8 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     [SerializeField] private float maxEyeRotationAngle = 105f;
     [SerializeField] private float maxRotationAngle = 48f;
 
+    private Global_HealthHandler healthHandler;
+
     private Transform playerCamera;
     private bool isDead;
 
@@ -53,6 +55,10 @@ public class NPC_VisualBehavior : NetworkBehaviour {
 
         initialEyeRotations = new Quaternion[m_eyes.Length];
         initialEyeForwards = new Vector3[m_eyes.Length];
+
+        healthHandler = GetComponentInChildren<Global_HealthHandler>();
+        if (healthHandler != null)
+            healthHandler.m_onDie.AddListener(OnDie);
 
         for (int i = 0; i < m_eyes.Length; i++) {
             initialEyeRotations[i] = m_eyes[i].rotation;
@@ -203,7 +209,7 @@ public class NPC_VisualBehavior : NetworkBehaviour {
         m_head.rotation = Quaternion.Slerp(m_head.rotation, limitedRotation, rotationSpeed * Time.deltaTime);
     }
 
-    public void OnDie() {
+    private void OnDie(Vector3 dir, float impact) {
         foreach (var e in m_eyesClosed) {
             e.gameObject.SetActive(true);
         }

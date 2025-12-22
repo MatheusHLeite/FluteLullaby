@@ -2,10 +2,10 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class NPC_HealthHandler : NetworkBehaviour {
+public class Global_HealthHandler : NetworkBehaviour, IDamageable {
     [Header("Setup")]
     [SerializeField] private float m_maxHealth;
-    [SerializeField] private UnityEvent<Vector3, float> m_onDie;
+    public UnityEvent<Vector3, float> m_onDie;
 
     private bool isDead;
 
@@ -13,6 +13,10 @@ public class NPC_HealthHandler : NetworkBehaviour {
     private NetworkVariable<Vector3> hitPoint = new NetworkVariable<Vector3>(Vector3.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<Vector3> hitDirection = new NetworkVariable<Vector3>(Vector3.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<float> impact = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public override void OnDestroy() {
+        m_onDie.RemoveAllListeners();
+    }
 
     #region Network Initialization
     public override void OnNetworkSpawn() {
@@ -41,7 +45,7 @@ public class NPC_HealthHandler : NetworkBehaviour {
     #endregion
 
     #region Damage
-    internal void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
+    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
         if (currentHealth.Value <= 0) return;
 
         Singleton.Instance.GameEvents.OnHit?.Invoke();

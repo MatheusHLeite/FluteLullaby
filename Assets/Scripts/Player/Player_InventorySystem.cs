@@ -5,6 +5,7 @@ using UnityEngine;
 public class Player_InventorySystem : NetworkBehaviour {
     private Player_InteractionSystem Interaction;
     private Player_CombatSystem Combat;
+    private Player_CameraMovementSystem CameraMovement;
 
     [Header("Hands")]
     [SerializeField] private Transform m_rightHand;
@@ -29,6 +30,7 @@ public class Player_InventorySystem : NetworkBehaviour {
     private void Awake() {
         Interaction = GetComponent<Player_InteractionSystem>();
         Combat = GetComponent<Player_CombatSystem>();
+        CameraMovement = GetComponent<Player_CameraMovementSystem>();
 
         weaponHolder = m_rightHand.parent;
     }
@@ -71,6 +73,8 @@ public class Player_InventorySystem : NetworkBehaviour {
         equippedItem = itemData;
 
         Combat.SetCanSwitch(false);
+
+        CameraMovement.PlayWeaponSwitchAnimation();
 
         weaponHolder.DOLocalRotate(new Vector3(45, 0, 0), changeWeaponSpeed).SetEase(Ease.InBack).OnComplete(() => {
             if (itemOnHand != null) {

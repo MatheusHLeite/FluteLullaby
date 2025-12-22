@@ -2,6 +2,12 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_MovementSystem : NetworkBehaviour {
+
+    [Header("Sprint System")]
+    [Tooltip("Tempo em segundos que o jogador precisa segurar Shift para começar a correr")]
+    [SerializeField] private float m_sprintHoldDelay = 0.3f;
+    [SerializeField] private float m_slideCameraTiltAngle = 8f;
+
     [Header("Crouch system")]
     [SerializeField] private float m_crouchHeight = 1.1f;
     [SerializeField] private float m_crouchCenter = -0.35f;
@@ -39,11 +45,30 @@ public class Player_MovementSystem : NetworkBehaviour {
     private float m_sprintCooldown;
     private float m_toCrouchSpeed;
 
-    //private float _actualPlayerSpeed;
-    private float _sprintRemaining;
+    private float _actualPlayerSpeed;
+    private float _staminaRemaining;
     private float _sprintCooldownReset;
     private bool _sprintOnCooldown;
     private RaycastHit _groundHit;
+
+    private bool _isDashing;
+    private float _dashTimer;
+    private float _dashCooldownTimer;
+    private Vector3 _dashDirection;
+
+    private bool _isSliding;
+    private float _slideTimer;
+    private float _slideCooldownTimer;
+    private Vector3 _slideDirection;
+    private float _slideSpeed;
+    private bool _crouchInputHeldDuringSlide;
+    private bool _isOnDownhill;
+
+    private float _sprintHoldTimer;
+    private bool _sprintHoldActive;
+
+    private float _staminaRegenCooldown;
+    private float _lastStaminaConsumption;
     #endregion
 
     #region Private upgradable/modifiable variables
@@ -51,10 +76,29 @@ public class Player_MovementSystem : NetworkBehaviour {
     private float m_sprintSpeed;
     private float m_crouchSpeed;
 
+    private float m_staminaRegenCooldownTime;
+    private float m_dashStaminaCost;
+    private float m_runningStaminaCost;
+
+    private float m_dashForce;
+    private float m_dashDuration;
+    private float m_dashCooldown;
+
+    private float m_slideDeceleration;
+    private float m_slideSideControl;
+    private float m_slideDuration;
+    private float m_slideCooldown;
+    private float m_slideStaminaCost;
+    private float m_minSprintSpeedToSlide;
+    private float m_slideSpeedBoost;
+    private float m_slideDownhillAcceleration;
+    private float m_slideDownhillAngleThreshold;
+    private float m_slideMaxDownhillSpeed;    
+    
     private float m_jumpPower;
 
-    private float m_sprintRecoverSpeed;
-    private float m_sprintDuration;
+    private float m_staminaRecoverSpeed;
+    private float m_maxStamina;
 
     private bool m_playerCanMove;
     private bool m_enableSprint;
@@ -64,9 +108,12 @@ public class Player_MovementSystem : NetworkBehaviour {
 
     #region Public variables
     public Collider GetPlayerCollider => _thisCollider;
+    public Rigidbody GetRigidbody => _rb;
     public bool IsGrounded { get; private set; }
     public bool IsSprinting { get; private set; }
     public bool IsCrouched { get; private set; }
+    public bool IsDashing => _isDashing;
+    public bool IsSliding => _isSliding;
     #endregion
 
     #region Network variables
@@ -120,10 +167,30 @@ public class Player_MovementSystem : NetworkBehaviour {
         m_deceleration = playerParameters.m_deceleration;
         m_jumpPower = playerParameters.m_jumpPower;
         m_coyoteTime = playerParameters.m_coyoteTime;
-        m_sprintDuration = playerParameters.m_sprintDuration;
+        m_maxStamina = playerParameters.m_maxStamina;
         m_sprintCooldown = playerParameters.m_sprintCooldown;
-        m_sprintRecoverSpeed = playerParameters.m_sprintRecoverSpeed;
+        m_runningStaminaCost = playerParameters.m_runningStaminaCost;
+        m_staminaRecoverSpeed = playerParameters.m_staminaRecoverSpeed;
+        m_staminaRegenCooldownTime = playerParameters.m_staminaRegenCooldownTime;
         m_toCrouchSpeed = playerParameters.m_toCrouchSpeed;
+        m_dashForce = playerParameters.m_dashForce;
+        m_dashDuration = playerParameters.m_dashDuration;
+        m_dashCooldown = playerParameters.m_dashCooldown;
+        m_dashStaminaCost = playerParameters.m_dashStaminaCost;
+
+        m_slideDeceleration = playerParameters.m_slideDeceleration;
+        m_slideSideControl = playerParameters.m_slideSideControl;
+        m_slideDuration = playerParameters.m_slideDuration;
+        m_slideCooldown = playerParameters.m_slideCooldown;
+        m_slideStaminaCost = playerParameters.m_slideStaminaCost;
+        m_minSprintSpeedToSlide = playerParameters.m_minSprintSpeedToSlide;
+        m_slideSpeedBoost = playerParameters.m_slideSpeedBoost;
+        m_slideDownhillAcceleration = playerParameters.m_slideDownhillAcceleration;
+        m_slideDownhillAngleThreshold = playerParameters.m_slideDownhillAngleThreshold;
+        m_slideMaxDownhillSpeed = playerParameters.m_slideMaxDownhillSpeed;
+
+        _dashCooldownTimer = 0f;
+        _slideCooldownTimer = 0f;
 
         standHeight = _thisCollider.height;
         colliderHeight = standHeight;
@@ -136,9 +203,11 @@ public class Player_MovementSystem : NetworkBehaviour {
         m_enableCrouch = true;
 
         if (!m_unlimitedSprint) {
-            _sprintRemaining = m_sprintDuration;
+            _staminaRemaining = m_maxStamina;
             _sprintCooldownReset = m_sprintCooldown;
         }
+
+        Singleton.Instance.GameEvents.OnStaminaUISet?.Invoke(m_maxStamina);
     }
     #endregion
 
@@ -172,17 +241,34 @@ public class Player_MovementSystem : NetworkBehaviour {
 
     #region Movement
     private void HandleMovement() {
-        if (!m_playerCanMove) return;
+        if (!m_playerCanMove || _isDashing) return;
+
+        if (_isSliding) {
+            HandleSlideMovement();
+            return;
+        }
         
         if (_sprintToggle) {
             if (Input.Sprint && movementInput.magnitude > 0) sprintButton = true;
             else if (movementInput.magnitude <= 0 || !canSprint) sprintButton = false;
         }
-        else
-            sprintButton = Input.Sprint;
+        else {
+            if (Input.Sprint && movementInput.magnitude > 0) {
+                _sprintHoldTimer += Time.deltaTime;
+                if (_sprintHoldTimer >= m_sprintHoldDelay) {
+                    _sprintHoldActive = true;
+                }
+            }
+            else {
+                _sprintHoldTimer = 0f;
+                _sprintHoldActive = false;
+            }
+            
+            sprintButton = _sprintHoldActive;
+        }
 
         movementInput = new Vector3(Input.MoveInput.x, 0, Input.MoveInput.y);
-        canSprint = m_enableSprint && _sprintRemaining > 0f && !_sprintOnCooldown && !IsCrouched;
+        canSprint = m_enableSprint && _staminaRemaining > 0f && !_sprintOnCooldown && !IsCrouched;
         sprintFlag = sprintButton && IsGrounded && (canSprint || m_unlimitedSprint);
         speedMultiplierBase = sprintFlag ? m_sprintSpeed : m_walkSpeed;
         speedMultiplier = IsCrouched ? m_crouchSpeed : speedMultiplierBase;
@@ -223,18 +309,18 @@ public class Player_MovementSystem : NetworkBehaviour {
     private void HandleSprint() {
         if (!m_enableSprint || m_unlimitedSprint) return;
 
-        Singleton.Instance.GameEvents.OnStaminaUsage?.Invoke(_sprintRemaining, m_sprintDuration);
-
         if (IsSprinting) {
-            _sprintRemaining -= Time.deltaTime;
-            if (_sprintRemaining <= 0) {
+            _staminaRemaining -= Time.deltaTime * m_runningStaminaCost;
+            _staminaRegenCooldown = Time.time + m_staminaRegenCooldownTime;
+            if (_staminaRemaining <= 0) {
                 IsSprinting = false;
                 _sprintOnCooldown = true;
             }
             return;
         }
 
-        _sprintRemaining = Mathf.Clamp(_sprintRemaining += Time.deltaTime * m_sprintRecoverSpeed, 0, m_sprintDuration);
+        if (_staminaRegenCooldown < Time.time) 
+            _staminaRemaining = Mathf.Clamp(_staminaRemaining += Time.deltaTime * m_staminaRecoverSpeed, 0, m_maxStamina);        
 
         if (_sprintOnCooldown) {
             m_sprintCooldown -= Time.deltaTime;
@@ -257,9 +343,14 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
 
     private void HandleCrouch() {
-        if (m_enableCrouch && IsGrounded) {
+        if (m_enableCrouch && IsGrounded && !_isSliding) {
             if (Input.Crouch) {
-                Crouch();        
+                bool canSlide = CanInitiateSlide();
+                if (canSlide) {
+                    InitiateSlide();
+                } else {
+                    Crouch();
+                }
             }       
             else if (!Input.Crouch) {
                 StandUp(); 
@@ -271,6 +362,162 @@ public class Player_MovementSystem : NetworkBehaviour {
         _thisCollider.center = Vector3.Lerp(_thisCollider.center, colliderCenter, Time.deltaTime * m_toCrouchSpeed);
         _thisCollider.height = Mathf.Lerp(_thisCollider.height, colliderHeight, Time.deltaTime * m_toCrouchSpeed);
         _cameraPivot.localPosition = Vector3.Lerp(_cameraPivot.localPosition, camPos, Time.deltaTime * m_toCrouchSpeed);
+    }
+
+    private void HandleDash() {
+        if (_isDashing) {
+            _dashTimer -= Time.deltaTime;
+
+            if (_dashTimer <= 0f) {
+                _isDashing = false;
+                _dashCooldownTimer = m_dashCooldown;
+            }
+            return;
+        }
+
+        if (_dashCooldownTimer > 0f)        
+            _dashCooldownTimer -= Time.deltaTime;        
+
+        bool hasMovementInput = movementInput.magnitude > 0.1f;
+        bool isNotHoldingSprint = !_sprintHoldActive;
+        bool hasEnoughStamina = m_unlimitedSprint || _staminaRemaining >= m_dashStaminaCost;
+
+        if (Input.Dash && _dashCooldownTimer <= 0f && !IsCrouched && !_isSliding && hasMovementInput && isNotHoldingSprint && hasEnoughStamina) {
+            PerformDash();
+            Input.ConsumeDash();
+        }
+        else if (Input.Dash)        
+            Input.ConsumeDash();        
+    }
+
+    private void HandleSlide() {
+        if (_isSliding) {
+            if (!_isOnDownhill) {
+                _slideTimer -= Time.deltaTime;
+            }
+
+            if (Input.Crouch) {
+                _crouchInputHeldDuringSlide = true;
+            }
+
+            bool jumpPressed = Input.Jump;
+            Vector3 moveInput = new Vector3(Input.MoveInput.x, 0, Input.MoveInput.y);
+            bool backwardInput = Vector3.Dot(transform.TransformDirection(moveInput), _slideDirection) < -0.5f;
+
+            bool timerExpired = !_isOnDownhill && _slideTimer <= 0f;
+
+            if (jumpPressed || backwardInput || timerExpired) {
+                CancelSlide(jumpPressed);
+            }
+            return;
+        }
+
+        if (_slideCooldownTimer > 0f) {
+            _slideCooldownTimer -= Time.deltaTime;
+        }
+    }
+
+    private void HandleSlideMovement() {
+        _isOnDownhill = false;
+
+        if (IsGrounded && _groundHit.normal != Vector3.zero) {
+            float groundAngle = Vector3.Angle(Vector3.up, _groundHit.normal);
+            Vector3 slopeDirection = Vector3.ProjectOnPlane(Vector3.down, _groundHit.normal).normalized;
+            float slopeDot = Vector3.Dot(_slideDirection, slopeDirection);
+
+            if (groundAngle >= m_slideDownhillAngleThreshold && slopeDot > 0.3f) {
+                _isOnDownhill = true;
+                _slideSpeed = Mathf.Min(_slideSpeed + m_slideDownhillAcceleration * Time.deltaTime, m_slideMaxDownhillSpeed);
+            }
+        }
+
+        if (!_isOnDownhill) {
+            _slideSpeed = Mathf.Lerp(_slideSpeed, 0f, m_slideDeceleration * Time.deltaTime);
+            
+            if (_slideSpeed < 0.1f) {
+                _slideSpeed = 0f;
+            }
+        }
+
+        Vector3 sideInput = new Vector3(Input.MoveInput.x, 0, 0);
+        Vector3 sideDirection = transform.TransformDirection(sideInput);
+
+        Vector3 slideVelocity = _slideDirection * _slideSpeed;
+        Vector3 sideVelocity = sideDirection * m_slideSideControl;
+
+        Vector3 targetVelocity = slideVelocity + sideVelocity;
+        Vector3 velocityChange = targetVelocity - new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+
+        velocityChange.y = 0f;
+
+        _rb.AddForce(velocityChange, ForceMode.VelocityChange);
+    }
+
+    private bool CanInitiateSlide() {
+        if (_isSliding || _isDashing || IsCrouched) return false;
+        if (_slideCooldownTimer > 0f) return false;
+
+        Vector3 horizontalVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+        float currentSpeed = horizontalVelocity.magnitude;
+
+        Vector3 forwardVelocity = transform.InverseTransformDirection(horizontalVelocity);
+        bool isMovingForward = forwardVelocity.z > 0.1f;
+        bool isMovingFastEnough = currentSpeed >= m_minSprintSpeedToSlide;
+
+        return isMovingFastEnough && isMovingForward;
+    }
+
+    private void InitiateSlide() {
+        _isSliding = true;
+        _slideTimer = m_slideDuration;
+        _crouchInputHeldDuringSlide = false;
+
+        Vector3 currentVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+        _slideDirection = currentVelocity.normalized;
+        _slideSpeed = currentVelocity.magnitude + m_slideSpeedBoost;
+
+        colliderCenter = new Vector3(0, m_crouchCenter, 0);
+        colliderHeight = m_crouchHeight;
+        camPosY = m_cameraCrouchY;
+
+        CameraMovementSystem.PlaySlideEffect(m_slideCameraTiltAngle);
+    }
+
+    private void CancelSlide(bool shouldJump = false) {
+        _isSliding = false;
+        _slideCooldownTimer = m_slideCooldown;
+        _slideSpeed = 0f;
+
+        CameraMovementSystem.ResetSlideEffect();
+
+        if (shouldJump && m_enableJump && IsGrounded) {
+            colliderCenter = Vector3.zero;
+            colliderHeight = standHeight;
+            camPosY = m_cameraStandY;
+            Jump();
+            return;
+        }
+
+        if (_crouchInputHeldDuringSlide && Input.Crouch) {
+            IsCrouched = true;
+            SetCrouchStateServerRpc(true);
+        } else {
+            if (canStandUp) {
+                colliderCenter = Vector3.zero;
+                colliderHeight = standHeight;
+                camPosY = m_cameraStandY;
+            } else {
+                IsCrouched = true;
+                SetCrouchStateServerRpc(true);
+            }
+        }
+    }
+
+    private void HandleStamina() {
+        if (_lastStaminaConsumption != _staminaRemaining) {
+            _lastStaminaConsumption = _staminaRemaining;
+            Singleton.Instance.GameEvents.OnStaminaConsume?.Invoke(_staminaRemaining);
+        }
     }
 
     private void Crouch() {
@@ -309,13 +556,33 @@ public class Player_MovementSystem : NetworkBehaviour {
         IsGrounded = false;
         coyoteTimer = 0f;
     }
+
+    private void PerformDash() {
+        Vector3 dashDir = transform.TransformDirection(movementInput).normalized;
+        _dashDirection = new Vector3(dashDir.x, 0f, dashDir.z).normalized;
+        
+        _isDashing = true;
+        _dashTimer = m_dashDuration;
+
+        if (!m_unlimitedSprint) {
+            _staminaRemaining -= m_dashStaminaCost;
+            _staminaRemaining = Mathf.Max(_staminaRemaining, 0f);
+        }
+
+        _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
+        _rb.AddForce(_dashDirection * m_dashForce, ForceMode.VelocityChange);
+
+        CameraMovementSystem.PlayDashEffect(_dashDirection);
+
+        _staminaRegenCooldown = Time.time + m_staminaRegenCooldownTime;
+    }
     #endregion
 
     #region Raycast
     private void RaycastCheck() {
         Vector3 baseCenter = transform.position + _thisCollider.center - (Vector3.up * ((_thisCollider.height / 2f) - _thisCollider.radius));
         Vector3 boxHalfExtents = new Vector3(_thisCollider.radius * 0.9f, .1f, _thisCollider.radius * 0.9f);    
-        IsGrounded = Physics.BoxCast(baseCenter, boxHalfExtents, Vector3.down, out RaycastHit bottomHit, Quaternion.identity, m_raycastDistance, m_groundLayerMask);
+        IsGrounded = Physics.BoxCast(baseCenter, boxHalfExtents, Vector3.down, out _groundHit, Quaternion.identity, m_raycastDistance, m_groundLayerMask);
         if (coyoteTimer == 0)
             IsGrounded = false;
 
@@ -332,7 +599,13 @@ public class Player_MovementSystem : NetworkBehaviour {
 
         HandleCrouch();
         HandleJump();
-        HandleSprint();
+        HandleDash();
+        HandleSlide();
+
+        if (!_isSliding) {
+            HandleSprint();
+            HandleStamina();
+        }
     }
 
     private void FixedUpdate() {

@@ -35,9 +35,15 @@ public class Wobble : MonoBehaviour
     
     private const float SMOOTHING_FACTOR = 5f;
     
+    private MaterialPropertyBlock propBlock;
+    private static readonly int WobbleXID = Shader.PropertyToID("_WobbleX");
+    private static readonly int WobbleZID = Shader.PropertyToID("_WobbleZ");
+    private static readonly int WaveAmplitudeID = Shader.PropertyToID("_WaveAmplitude");
+    
     void Start()
     {
         rend = GetComponent<Renderer>();
+        propBlock = new MaterialPropertyBlock();
         lastPos = transform.position;
         lastRot = transform.rotation.eulerAngles;
     }
@@ -70,9 +76,10 @@ public class Wobble : MonoBehaviour
 
         currentWaveIntensity = Mathf.Lerp(currentWaveIntensity, targetIntensity, Time.deltaTime * WaveRecovery);
 
-        rend.material.SetFloat("_WobbleX", wobbleAmountX);
-        rend.material.SetFloat("_WobbleZ", wobbleAmountZ);
-        rend.material.SetFloat("_WaveAmplitude", MaxWobble * currentWaveIntensity * WaveIntensityMax);
+        propBlock.SetFloat(WobbleXID, wobbleAmountX);
+        propBlock.SetFloat(WobbleZID, wobbleAmountZ);
+        propBlock.SetFloat(WaveAmplitudeID, MaxWobble * currentWaveIntensity * WaveIntensityMax);
+        rend.SetPropertyBlock(propBlock);
 
         wobbleAmountToAddX = Mathf.Lerp(wobbleAmountToAddX, 0, Time.deltaTime * Recovery);
         wobbleAmountToAddZ = Mathf.Lerp(wobbleAmountToAddZ, 0, Time.deltaTime * Recovery);

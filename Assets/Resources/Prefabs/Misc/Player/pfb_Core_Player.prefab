@@ -2447,6 +2447,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  m_sprintHoldDelay: 0.15
+  m_slideCameraTiltAngle: 12
   m_crouchHeight: 1.1
   m_crouchCenter: -0.35
   m_cameraCrouchY: -0.1
@@ -2472,10 +2474,35 @@ MonoBehaviour:
   m_playerCameraHolder: {fileID: 1079605932885980738}
   m_weaponsHolder: {fileID: 3238552059071448730}
   m_playerCamera: {fileID: 3387822892132135912}
+  m_postProcessingVolumeProfile: {fileID: 0}
   swayIntensity: 0.075
   swaySmoothness: 4
   swayMovementIntensity: 0.01
   swayMovementSpeed: 14
+  weaponSwitchTiltAngle: 5.5
+  weaponSwitchSideAngle: 2
+  weaponSwitchDuration: 0.375
+  dashFOVIncrease: 65
+  dashEffectDuration: 0.225
+  dashSideEffectDuration: 0.75
+  dashSideTiltAngle: 6
+  dashBackwardTiltAngle: 4
+  dashSideYawOffset: 2
+  dashSidePositionOffset: 0.45
+  dashBackwardFOVReduction: 8
+  dashMotionBlurIntensity: 0.5
+  slideEffectDuration: 0.3
+  enableSpeedShake: 1
+  shakeSpeedThreshold: 12.5
+  shakeMaxSpeed: 80
+  shakeIntensity: 12
+  shakeFrequency: 25
+  walkBobSpeed: 16
+  walkBobAmount: 0.125
+  sprintBobSpeed: 22
+  sprintBobAmount: 0.315
+  jumpBobAmount: 0.3
+  landBobAmount: 0.9
 --- !u!114 &5411995304523090221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2685,6 +2712,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  useDashFallback: 1
+  dashTapTimeWindow: 0.15
 --- !u!114 &2731641437089409869
 MonoBehaviour:
   m_ObjectHideFlags: 0

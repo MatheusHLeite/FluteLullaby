@@ -54,6 +54,7 @@ public class SettingsManager : MonoBehaviour {
     private Resolution currentResolution;
     private FullScreenMode currentScreenMode;
 
+    public VolumeProfile VolumeProfile => m_globalVolume;
     public bool HDRSupport {  get; private set; }
 
     #region General options string

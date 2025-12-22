@@ -78,6 +78,33 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "LastSlotUsed",
+                    "type": "Button",
+                    "id": "7cb953c4-ecd4-40da-b6b4-5c24e466cc2e",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "710c6cab-0583-4f97-b430-cc20b3c7ff60",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Crouch",
+                    "type": "Button",
+                    "id": "a11fad90-dfbb-4792-9e13-5af15c90cba4",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Slot1",
                     "type": "Button",
                     "id": "87098ee5-2c77-4ad9-b388-c49460288c08",
@@ -108,33 +135,6 @@
                     "name": "Slot4",
                     "type": "Button",
                     "id": "bdec2432-fb87-4356-b9f4-ad7dd8a63a54",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "LastSlotUsed",
-                    "type": "Button",
-                    "id": "7cb953c4-ecd4-40da-b6b4-5c24e466cc2e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Reload",
-                    "type": "Button",
-                    "id": "710c6cab-0583-4f97-b430-cc20b3c7ff60",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Crouch",
-                    "type": "Button",
-                    "id": "a11fad90-dfbb-4792-9e13-5af15c90cba4",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -387,7 +387,7 @@
                 {
                     "name": "",
                     "id": "2f35cc96-8b5f-4643-a4e5-7b42fd416369",
-                    "path": "<Keyboard>/leftCtrl",
+                    "path": "<Keyboard>/c",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",

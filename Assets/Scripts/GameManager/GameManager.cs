@@ -78,6 +78,11 @@ public interface IInteractable {
     void Interact(Player_InteractionSystem interactor);
 }
 
+public interface IDamageable
+{
+    void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact);
+}
+
 public enum Weapons { None, Revolver, Shotgun }
 
 public enum Language { English, Portuguese, Spanish }

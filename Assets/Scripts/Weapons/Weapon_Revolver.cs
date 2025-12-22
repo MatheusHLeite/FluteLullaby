@@ -8,24 +8,14 @@ public class Weapon_Revolver : Weapon_Firearm {
 
         Physics.Raycast(ray, out hit, m_range, ~layerToIgnore);
 
-        Vector3 dir;
+        Vector3 dir = ray.direction;
+        //dir = (hit.point - weaponMuzzle.position).normalized;
 
-        if (hit.collider != null)
-        {
-            dir = (hit.point - weaponMuzzle.position).normalized;
+        if (hit.collider != null && hit.collider.TryGetComponent(out Damagable_BodyPart damagable))
+            damagable.TakeDamage(m_damage, hit.point, dir, m_impact);
 
-            if (hit.collider.TryGetComponent(out Enemy enemy))
-                enemy.TakeDamage(m_damage);
-
-            if (hit.collider.TryGetComponent(out Player_BodyPart player))
-                player.TakeDamage(m_damage, hit.point, dir, m_impact);
-
-            if (hit.collider.TryGetComponent(out NPC_HealthHandler npc))
-                npc.TakeDamage(m_damage, hit.point, dir, m_impact);
-        }
-        else
-            dir = ray.direction;
-
+        /*else
+            dir = ray.direction;*/
 
         Singleton.Instance.GameEvents.OnShot?.Invoke(weaponMuzzle.position, hit, dir);
     }

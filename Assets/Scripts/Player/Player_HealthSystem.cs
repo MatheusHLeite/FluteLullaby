@@ -4,7 +4,7 @@ using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 
-public class Player_HealthSystem : NetworkBehaviour {
+public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     [Header("Setup")]
     private NetworkVariable<float> currentHealth = new NetworkVariable<float>(100f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     [SerializeField] private float respawnDelay = 3f;

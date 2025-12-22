@@ -20,16 +20,8 @@ public class Weapon_Shotgun : Weapon_Firearm {
             Vector3 direction = GetSpreadDirection();
             Physics.Raycast(CameraMovement.GetPlayerCamera.transform.position, direction, out hit, m_range, ~layerToIgnore);
 
-            if (hit.collider != null) {
-                if (hit.collider.TryGetComponent(out Enemy enemy)) 
-                    enemy.TakeDamage(m_damage / pelletCount);                
-                    
-                if (hit.collider.TryGetComponent(out Player_BodyPart player)) 
-                    player.TakeDamage(m_damage / pelletCount, hit.point, ray.direction, m_impact);                 
-
-                if (hit.collider.TryGetComponent(out NPC_HealthHandler npc))
-                    npc.TakeDamage(m_damage, hit.point, ray.direction, m_impact);
-            }
+            if (hit.collider != null && hit.collider.TryGetComponent(out Damagable_BodyPart damagable)) 
+                damagable.TakeDamage(m_damage / pelletCount, hit.point, ray.direction, m_impact);            
 
             Singleton.Instance.GameEvents.OnShot?.Invoke(weaponMuzzle.position, hit, direction);
         }

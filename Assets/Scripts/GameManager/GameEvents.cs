@@ -42,7 +42,8 @@ public class GameEvents : MonoBehaviour {
     #region Player management
     public UnityEvent<float, float> OnHealthSet { get; private set; } = new();
     public UnityEvent<float, float> OnDamageTaken { get; private set; } = new();
-    public UnityEvent<float, float> OnStaminaUsage { get; private set; } = new();
+    public UnityEvent<float> OnStaminaConsume { get; private set; } = new();
+    public UnityEvent<float> OnStaminaUISet { get; private set; } = new();
     #endregion
 
     #region Settings

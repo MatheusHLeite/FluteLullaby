@@ -26,6 +26,7 @@ public class UI_PlayerHUD : MonoBehaviour {
 
     private int _killCount;
     private int _deathCount;
+    private float _maxStamina;
     private bool m_staminaFull;
 
     private int crosshairType;
@@ -36,7 +37,8 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
-        Singleton.Instance.GameEvents.OnStaminaUsage.AddListener(OnStaminaUsage);
+        Singleton.Instance.GameEvents.OnStaminaConsume.AddListener(OnStaminaUsage);
+        Singleton.Instance.GameEvents.OnStaminaUISet.AddListener(i => _maxStamina = i);
         Singleton.Instance.GameEvents.OnHit.AddListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnAmmoSpent);
@@ -47,7 +49,8 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnHoverOverItem.RemoveListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.RemoveListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.RemoveListener(OnDamageTaken);
-        Singleton.Instance.GameEvents.OnStaminaUsage.RemoveListener(OnStaminaUsage);
+        Singleton.Instance.GameEvents.OnStaminaConsume.RemoveListener(OnStaminaUsage);
+        Singleton.Instance.GameEvents.OnStaminaUISet.RemoveListener(i => _maxStamina = i);
         Singleton.Instance.GameEvents.OnHit.RemoveListener(OnHit);
         Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
@@ -136,8 +139,8 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_killIndicator.transform.DOScale(Vector3.one, 0.2f);
     }
 
-    private void OnStaminaUsage(float currentStamina, float maxStamina) {
-        m_staminaBar.fillAmount = currentStamina / maxStamina;
+    private void OnStaminaUsage(float currentStamina) {
+        m_staminaBar.fillAmount = currentStamina / _maxStamina;
 
         if (m_staminaBar.fillAmount >= 1 && !m_staminaFull) {            
             m_staminaFull = true;

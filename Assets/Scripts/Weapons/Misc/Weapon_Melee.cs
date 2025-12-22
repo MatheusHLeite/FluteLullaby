@@ -98,8 +98,7 @@ public class Weapon_Melee : MonoBehaviour {
     #endregion
 
     private void OnTriggerEnter(Collider other) {
-        if (other.TryGetComponent(out Enemy enemy)) {
-            enemy.TakeDamage(m_damage);
-        }
+        if (other.TryGetComponent(out Damagable_BodyPart damagable))
+            damagable.TakeDamage(m_damage, other.ClosestPoint(transform.position), transform.forward, 30); //[TODO] Hardcoded
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour {
+public class Enemy : MonoBehaviour, IDamageable {
     [SerializeField] private Material m_onHitMaterial;
     [SerializeField] private Renderer m_enemySkin;
     [Range(0, 255)] public byte m_onHitEffectIntensity;
@@ -62,7 +62,7 @@ public class Enemy : MonoBehaviour {
         m_enemySkin.SetPropertyBlock(propBlock, hitMaterialIndex);
     }
 
-    public void TakeDamage(float damage) {
+    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
         print($"dealing {damage} to {gameObject.name}");
 
         VisualHit();
