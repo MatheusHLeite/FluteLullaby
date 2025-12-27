@@ -71,5 +71,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<Vector3, RaycastHit, Vector3> OnShot { get; private set; } = new();
     #endregion
 
-    public UnityEvent<bool> LockNavigationInputs { get; set; } = new(); 
+    public UnityEvent<bool> LockNavigationInputs { get; set; } = new();
+
+    public UnityEvent<ImportantDecision> OnImportantDecisionTaken { get; set; } = new();
 }
