@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using DG.Tweening;
+using NaughtyAttributes;
 using TMPro;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ public class RadialMenuUI : MonoBehaviour {
     [Header("Setup")]
     [SerializeField] private RadialMenuButton m_optionPrefab;
     [SerializeField] private TMP_Text m_timer;
+    [SerializeField] private CanvasGroup m_mainCanvasGroup;
 
     [Header("Decision made UI")]
     [SerializeField] private CanvasGroup m_decisionMadeCanvasGroup;
@@ -33,7 +35,12 @@ public class RadialMenuUI : MonoBehaviour {
     }
 
     private void OnImportantDecisionTaken(ImportantDecision decision) {
-        
+        m_mainCanvasGroup.DOFade(0, 1f).SetDelay(.7f).OnComplete(()=> {
+     
+            m_decisionMadeCanvasGroup.DOFade(1, 0.2f).SetDelay(1.35f);
+            //m_decisionMadeText.text = "";
+        });
+        StopAllCoroutines();
     }
 
     private void TestUI()
@@ -44,6 +51,11 @@ public class RadialMenuUI : MonoBehaviour {
         newDecisions[1].optionText = "Run";
         newDecisions[2].optionText = "Run towards";
         newDecisions[3].optionText = "Hide";
+
+        newDecisions[0].id = "shootDecision_0";
+        newDecisions[1].id = "runDecision_0";
+        newDecisions[2].id = "runTowardsDecision_0";
+        newDecisions[3].id = "hideDecision_0";
 
         SetupOptions(newDecisions, 60);
     }
@@ -131,4 +143,5 @@ public class RadialMenuUI : MonoBehaviour {
 
 public struct ImportantDecision {
     public string optionText;
+    [ReadOnly] public string id;
 }

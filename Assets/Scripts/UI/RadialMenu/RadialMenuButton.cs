@@ -15,6 +15,23 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public static bool Selected;
 
+    private void Awake() {
+        Singleton.Instance.GameEvents.OnImportantDecisionTaken.AddListener(OnImportantDecisionTaken);
+    }
+
+    private void OnDestroy() {
+        Singleton.Instance.GameEvents.OnImportantDecisionTaken.RemoveListener(OnImportantDecisionTaken);
+    }
+
+    private void OnImportantDecisionTaken(ImportantDecision decision) {
+        if (decision.id == thisDecision.id) {
+            thisCg.DOFade(0, 1.5f);
+            return;
+        }
+
+        thisCg.DOFade(0, 0.9f);
+    }
+
     public void OnPointerEnter(PointerEventData eventData) {
         if (Selected) return;
         img_background.DOFade(0.15f, 0.2f);
@@ -31,8 +48,6 @@ public class RadialMenuButton : MonoBehaviour, IPointerEnterHandler, IPointerExi
         if (Selected) return;
         img_background.transform.DOScale(Vector3.one * 3f, 2f).SetEase(Ease.InBounce);
         img_background.color = Color.green;
-
-        thisCg.DOFade(0, 1.5f);
 
         Singleton.Instance.GameEvents.OnImportantDecisionTaken?.Invoke(thisDecision);
 
