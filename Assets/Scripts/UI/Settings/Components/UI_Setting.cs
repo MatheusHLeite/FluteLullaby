@@ -39,6 +39,15 @@ public class UI_Setting : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         options = newOptions;
         actualIndex = index;
 
+        if (options.Count <= 0) {
+            m_selectedOption.SetText("Error");
+            m_selectedOption.color = Color.red;
+
+            m_selectNext.gameObject.SetActive(false);
+            m_selectPrevious.gameObject.SetActive(false);
+            return;
+        }
+
         if (options.Count <= 1) {
             m_selectedOption.SetText(actualIndex == -1 ? "Custom" : options[actualIndex].text);
             m_selectedOption.color = inativeIndexColor;
