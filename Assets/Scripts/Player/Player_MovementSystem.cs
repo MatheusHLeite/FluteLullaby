@@ -212,26 +212,24 @@ public class Player_MovementSystem : NetworkBehaviour {
     #endregion
 
     #region Network Initialization
-    public override void OnNetworkSpawn()  {
-        if (IsOwner) {
-            _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
+    public void InitializeNetwork(bool isOwner)  {
+        isCrouched_NV.OnValueChanged += OnCrouchStateChanged;
 
-            Singleton.Instance.GameEvents.OnSprintToggleChanged.AddListener(OnSprintToggleChanged);
-            Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
-            return; 
-        }
+        if (!isOwner) return;
 
-        isCrouched_NV.OnValueChanged += OnCrouchStateChanged;      
+        _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
+
+        Singleton.Instance.GameEvents.OnSprintToggleChanged.AddListener(OnSprintToggleChanged);
+        Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
     }
 
-    public override void OnNetworkDespawn() {
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSprintToggleChanged.RemoveListener(OnSprintToggleChanged);
-            Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
-            return;
-        }
-
+    public void DeinitializeNetwork(bool isOwner) {
         isCrouched_NV.OnValueChanged -= OnCrouchStateChanged;
+
+        if (!isOwner) return;
+
+        Singleton.Instance.GameEvents.OnSprintToggleChanged.RemoveListener(OnSprintToggleChanged);
+        Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
     }
 
     private void OnCrouchStateChanged(bool oldValue, bool newValue) => Animation.OnCrouch(newValue);
@@ -600,8 +598,8 @@ public class Player_MovementSystem : NetworkBehaviour {
     #endregion
 
     #region Update
-    private void Update() {
-        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() == GameState.Paused) return;
+    public void Tick(bool isOwner) {
+        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() == GameState.Paused) return;
 
         HandleCrouch();
         HandleJump();
@@ -614,8 +612,8 @@ public class Player_MovementSystem : NetworkBehaviour {
         HandleStamina();
     }
 
-    private void FixedUpdate() {
-        if (!IsOwner || HealthSystem.IsDead) return;
+    public void FixedTick(bool isOwner) {
+        if (!isOwner || HealthSystem.IsDead) return;
 
         RaycastCheck();
 

@@ -23,12 +23,12 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         CameraSystem = GetComponent<Player_CameraMovementSystem>();
     }
 
-    public override void OnNetworkSpawn() {
+    public void InitializeNetwork(bool isOwner) {
         PlayerName.OnValueChanged += OnNameChanged;
 
         Singleton.Instance.GameEvents.OnPlayerIndicatorChanged.AddListener(OnPlayerIndicatorChanged);
 
-        if (IsOwner) {
+        if (isOwner) {
             Singleton.Instance.GameEvents.OnPlayerDie.AddListener(OnPlayerDie);
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
             Singleton.Instance.GameEvents.OnShot.AddListener(OnShot);
@@ -46,14 +46,14 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         m_firstPersonHolder.SetActive(false);
     }
 
-    public override void OnNetworkDespawn() {
+    public void DeinitializeNetwork(bool isOwner) {
         Singleton.Instance.GameEvents.OnPlayerIndicatorChanged.RemoveListener(OnPlayerIndicatorChanged);
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
-            Singleton.Instance.GameEvents.OnShot.RemoveListener(OnShot);
-        }
+        if (!isOwner) return;
+
+        Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
+        Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
+        Singleton.Instance.GameEvents.OnShot.RemoveListener(OnShot);
     }
 
     private void OnShot(Vector3 initialPoint, RaycastHit targetPos, Vector3 direction) {
@@ -64,9 +64,8 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
 
         StartCoroutine(NewTrail(newTrail));
 
-        if (targetPos.point != Vector3.zero) {
-            OnWeaponHit(targetPos);
-        }
+        if (targetPos.point != Vector3.zero) 
+            OnWeaponHit(targetPos);        
     }
 
     private void OnWeaponHit(RaycastHit hit) {
@@ -154,9 +153,10 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         }
     }
 
-    private void Update() {
-        if (!IsOwner && Camera.main != null) {
-            m_indicatorHolder.transform.forward = Camera.main.transform.forward;
-        }
+    public void Tick(bool isOwner) {
+        if (isOwner) return;
+        if (Camera.main == null) return;
+
+        m_indicatorHolder.transform.forward = Camera.main.transform.forward;
     }
 }

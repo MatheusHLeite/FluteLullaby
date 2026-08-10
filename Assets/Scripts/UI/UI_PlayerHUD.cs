@@ -11,6 +11,8 @@ public class UI_PlayerHUD : MonoBehaviour {
     [Header("Health")]
     [SerializeField] private Image m_healthBar;
     [SerializeField] private Image m_healthBarEffect;
+    [SerializeField] private Color m_defaultHealthColor;
+    [SerializeField] private Color m_lowHealthColor;
 
     [Header("Stamina")]
     [SerializeField] private Image m_staminaBar;
@@ -22,7 +24,6 @@ public class UI_PlayerHUD : MonoBehaviour {
     [SerializeField] private CanvasGroup[] m_damageTakenScreenEffect;
     
     [Header("Crosshair")]
-    [SerializeField] private Animator m_crosshairAnimator;
     [SerializeField] private GameObject m_defaultCrosshair;
     [SerializeField] private CrosshairType[] m_crosshairs;    
 
@@ -36,15 +37,11 @@ public class UI_PlayerHUD : MonoBehaviour {
     #region Start
     private void Awake() {       
         Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);        
-        Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaConsume.AddListener(OnStaminaUsage);
-        Singleton.Instance.GameEvents.OnStaminaUISet.AddListener(i => _maxStamina = i);
-        Singleton.Instance.GameEvents.OnHit.AddListener(OnHit);
-        Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
+        Singleton.Instance.GameEvents.OnStaminaUISet.AddListener(SetMaxStamina);
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
-
         Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
         Singleton.Instance.GameEvents.OnInventoryOpened.AddListener(OnInventoryOpened);
         Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
@@ -52,15 +49,11 @@ public class UI_PlayerHUD : MonoBehaviour {
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnHoverOverItem.RemoveListener(SetSelectedActionText);        
-        Singleton.Instance.GameEvents.OnHealthSet.RemoveListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.RemoveListener(OnDamageTaken);
         Singleton.Instance.GameEvents.OnStaminaConsume.RemoveListener(OnStaminaUsage);
-        Singleton.Instance.GameEvents.OnStaminaUISet.RemoveListener(i => _maxStamina = i);
-        Singleton.Instance.GameEvents.OnHit.RemoveListener(OnHit);
-        Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
+        Singleton.Instance.GameEvents.OnStaminaUISet.RemoveListener(SetMaxStamina);
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
-
         Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
         Singleton.Instance.GameEvents.OnInventoryOpened.RemoveListener(OnInventoryOpened);
         Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
@@ -69,6 +62,13 @@ public class UI_PlayerHUD : MonoBehaviour {
     private void Start() {        
         _impulseSource = GetComponent<CinemachineImpulseSource>();
         m_ammo.gameObject.SetActive(false);
+
+        m_healthBar.fillAmount = 1f;
+        m_healthBar.color = m_defaultHealthColor;
+    }
+
+    private void SetMaxStamina(float max) {
+        _maxStamina = max;
     }
     #endregion
 
@@ -140,25 +140,6 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_ammo.text = $"{currentAmmo}/<size=50%>{maxAmmo}</size>";
     }
 
-    private void OnHit() {
-        m_crosshairAnimator.SetTrigger("OnHit");
-
-        /*if (killed) {
-            m_hitCrosshair.alpha = 0;
-            m_killCrosshair.alpha = 1;
-            m_killCrosshair.DOFade(0, 0.55f).SetDelay(0.14f);
-        }
-        else {
-            m_killCrosshair.alpha = 0;
-            m_hitCrosshair.alpha = 1;
-            m_hitCrosshair.DOFade(0, 0.4f).SetDelay(0.11f);
-        }  */      
-    }
-
-    private void OnKill() {
-         m_crosshairAnimator.SetTrigger("OnKill");
-    }
-
     private void OnStaminaUsage(float currentStamina) {
         m_staminaBar.fillAmount = currentStamina / _maxStamina;
 
@@ -187,32 +168,17 @@ public class UI_PlayerHUD : MonoBehaviour {
         if (currentHealth < maxHealth)
             OnDamageTakenScreenVisual();
 
-        m_healthBar.fillAmount = currentHealth / maxHealth;
+        float fillValue = Mathf.Clamp01(currentHealth / maxHealth);
+        Color correctColor = Color.Lerp(m_lowHealthColor, m_defaultHealthColor, fillValue);
+        
+        m_healthBar.DOKill();
+        m_healthBarEffect.DOKill();
 
-        m_healthBarEffect.DOFillAmount(currentHealth / maxHealth, 0.25f).SetDelay(1f);
-        m_healthBarEffect.color = Color.white;
-        m_healthBarEffect.DOColor(Color.red, 0.25f);
+        m_healthBar.color = Color.red;
+        m_healthBar.DOColor(correctColor, 0.3f);
 
-        m_healthBar.color = Color.green;
-
-        if (m_healthBar.fillAmount <= 0.7)
-            m_healthBar.color = Color.yellow;       
-        if (m_healthBar.fillAmount <= 0.4)
-            m_healthBar.color = new Color32(255, 128, 0, 255);
-        if (m_healthBar.fillAmount <= 0.2)
-            m_healthBar.color = Color.red;        
-
-        if (m_healthBar.fillAmount <= 0) 
-            OnDeath();        
-    }
-
-    private void OnDeath() {
-        m_healthBar.fillAmount = 0;
-    }
-
-    private void OnHealthSet(float actualHealth, float maxHealth) {
-        m_healthBar.fillAmount = maxHealth;
-        m_healthBar.color = Color.green;
+        m_healthBar.DOFillAmount(fillValue, 0.03f);
+        m_healthBarEffect.DOFillAmount(fillValue, 0.25f).SetDelay(1.2f);
     }
 
     private void SetSelectedActionText(string text) {

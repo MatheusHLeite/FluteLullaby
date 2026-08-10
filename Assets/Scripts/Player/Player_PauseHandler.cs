@@ -22,7 +22,9 @@ public class Player_PauseHandler : MonoBehaviour {
         Camera = GetComponent<Player_CameraMovementSystem>();
     }
 
-    private void Start() {
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
+
         PauseInteractionProcessor.Instance.SetPlayerCamera(Camera.GetPlayerCamera);
         MenuManagement_Handler.Instance.SetupPlayerReference(this);
     }
@@ -81,7 +83,9 @@ public class Player_PauseHandler : MonoBehaviour {
         });
     }
 
-    private void Update() {
+    public void Tick(bool isOwner) {
+        if (!isOwner) return;
+
         if (Input.Pause) {
             HandlePause();            
             return;

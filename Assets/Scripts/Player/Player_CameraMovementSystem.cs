@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Globalization;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -145,9 +146,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         m_postProcessingVolumeProfile = Singleton.Instance.SettingsManager.VolumeProfile;
 
-        if (m_postProcessingVolumeProfile != null && m_postProcessingVolumeProfile.TryGet(out MotionBlur mb)) {
-            motionBlur = mb;
-        }
+        if (m_postProcessingVolumeProfile != null && m_postProcessingVolumeProfile.TryGet(out MotionBlur mb)) 
+            motionBlur = mb;        
     }
 
     public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
@@ -169,12 +169,10 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         m_playerCamera.fieldOfView = m_defaultFov;
     }
     #endregion
-    //TROCAR DE ARMA FAZ A TELA MEXER
+    
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
-
-        if (!IsOwner) 
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) 
             m_playerCamera.gameObject.SetActive(false);        
         else {
             Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
@@ -183,14 +181,12 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         }                  
     }
 
-    public override void OnNetworkDespawn() {
-        base.OnNetworkDespawn();
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
-            Singleton.Instance.GameEvents.OnInvertAxisChanged.RemoveListener(CheckInvertCameraEnabled);
-            Singleton.Instance.GameEvents.OnCameraBobEnabledChanged.RemoveListener(CheckCameraBalanceEnabled);
-        }
+        Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
+        Singleton.Instance.GameEvents.OnInvertAxisChanged.RemoveListener(CheckInvertCameraEnabled);
+        Singleton.Instance.GameEvents.OnCameraBobEnabledChanged.RemoveListener(CheckCameraBalanceEnabled);
     }
     #endregion
 
@@ -539,14 +535,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
             });
     }
 
-    private void FixedUpdate() {
-        if (Movement != null && Movement.GetRigidbody != null) {
-            cachedVelocity = Movement.GetRigidbody.linearVelocity;
-            cachedVelocityMagnitude = new Vector3(cachedVelocity.x, 0f, cachedVelocity.z).magnitude;
-        }
-    }
-
-    private void Update() {
+    public void Tick(bool isOwner) {
         HandleNetworkCameraRotation();
 
         if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) {
@@ -558,5 +547,12 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
  
         HandleCameraMovement();
         HandleCameraZoom();
+    }
+
+    public void FixedTick(bool isOwner) {
+        if (Movement != null && Movement.GetRigidbody != null) {
+            cachedVelocity = Movement.GetRigidbody.linearVelocity;
+            cachedVelocityMagnitude = new Vector3(cachedVelocity.x, 0f, cachedVelocity.z).magnitude;
+        }
     }
 }

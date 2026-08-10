@@ -36,7 +36,6 @@ public class Player_InputHandler : NetworkBehaviour {
     public bool Slot4 { get; private set; }
     public bool LastSlotUsed { get; private set; }
 
-
     private void OnEnable() {
         if (Input == null) AddInputListeners();
           
@@ -154,8 +153,8 @@ public class Player_InputHandler : NetworkBehaviour {
 
     private void OnLook(InputAction.CallbackContext context) { LookInput = context.ReadValue<Vector2>(); }
 
-    private void Update() {
-        if (!IsOwner) return;
+    public void Tick(bool isOwner) {
+        if (!isOwner) return;
 
         if (useDashFallback && Keyboard.current != null) {
             if (Keyboard.current.leftShiftKey.wasPressedThisFrame) {
@@ -166,17 +165,16 @@ public class Player_InputHandler : NetworkBehaviour {
             if (Keyboard.current.leftShiftKey.wasReleasedThisFrame && _shiftWasPressed) {
                 float holdDuration = Time.time - _shiftPressTime;
                 
-                if (holdDuration < dashTapTimeWindow) {
-                    Dash = true;
-                }
+                if (holdDuration < dashTapTimeWindow) 
+                    Dash = true;                
                 
                 _shiftWasPressed = false;
             }
         }
     }
 
-    private void LateUpdate() {
-        if (!IsOwner) return;
+    public void LateTick(bool isOwner) {
+        if (!isOwner) return;
 
         Jump = false;
         Attack = false;

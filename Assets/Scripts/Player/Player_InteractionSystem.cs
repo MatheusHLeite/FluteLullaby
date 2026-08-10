@@ -44,26 +44,22 @@ public class Player_InteractionSystem : NetworkBehaviour {
     #endregion
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
-
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
-            Singleton.Instance.GameEvents.OnInteractionReset.AddListener(OnInteractionReset);
-        }
-
+    public void InitializeNetwork(bool isOwner) {
         Players[OwnerClientId] = this;
+
+        if (!isOwner) return;
+
+        Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
+        Singleton.Instance.GameEvents.OnInteractionReset.AddListener(OnInteractionReset);
     }
 
-    public override void OnNetworkDespawn() {
-        base.OnNetworkDespawn();
-
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
-            Singleton.Instance.GameEvents.OnInteractionReset.RemoveListener(OnInteractionReset);
-        }
-
+    public void DeinitializeNetwork(bool isOwner) {
         Players.Remove(OwnerClientId);
+
+        if (!isOwner) return;
+
+        Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
+        Singleton.Instance.GameEvents.OnInteractionReset.RemoveListener(OnInteractionReset);
     }
     #endregion
 
@@ -157,9 +153,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
     #region RPC
     
     #endregion
-
-    private void Update() {
-        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
+    public void Tick(bool isOwner) {
+        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
        
         DetectInteractable();
         HandleInteract();

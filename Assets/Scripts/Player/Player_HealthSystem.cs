@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -25,60 +24,51 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     }
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnHealthSet.AddListener(SetHealth);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnSpawn);
-        }
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
+
+        currentHealth.OnValueChanged += OnHealthChanged;
+
+        //Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnSpawn);
     }
 
-    public override void OnNetworkDespawn() {
-        if (IsOwner) {
-            currentHealth.OnValueChanged -= OnHealthChanged;
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-            Singleton.Instance.GameEvents.OnHealthSet.RemoveListener(SetHealth);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnSpawn);
-        }
+        currentHealth.OnValueChanged -= OnHealthChanged;
+
+        //Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnSpawn);
     }
     #endregion
 
     internal void SetPlayerParameters(PlayerParameters_SO playerParameters) {
         maxHealth = playerParameters.m_maxHealth;
 
-        currentHealth.OnValueChanged += OnHealthChanged;
-
-        OnSpawn();
+        SetHealth(maxHealth);
     }
 
     private void OnHealthChanged(float previousValue, float newValue) {
-        if (newValue <= 0f && !IsDead) {
-            Die(hitPoint.Value, hitDirection.Value, impact.Value);
-        }
+        if (newValue <= 0f && !IsDead) 
+            Die(hitPoint.Value, hitDirection.Value, impact.Value);        
 
         Singleton.Instance.GameEvents.OnDamageTaken?.Invoke(newValue, maxHealth);
     }
 
-    private void OnSpawn() {
-        Singleton.Instance.GameEvents.OnHealthSet?.Invoke(maxHealth, maxHealth);        
-    }
+    private void SetHealth(float maxHealth) {
+        Singleton.Instance.GameEvents.OnHealthSet?.Invoke(maxHealth, maxHealth);
 
-    private void SetHealth(float actualHealth, float maxHealth) {
         if (IsServer) {
-            OnHealthSet(actualHealth);
+            OnHealthSet(maxHealth);
             return;
         }
 
-        SetHealthServerRpc(actualHealth);
+        SetHealthServerRpc(maxHealth);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void SetHealthServerRpc(float actualHealth) {
-        OnHealthSet(actualHealth);
-    }
+    private void SetHealthServerRpc(float maxHealth) => OnHealthSet(maxHealth);
 
-    private void OnHealthSet(float actualHealth) {
-        currentHealth.Value = actualHealth;
-    }
+    private void OnHealthSet(float maxHealth) => currentHealth.Value = maxHealth;
 
     public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
         if (currentHealth.Value <= 0) return;

@@ -23,18 +23,6 @@ public class Player_AudioSystem : NetworkBehaviour {
         }
     }
 
-    public override void OnNetworkSpawn() {
-        if (!IsOwner) return;
-
-        
-    }
-
-    public override void OnNetworkDespawn() {
-        if (!IsOwner) return;
-
-        
-    }
-
     public void CallPlayShotSFX(WeaponClass weapon) {
         PlayShotSFX(weapon);
         RequestShootSoundServerRpc(weapon);

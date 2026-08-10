@@ -72,35 +72,27 @@ public class Player_AnimationSystem : NetworkBehaviour {
     }
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
-
-        if (IsOwner) {
-            m_rb = GetComponent<Rigidbody>();
-            m_collider = GetComponent<CapsuleCollider>();
-
-            SetRagdollState(false);
-
-            Singleton.Instance.GameEvents.OnPlayerDie.AddListener(OnPlayerDie);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
-            Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
-            Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
-            return;
-        }
-
+    public void InitializeNetwork(bool isOwner) {
         SetRagdollState(true);
         SetRigidbodyState(true, true);
+
+        if (!isOwner) return;
+
+        SetRagdollState(false);
+
+        Singleton.Instance.GameEvents.OnPlayerDie.AddListener(OnPlayerDie);
+        Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
+        Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
     }
 
-    public override void OnNetworkDespawn() {
-        base.OnNetworkDespawn();
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
-            Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
-            Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
-        }
+        Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
+        Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
+        Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
     }
     #endregion
 
@@ -284,8 +276,8 @@ public class Player_AnimationSystem : NetworkBehaviour {
         RequestAnimatorSyncServerRpc(parameters);
     }
 
-    private void Update() {
-        if (!IsOwner) return;
+    public void Tick(bool isOwner) {
+        if (!isOwner) return;
 
         UpdateAnimator();
     }

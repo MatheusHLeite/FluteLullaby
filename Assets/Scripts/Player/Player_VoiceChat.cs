@@ -7,14 +7,14 @@ public class Player_VoiceChat : NetworkBehaviour {
 
     private string connectedDevice;
 
-    public override void OnNetworkSpawn() {
-        if (!IsOwner) return;
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
         Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.AddListener(OnMicrophoneDeviceSwitch);
     }
 
-    public override void OnNetworkDespawn() {
-        if (!IsOwner) return;
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
         Microphone.End(connectedDevice);
         Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch.RemoveListener(OnMicrophoneDeviceSwitch);

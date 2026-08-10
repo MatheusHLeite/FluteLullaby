@@ -34,20 +34,16 @@ public class Player_CombatSystem : NetworkBehaviour {
     #endregion
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnActualSlotItemSet.AddListener(OnSlotSelected);
-        }
+        Singleton.Instance.GameEvents.OnActualSlotItemSet.AddListener(OnSlotSelected);
     }
 
-    public override void OnNetworkDespawn() {
-        base.OnNetworkDespawn();
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnActualSlotItemSet.RemoveListener(OnSlotSelected);
-        }
+        Singleton.Instance.GameEvents.OnActualSlotItemSet.RemoveListener(OnSlotSelected);
     }
     #endregion
 
@@ -88,8 +84,8 @@ public class Player_CombatSystem : NetworkBehaviour {
         Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.firearm);
     }
 
-    private void Update() {
-        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
+    public void Tick(bool isOwner) {
+        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
 
         HandleAttack();        
     }

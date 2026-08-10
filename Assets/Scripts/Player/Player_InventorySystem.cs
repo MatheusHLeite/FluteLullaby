@@ -39,26 +39,22 @@ public class Player_InventorySystem : NetworkBehaviour {
     #endregion
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        base.OnNetworkSpawn();
+    public void InitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnItemDropped.AddListener(OnSlotItemDropped);            
-            Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
-            Singleton.Instance.GameEvents.OnDragBegun.AddListener(i => previousIndex = i);
-            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.AddListener(OnQuickSlotItemUpdated);
-        }
+        Singleton.Instance.GameEvents.OnItemDropped.AddListener(OnSlotItemDropped);
+        Singleton.Instance.GameEvents.OnSlotSelected.AddListener(OnSlotSelected);
+        Singleton.Instance.GameEvents.OnDragBegun.AddListener(i => previousIndex = i);
+        Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.AddListener(OnQuickSlotItemUpdated);
     }
 
-    public override void OnNetworkDespawn() {
-        base.OnNetworkDespawn();
+    public void DeinitializeNetwork(bool isOwner) {
+        if (!isOwner) return;
 
-        if (IsOwner) {
-            Singleton.Instance.GameEvents.OnItemDropped.RemoveListener(OnSlotItemDropped);
-            Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
-            Singleton.Instance.GameEvents.OnDragBegun.RemoveListener(i => previousIndex = i);
-            Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.RemoveListener(OnQuickSlotItemUpdated);
-        }
+        Singleton.Instance.GameEvents.OnItemDropped.RemoveListener(OnSlotItemDropped);
+        Singleton.Instance.GameEvents.OnSlotSelected.RemoveListener(OnSlotSelected);
+        Singleton.Instance.GameEvents.OnDragBegun.RemoveListener(i => previousIndex = i);
+        Singleton.Instance.GameEvents.OnQuickSlotItemUpdated.RemoveListener(OnQuickSlotItemUpdated);
     }
     #endregion
 
