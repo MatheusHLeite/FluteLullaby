@@ -5,35 +5,36 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class UI_PlayerHUD : MonoBehaviour {
-    [Header("UI")]
-    [SerializeField] private TMP_Text m_selectedActionIndicator;
+    [Header("References")]
+    [SerializeField] private CanvasGroup m_hud;
+
+    [Header("Health")]
     [SerializeField] private Image m_healthBar;
     [SerializeField] private Image m_healthBarEffect;
+
+    [Header("Stamina")]
     [SerializeField] private Image m_staminaBar;
     [SerializeField] private CanvasGroup m_staminaBarCanvas;
-    [SerializeField] private TMP_Text m_killCounter;
-    [SerializeField] private TMP_Text m_deathCounter;
-    [SerializeField] private CanvasGroup m_killIndicator;
+
+    [Header("UI Elements")]
+    [SerializeField] private TMP_Text m_selectedActionIndicator;    
     [SerializeField] private TMP_Text m_ammo;
     [SerializeField] private CanvasGroup[] m_damageTakenScreenEffect;
     
     [Header("Crosshair")]
     [SerializeField] private Animator m_crosshairAnimator;
-    [SerializeField] private CrosshairType[] m_crosshairs;
     [SerializeField] private GameObject m_defaultCrosshair;
+    [SerializeField] private CrosshairType[] m_crosshairs;    
 
-    private CinemachineImpulseSource impulseSource;
-
-    private int _killCount;
-    private int _deathCount;
     private float _maxStamina;
-    private bool m_staminaFull;
+    private bool _staminaFull;
 
-    private int crosshairType;
+    private int _crosshairType;
 
-    private void Awake() {
-        m_ammo.gameObject.SetActive(false);
+    private CinemachineImpulseSource _impulseSource;
 
+    #region Start
+    private void Awake() {       
         Singleton.Instance.GameEvents.OnHoverOverItem.AddListener(SetSelectedActionText);        
         Singleton.Instance.GameEvents.OnHealthSet.AddListener(OnHealthSet);
         Singleton.Instance.GameEvents.OnDamageTaken.AddListener(OnDamageTaken);
@@ -43,6 +44,10 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnKill.AddListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
+
+        Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnInventoryOpened.AddListener(OnInventoryOpened);
+        Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
     }
 
     private void OnDestroy() {
@@ -55,18 +60,42 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnKill.RemoveListener(OnKill);
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
         Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
+
+        Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
+        Singleton.Instance.GameEvents.OnInventoryOpened.RemoveListener(OnInventoryOpened);
+        Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
     }
 
-    private void Start() {
-        impulseSource = GetComponent<CinemachineImpulseSource>();
+    private void Start() {        
+        _impulseSource = GetComponent<CinemachineImpulseSource>();
+        m_ammo.gameObject.SetActive(false);
     }
+    #endregion
+
+    #region HUD
+    private void OnGamePaused() => HandleHUDVisibility(true);
+
+    private void OnInventoryOpened() => HandleHUDVisibility(true);
+
+    private void OnGameResumed() => HandleHUDVisibility(false);
+
+    private void HandleHUDVisibility(bool hide) {
+        m_hud.DOKill();
+
+        m_hud.interactable = !hide;
+        m_hud.blocksRaycasts = !hide;
+
+        m_hud.alpha = hide ? 1f : 0f;
+        m_hud.DOFade(hide ? 0 : 1f, 0.2f);
+    }
+    #endregion
 
     private void OnCrosshairTypeChanged(int index) {
-        crosshairType = index;
+        _crosshairType = index;
     }
 
     private void OnWeaponChanged(Weapon_Firearm weapon) {
-        Weapons weaponType = Weapons.None;
+        WeaponClass weaponType = WeaponClass.None;
 
         if (weapon == null || (weapon != null && weapon.GetItem().m_itemType != ItemType.Firearm)) {
             m_ammo.gameObject.SetActive(false);
@@ -75,14 +104,14 @@ public class UI_PlayerHUD : MonoBehaviour {
             if (!m_ammo.gameObject.activeSelf) m_ammo.gameObject.SetActive(true);
             m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
 
-            weaponType = weapon.GetItem().weaponType;
+            weaponType = weapon.ThisWeaponClass;
         }
         
         CheckCrosshair(weaponType);
     }
 
-    private void CheckCrosshair(Weapons weapon) {
-        if (weapon == Weapons.None) {
+    private void CheckCrosshair(WeaponClass weapon) {
+        if (weapon == WeaponClass.None) {
             SelectCrosshair(weapon);
             m_defaultCrosshair.gameObject.SetActive(true);
             return;
@@ -92,7 +121,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         SelectCrosshair(weapon);
     }
 
-    private void SelectCrosshair(Weapons weapon) {
+    private void SelectCrosshair(WeaponClass weapon) {
         for (int i = 0; i < m_crosshairs.Length; i++) {
             for (int c = 0; c < m_crosshairs[i].m_crosshairs.Length; c++) {
                 m_crosshairs[i].m_crosshairs[c].SetActive(false);
@@ -101,7 +130,7 @@ public class UI_PlayerHUD : MonoBehaviour {
 
         for (int i = 0; i < m_crosshairs.Length; i++) {
             if (weapon == m_crosshairs[i].m_weapon) {
-                m_crosshairs[i].m_crosshairs[crosshairType].SetActive(true);
+                m_crosshairs[i].m_crosshairs[_crosshairType].SetActive(true);
                 break;
             }
         }
@@ -128,27 +157,18 @@ public class UI_PlayerHUD : MonoBehaviour {
 
     private void OnKill() {
          m_crosshairAnimator.SetTrigger("OnKill");
-
-        _killCount++;
-        m_killCounter.SetText(_killCount.ToString());
-        m_killCounter.transform.DOPunchScale(new Vector3(0.2f, 0.2f, 0.2f), 0.15f);
-
-        m_killIndicator.alpha = 1;
-        m_killIndicator.transform.localScale = new Vector3(1.9f, 2.3f, 1.9f);
-        m_killIndicator.DOFade(0, 0.75f).SetDelay(1f);
-        m_killIndicator.transform.DOScale(Vector3.one, 0.2f);
     }
 
     private void OnStaminaUsage(float currentStamina) {
         m_staminaBar.fillAmount = currentStamina / _maxStamina;
 
-        if (m_staminaBar.fillAmount >= 1 && !m_staminaFull) {            
-            m_staminaFull = true;
+        if (m_staminaBar.fillAmount >= 1 && !_staminaFull) {            
+            _staminaFull = true;
             m_staminaBarCanvas.DOKill();
             m_staminaBarCanvas.DOFade(0, 0.8f).SetDelay(1f);
         }
-        else if (m_staminaBar.fillAmount < 1 && m_staminaFull) {
-            m_staminaFull = false;
+        else if (m_staminaBar.fillAmount < 1 && _staminaFull) {
+            _staminaFull = false;
             m_staminaBarCanvas.DOKill();
             m_staminaBarCanvas.DOFade(1, 0.8f);
         }
@@ -160,7 +180,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_damageTakenScreenEffect[index].alpha = 1;
         m_damageTakenScreenEffect[index].DOFade(0, 0.5f).SetDelay(1.7f);
     
-        //impulseSource.GenerateImpulse(new Vector3(Random.Range(.1f, .35f), Random.Range(-.15f, .15f), 0f));
+        _impulseSource.GenerateImpulse(new Vector3(Random.Range(.1f, .35f), Random.Range(-.15f, .15f), 0f));
     }
 
     private void OnDamageTaken(float currentHealth, float maxHealth) {
@@ -182,17 +202,12 @@ public class UI_PlayerHUD : MonoBehaviour {
         if (m_healthBar.fillAmount <= 0.2)
             m_healthBar.color = Color.red;        
 
-        if (m_healthBar.fillAmount <= 0) {
-            OnDeath();
-        }
+        if (m_healthBar.fillAmount <= 0) 
+            OnDeath();        
     }
 
     private void OnDeath() {
         m_healthBar.fillAmount = 0;
-
-        _deathCount++;
-
-        m_deathCounter.text = _deathCount.ToString();
     }
 
     private void OnHealthSet(float actualHealth, float maxHealth) {
@@ -207,6 +222,6 @@ public class UI_PlayerHUD : MonoBehaviour {
 
 [System.Serializable]
 public struct CrosshairType {
-    public Weapons m_weapon;
+    public WeaponClass m_weapon;
     public GameObject[] m_crosshairs;
 }

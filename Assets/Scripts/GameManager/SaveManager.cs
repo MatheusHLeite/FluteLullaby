@@ -1,5 +1,7 @@
 using Sirenix.OdinInspector;
 using System.Collections;
+using Unity.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
 public class SaveManager : MonoBehaviour {
@@ -49,7 +51,7 @@ public class SaveManager : MonoBehaviour {
     private void OnNewItemAdded(Item_SO item, int index, int itemQuantity, bool isSplitItem = false) {
         if (!isSplitItem) {
             for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-                if (PlayerData.acquiredItems[i].id == item.id) {
+                if (PlayerData.acquiredItems[i].itemBaseId == item.id) {
                     UpdateItemData(i, itemQuantity);
                     return;
                 }
@@ -63,7 +65,7 @@ public class SaveManager : MonoBehaviour {
 
                 };
                 MeleeWeapon meleeWeapon = new MeleeWeapon {
-                    id = item.id,
+                    itemBaseId = item.id,
                     uniqueId = System.Guid.NewGuid().ToString(),
                     quantity = itemQuantity,
                     index = index,
@@ -81,7 +83,7 @@ public class SaveManager : MonoBehaviour {
                     m_reloadSpeedMultiplier = 1
                 };
                 LongRangeWeapon longRangeWeapon = new LongRangeWeapon {
-                    id = item.id,
+                    itemBaseId = item.id,
                     uniqueId = System.Guid.NewGuid().ToString(),
                     quantity = itemQuantity,
                     index = index,
@@ -97,7 +99,7 @@ public class SaveManager : MonoBehaviour {
 
                 };
                 Item newItem = new Item {
-                    id = item.id,
+                    itemBaseId = item.id,
                     uniqueId = System.Guid.NewGuid().ToString(),
                     quantity = itemQuantity,
                     index = index,
@@ -114,7 +116,7 @@ public class SaveManager : MonoBehaviour {
 
     private void OnItemRemoved(ItemData item, int index) {
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].id == item.id &&
+            if (PlayerData.acquiredItems[i].itemBaseId == item.itemBaseId &&
                 PlayerData.acquiredItems[i].uniqueId == item.uniqueId) {
                 PlayerData.acquiredItems.RemoveAt(i);
                 SaveSystemHandler.SaveData(PlayerData);
@@ -134,7 +136,7 @@ public class SaveManager : MonoBehaviour {
         int splitResult = quantity - originalSplit;
 
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].id == itemData.id && PlayerData.acquiredItems[i].uniqueId == itemData.uniqueId) {
+            if (PlayerData.acquiredItems[i].itemBaseId == itemData.itemBaseId && PlayerData.acquiredItems[i].uniqueId == itemData.uniqueId) {
                 PlayerData.acquiredItems[i].quantity = splitResult;
                 Singleton.Instance.GameEvents.OnItemUpdated?.Invoke(PlayerData.acquiredItems[i]);
                 break;
@@ -142,14 +144,14 @@ public class SaveManager : MonoBehaviour {
         }
 
         int newIndex = Singleton.Instance.InventoryManager.GetEmptySlotIndex(UI_InventoryManager._quickSlots.Count);
-        Item_SO item = Singleton.Instance.GameManager.GetItemByID(itemData.id);
+        Item_SO item = Singleton.Instance.GameManager.GetItemByID(itemData.itemBaseId);
 
         OnNewItemAdded(item, newIndex, originalSplit, true);
     }
 
     private void OnWeaponAmmoConsumed(LongRangeWeapon_SO weapon, int currentAmmo, int stockedAmmo, int remainingAmmo) {
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].id == weapon.m_ammo.id) 
+            if (PlayerData.acquiredItems[i].itemBaseId == weapon.m_ammo.id) 
             {
                 int amountToRemove = Mathf.Min(PlayerData.acquiredItems[i].quantity, remainingAmmo);
 
@@ -164,7 +166,7 @@ public class SaveManager : MonoBehaviour {
         }
 
         for (int i = 0; i < PlayerData.acquiredLongRangeWeapons.Count; i++) {
-            if (PlayerData.acquiredLongRangeWeapons[i].id == weapon.id) {
+            if (PlayerData.acquiredLongRangeWeapons[i].itemBaseId == weapon.id) {
                 PlayerData.acquiredLongRangeWeapons[i].firearmData.m_currentAmmo = currentAmmo;
                 break;
             }
@@ -175,7 +177,7 @@ public class SaveManager : MonoBehaviour {
 
     public void OnInventoryItemUpdated(string id, string uniqueId, int newIndex, int newQuantity) {
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].id == id && 
+            if (PlayerData.acquiredItems[i].itemBaseId == id && 
                 PlayerData.acquiredItems[i].uniqueId == uniqueId) {
                 PlayerData.acquiredItems[i].index = newIndex;
                 PlayerData.acquiredItems[i].quantity = newQuantity;
@@ -190,7 +192,7 @@ public class SaveManager : MonoBehaviour {
         int quantityToBeAdded = itemDataToRemove.quantity;
 
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].id == itemDataToBeUpdated.id && 
+            if (PlayerData.acquiredItems[i].itemBaseId == itemDataToBeUpdated.itemBaseId && 
                 PlayerData.acquiredItems[i].uniqueId == itemDataToBeUpdated.uniqueId) {
                 UpdateItemData(i, quantityToBeAdded);
                 break;
@@ -204,7 +206,7 @@ public class SaveManager : MonoBehaviour {
     #region Get
     public ItemData GetItemFromInventory(string id) {
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++)
-            if (PlayerData.acquiredItems[i].id == id)
+            if (PlayerData.acquiredItems[i].itemBaseId == id)
                 return PlayerData.acquiredItems[i];
         return null;
     }
@@ -212,7 +214,7 @@ public class SaveManager : MonoBehaviour {
     public LongRangeWeapon GetLongRangeWeaponFromInventory(string id) {
         if (PlayerData.acquiredLongRangeWeapons.Count > 0) {
             for (int i = 0; i < PlayerData.acquiredLongRangeWeapons.Count; i++) {
-                if (PlayerData.acquiredLongRangeWeapons[i].id == id)
+                if (PlayerData.acquiredLongRangeWeapons[i].itemBaseId == id)
                     return PlayerData.acquiredLongRangeWeapons[i];
             }
         }
@@ -222,7 +224,7 @@ public class SaveManager : MonoBehaviour {
     public MeleeWeapon GetMeleeWeaponFromInventory(string id) {
         if (PlayerData.acquiredMeleeWeapons.Count > 0) {
             for (int i = 0; i < PlayerData.acquiredMeleeWeapons.Count; i++) {
-                if (PlayerData.acquiredMeleeWeapons[i].id == id)
+                if (PlayerData.acquiredMeleeWeapons[i].itemBaseId == id)
                     return PlayerData.acquiredMeleeWeapons[i];
             }
         }
@@ -232,7 +234,7 @@ public class SaveManager : MonoBehaviour {
     public int GetAllItemQuantities(string id) {
         int quantity = 0;
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++)
-            if (PlayerData.acquiredItems[i].id == id) 
+            if (PlayerData.acquiredItems[i].itemBaseId == id) 
                 quantity += PlayerData.acquiredItems[i].quantity;           
         return quantity;
     }
@@ -252,16 +254,32 @@ public class SaveManager : MonoBehaviour {
 }
 
 #region Data classes
-[System.Serializable]
-public class FirearmWeaponData {
-    public int m_currentAmmo;
-    public float m_fireRateMultiplier;
-    public float m_reloadSpeedMultiplier;
+public enum ItemExtraKind : byte {
+    None,
+    Weapon,
+    Melee,
 }
 
 [System.Serializable]
-public class MeleeWeaponData {    
+public struct FirearmWeaponData : INetworkSerializable {
+    public int m_currentAmmo;
+    public float m_fireRateMultiplier;
+    public float m_reloadSpeedMultiplier;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
+        serializer.SerializeValue(ref m_currentAmmo);
+        serializer.SerializeValue(ref m_fireRateMultiplier);
+        serializer.SerializeValue(ref m_reloadSpeedMultiplier);
+    }
+}
+
+[System.Serializable]
+public struct MeleeWeaponData : INetworkSerializable {
     public float m_attackSpeedMultiplier;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
+        serializer.SerializeValue(ref m_attackSpeedMultiplier);
+    }
 }
 
 [System.Serializable]
@@ -269,12 +287,49 @@ public class InventoryItemData {
     
 }
 
-[System.Serializable]
+/*[System.Serializable]
 public class ItemData {
-    public string id;
+    public string itemBaseId;
     public string uniqueId;
     public int quantity;
     public int index;
+}*/
+
+[System.Serializable]
+public class ItemData : INetworkSerializable {
+    public string itemBaseId;
+    public string uniqueId;
+    public ulong ownerId;
+
+    public int quantity;
+    public int index;
+
+    public Vector3 initialPos;
+    public Quaternion initialRot;
+
+    public ItemExtraKind extraKind;
+    public FirearmWeaponData firearm;
+    public MeleeWeaponData melee;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
+        serializer.SerializeValue(ref itemBaseId);
+        serializer.SerializeValue(ref uniqueId);
+        serializer.SerializeValue(ref ownerId);
+
+        serializer.SerializeValue(ref initialPos);
+        serializer.SerializeValue(ref initialRot);
+
+        serializer.SerializeValue(ref extraKind);
+
+        switch (extraKind) {
+            case ItemExtraKind.Weapon:
+                serializer.SerializeValue(ref firearm);
+                break;
+            case ItemExtraKind.Melee:
+                serializer.SerializeValue(ref melee);
+                break;
+        }
+    }
 }
 
 [System.Serializable]

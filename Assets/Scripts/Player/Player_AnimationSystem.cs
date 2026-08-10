@@ -1,3 +1,4 @@
+using DelightStudio.Data;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
@@ -5,6 +6,7 @@ using UnityEngine;
 public class Player_AnimationSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Animator m_fullBodyAnimator;
+    [SerializeField] private Animator m_handsAnimator;
 
     [Header("Animation settings")]
     [SerializeField] private float m_animationSmoothness;
@@ -12,6 +14,8 @@ public class Player_AnimationSystem : NetworkBehaviour {
     [Header("Ragdoll")]
     [SerializeField] private Rigidbody[] ragdollBodies;
     private Collider[] ragdollColliders;
+
+    private bool isPaused;
 
     #region Private references
     private Rigidbody m_rb;
@@ -37,15 +41,17 @@ public class Player_AnimationSystem : NetworkBehaviour {
     private const string MovementY = "MovementY";
     private const string IsGrounded = "IsGrounded";
     private const string Jump = "Jump";
-    private const string Crouch = "IsCrouch";
-    private const string IdleState = "SetIdle";
-    private const string Attack = "Attack_";
-    private const string Shot = "Shot";
-    private const string Reload = "Reload";
+    private const string Crouch = "IsCrouch";    
+    private const string Attack = "Attack_";    
     private const string HoldingWeapon = "Holding_";
-    #endregion
 
-    private string lastState;
+    private const string Reload = "Reload";
+    private const string Shot = "Shot";
+    private const string Collect = "Collect";
+    private const string IdleState = "SetIdle";
+    private const string WeaponAnimationIndex = "WeaponHoldingIndex";
+    private const string BothHandBusy = "BothHandBusy";
+    #endregion
 
     private void Awake() {
         Input = GetComponent<Player_InputHandler>();
@@ -76,7 +82,9 @@ public class Player_AnimationSystem : NetworkBehaviour {
             SetRagdollState(false);
 
             Singleton.Instance.GameEvents.OnPlayerDie.AddListener(OnPlayerDie);
-            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);            
+            Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnPlayerRespawn);
+            Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
+            Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
             return;
         }
 
@@ -90,8 +98,16 @@ public class Player_AnimationSystem : NetworkBehaviour {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnPlayerDie.RemoveListener(OnPlayerDie);
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnPlayerRespawn);
+            Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
+            Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
         }
     }
+    #endregion
+
+    #region Event calls
+    private void OnGamePaused() => isPaused = true;
+
+    private void OnGameResumed() => isPaused = false;
     #endregion
 
     #region Ragdoll
@@ -191,15 +207,35 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
     public void OnJump() => RequestAnimationServerRpc(Jump);
 
-    public void OnShot() => RequestAnimationServerRpc(Shot);
-   
-    public void OnReload() => RequestAnimationServerRpc(Reload);
+    public void OnShot() {
+        m_handsAnimator.SetTrigger(Shot);
+        RequestAnimationServerRpc(Shot); 
+    }
 
-    public void ChangeIdleState(Weapons weapons) {
-        if (!string.IsNullOrEmpty(lastState)) RequestAnimationStateServerRpc(lastState, false);
+    public void OnCollect() {
+        m_handsAnimator.SetTrigger(Collect);
+        RequestAnimationServerRpc(Collect);
+    }
+
+    public void OnReload() {
+        m_handsAnimator.SetTrigger(Reload);
+        RequestAnimationServerRpc(Reload); 
+    }
+
+    public void ChangeIdleState(Weapon currentWeapon) {
+        //m_handsAnimator.runtimeAnimatorController = currentWeapon.m_overrideController;
+
+        m_handsAnimator.SetInteger(WeaponAnimationIndex, (int)currentWeapon.m_weaponType);
+        m_handsAnimator.SetBool(BothHandBusy, currentWeapon.m_handUsage == HandUsage.TwoHanded);
+
+        m_handsAnimator.SetTrigger(IdleState);
+
+        /*if (!string.IsNullOrEmpty(lastState)) 
+            RequestAnimationStateServerRpc(lastState, false);
         lastState = HoldingWeapon + weapons;
-        RequestAnimationStateServerRpc(lastState, true);
 
+
+        RequestAnimationStateServerRpc(lastState, true);*/
         RequestAnimationServerRpc(IdleState); 
     }
     #endregion
@@ -239,9 +275,9 @@ public class Player_AnimationSystem : NetworkBehaviour {
         inputY = Mathf.Lerp(inputY, rawInputY, m_animationSmoothness * Time.deltaTime);
 
         MovementAnimationParameters parameters = new MovementAnimationParameters {
-            m_moveMagnitude = inputMagnitude,
-            m_moveX = inputX,
-            m_moveY = inputY,
+            m_moveMagnitude = isPaused ? 0 : inputMagnitude,
+            m_moveX = isPaused ? 0 : inputX,
+            m_moveY = isPaused ? 0 : inputY,
             m_isGrounded = Movement.IsGrounded
         };
 

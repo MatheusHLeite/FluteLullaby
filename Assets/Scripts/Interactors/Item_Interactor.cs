@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class Item_Interactor : Interactor {
@@ -10,16 +11,31 @@ public class Item_Interactor : Interactor {
     [BoxGroup("Item setup"), SerializeField, MinValue(1), MaxValue(nameof(m_maxAmount)), HideIf(nameof(m_randomizeAmount))] private int m_amount = 1;
     [BoxGroup("Item setup"), SerializeField, ShowIf(nameof(m_randomizeAmount))] private GameObject[] m_itemVisuals;
 
+    [Header("Setup")]
+    [SerializeField] private MonoBehaviour[] scriptsToDisableOnHand;
+    [SerializeField] private MonoBehaviour[] scriptsToEnableOnHand;
+
     private int m_slotIndex;
     private int m_index;
+
+    private bool displayItem;
     private int m_maxAmount => m_randomizeAmount ? m_itemVisuals.Length : 50;
 
     private NetworkObject _object;
 
-    protected override void Awake() {
-        base.Awake();
+    private Rigidbody rb;
+    private Collider[] colliders;
+    private NetworkTransform networkTransform;
+    private NetworkRigidbody networkRigidbody;    
 
+    private Transform followTarget;
+
+    protected void Awake() {
         _object = GetComponent<NetworkObject>();
+        rb = GetComponent<Rigidbody>();
+        colliders = GetComponents<Collider>();
+        networkTransform = GetComponent<NetworkTransform>();
+        networkRigidbody = GetComponent<NetworkRigidbody>();
 
         if (m_randomizeAmount) {
             m_amount = Random.Range(1, m_itemVisuals.Length);
@@ -30,12 +46,15 @@ public class Item_Interactor : Interactor {
     }
 
     public override void OnHoverOverItem(bool isOnTarget) {
+        if (displayItem) return;
         Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke(isOnTarget ? m_item.m_itemName : "");
 
         base.OnHoverOverItem(isOnTarget);
     }
 
     public override void Interact(Player_InteractionSystem interactor) {
+        if (displayItem) return;
+
         if (!Singleton.Instance.InventoryManager.CanPickUpItem(m_item)) {
             print("<color=yellow>Cannot pick up item: {reason}</color>");
             return; 
@@ -51,18 +70,66 @@ public class Item_Interactor : Interactor {
 
         Singleton.Instance.GameEvents.OnItemCollected?.Invoke(m_item, m_slotIndex, m_amount, false);
 
-        if (IsOwner || IsClient)
-            DespawnObjectServerRpc();
-
         base.Interact(interactor);
+
+        RequestDespawnServerRpc();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public virtual void DespawnObjectServerRpc()
-    {
-        if (!IsServer) return;
+    public void SetAsHandItem(ulong playerId) {
+        rb.isKinematic = true;
+        displayItem = true;
 
-        if (_object != null && _object.IsSpawned)
-            _object.Despawn(true);
+        networkRigidbody.enabled = false;
+        networkTransform.enabled = false;
+        RemoveColliders();
+
+        foreach (var s in scriptsToDisableOnHand)
+            s.enabled = false;
+
+        foreach (var s in scriptsToEnableOnHand)
+            s.enabled = true;
+
+        if (!Player_InteractionSystem.Players.TryGetValue(playerId, out var player))
+            return;
+
+        bool isLocalPlayer =
+            playerId == NetworkManager.Singleton.LocalClientId;
+
+        followTarget = player.GetRightPlayerHand;
+
+        if (isLocalPlayer)
+            SetLayerRecursively(gameObject, LayerMask.NameToLayer("FirstPersonElement"));
+    }
+
+    void SetLayerRecursively(GameObject obj, int layer) {
+        obj.layer = layer;
+
+        foreach (Transform child in obj.transform)
+            SetLayerRecursively(child.gameObject, layer);
+    }
+
+    private void RemoveColliders(bool shouldDestroy = true) {
+        foreach (var c in colliders) {
+            if (shouldDestroy) Destroy(c);
+            else c.isTrigger = true;
+        }
+    }
+
+    [Rpc(SendTo.Server)]
+    public void RequestDespawnServerRpc(RpcParams rpcParams = default) {
+        if (!IsSpawned) return;
+        NetworkObject.Despawn(true);
+    }
+
+    private void LateUpdate() {
+        if (!followTarget) return;
+
+        Vector3 itemOffset = m_item.m_itemPositionOffset;
+        Vector3 finalPos = followTarget.position + (followTarget.rotation * itemOffset);
+
+        Quaternion rotOffset = Quaternion.Euler(m_item.m_itemRotationOffset);
+        Quaternion finalRot = followTarget.rotation * rotOffset;
+
+        transform.SetPositionAndRotation(finalPos, finalRot);
     }
 }

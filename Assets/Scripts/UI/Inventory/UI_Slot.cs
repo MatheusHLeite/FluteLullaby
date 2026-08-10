@@ -36,7 +36,7 @@ public class UI_Slot : MonoBehaviour {
 
     public void SetupSlot(ItemData item) {
         emptySlot = false;
-        id = item.id;
+        id = item.itemBaseId;
         uniqueId = item.uniqueId;
 
         currentItem = item;

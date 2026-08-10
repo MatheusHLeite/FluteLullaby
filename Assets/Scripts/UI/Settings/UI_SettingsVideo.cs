@@ -39,6 +39,8 @@ public class UI_SettingsVideo : MonoBehaviour {
 
     private bool hasChangesToApply;
 
+    private UnityAction savedAction;
+
     private UnityAction onApply;
     private UnityAction onDiscard;
 
@@ -53,18 +55,28 @@ public class UI_SettingsVideo : MonoBehaviour {
     }
 
     public bool HasChangesToApply(UnityAction action) {
+        savedAction = action;
+        savedAction += ResetAction;
+
         if (hasChangesToApply) {
-            onApply += action;
-            onDiscard += action;
+            onApply += savedAction;
+            onDiscard += savedAction;
 
             discardChangesPopUp.Setup(POP_UP_TITLE, POP_UP_BODY, POP_UP_ACCEPT, POP_UP_DISCARD, onApply, onDiscard);
-
             discardChangesPopUp.OpenPopUp();
             return true;
         }
 
         action?.Invoke();
+        ResetAction();
         return false;
+    }
+
+    private void ResetAction() {
+        onApply -= savedAction;
+        onDiscard -= savedAction;
+
+        savedAction = null;
     }
 
     private void OnSettingsDataLoaded(PlayerSaveData data) {

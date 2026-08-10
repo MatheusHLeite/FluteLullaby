@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class Interactor : NetworkBehaviour, IInteractable {
@@ -14,21 +15,22 @@ public class Interactor : NetworkBehaviour, IInteractable {
 
     private Collider _collider;
     private Rigidbody _rigidbody;
-    private ClientNetworkTransform _clientNetworkTransform;
+    private NetworkTransform _networkTransform;
 
     private MaterialPropertyBlock propBlock;
     private Material outlineInstance;
 
-    protected virtual void Awake() {        
+    public override void OnNetworkSpawn() {
         _collider = GetComponent<Collider>();
-        _clientNetworkTransform = GetComponent<ClientNetworkTransform>();
+        _networkTransform = GetComponent<NetworkTransform>();
         _rigidbody = GetComponent<Rigidbody>();
 
         SetMaterials();
     }
 
-    public override void OnDestroy() {
-        if (outlineInstance) Destroy(outlineInstance);
+    public override void OnNetworkDespawn() {
+        if (outlineInstance) 
+            Destroy(outlineInstance);
     }
 
     private void SetMaterials() {
@@ -60,7 +62,7 @@ public class Interactor : NetworkBehaviour, IInteractable {
     public void SetThirdPersonViewOnly() {
         Destroy(_collider);
         Destroy(_rigidbody);
-        Destroy(_clientNetworkTransform);
+        Destroy(_networkTransform);
         Destroy(this);
 
         m_thirdPersonVisual.SetActive(true);

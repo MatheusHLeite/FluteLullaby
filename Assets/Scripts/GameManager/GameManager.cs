@@ -1,4 +1,3 @@
-using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
@@ -78,11 +77,16 @@ public interface IInteractable {
     void Interact(Player_InteractionSystem interactor);
 }
 
+public interface IWeapon {
+    void Fire(Player_CombatSystem combat);
+    void Reload(Player_CombatSystem combat);
+}
+
 public interface IDamageable {
     void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact);
 }
 
-public enum Weapons { None, Revolver, Shotgun }
+public enum WeaponClass { None = 0, Revolver = 1, Shotgun = 2, Melee = 3 }
 
 public enum Language { English, Portuguese, Spanish }
 
@@ -98,15 +102,10 @@ public enum Quality { Low, Medium, High, Ultra }
 
 public enum Size { Small, Normal, Big }
 
-[System.Serializable]
-public struct CollectableItems {
-    public Item_SO m_item;
-    public bool m_useActualPositionAndRotation;
-    [HideIf(nameof(m_useActualPositionAndRotation))] public Vector3 m_position;
-    [HideIf(nameof(m_useActualPositionAndRotation))] public Quaternion m_rotation;
-}
+public enum EnemyState { Idle, Wandering, Chasing, Searching }
 
-[System.Serializable]
+public enum HandUsage { OneHanded, TwoHanded }
+
 public struct BodyPartDamageMultiplier {
     public BodyPart m_bodyPart;
     public float m_damageMultiplier;

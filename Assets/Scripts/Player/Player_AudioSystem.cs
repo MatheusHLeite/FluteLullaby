@@ -35,13 +35,13 @@ public class Player_AudioSystem : NetworkBehaviour {
         
     }
 
-    public void CallPlayShotSFX(Weapons weapon) {
+    public void CallPlayShotSFX(WeaponClass weapon) {
         PlayShotSFX(weapon);
         RequestShootSoundServerRpc(weapon);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestShootSoundServerRpc(Weapons weapon, ServerRpcParams rpc = default) {
+    private void RequestShootSoundServerRpc(WeaponClass weapon, ServerRpcParams rpc = default) {
         ulong senderClientId = rpc.Receive.SenderClientId;
 
         var targets = NetworkManager.Singleton.ConnectedClientsIds
@@ -61,20 +61,20 @@ public class Player_AudioSystem : NetworkBehaviour {
     }
 
     [ClientRpc]
-    private void PlayShootSoundClientRpc(Weapons weapon, ClientRpcParams rpcParams = default) {
+    private void PlayShootSoundClientRpc(WeaponClass weapon, ClientRpcParams rpcParams = default) {
         PlayShotSFX(weapon);
     }
 
-    private void PlayShotSFX(Weapons weapon) {
+    private void PlayShotSFX(WeaponClass weapon) {
         m_shootAudioSource.pitch = Random.Range(0.9f, 1.4f);
         AudioClip clip;
 
         switch (weapon) {
-            case Weapons.Revolver:
+            case WeaponClass.Revolver:
                 m_shootAudioSource.volume = 0.5f;
                 clip = m_revolverShotSounds[Random.Range(0, m_revolverShotSounds.Length)];
                 break;
-            case Weapons.Shotgun:
+            case WeaponClass.Shotgun:
                 m_shootAudioSource.volume = 1f;
                 clip = m_shotgunShotSounds[Random.Range(0, m_shotgunShotSounds.Length)];
                 break;

@@ -53,7 +53,7 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         Singleton.Instance.GameEvents.OnWeaponReload.RemoveListener(OnWeaponReload);
     }
 
-    private void OnWeaponReload(bool isReloading, Weapons weapons) => this.isReloading = isReloading;
+    private void OnWeaponReload(bool isReloading, WeaponClass weapons) => this.isReloading = isReloading;
 
     public UI_Slot GetActualSlot() => lastSlot;
 

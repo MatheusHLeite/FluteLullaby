@@ -48,7 +48,7 @@ public class Tooltip : MonoBehaviour, IPointerExitHandler {
         Singleton.Instance.GameEvents.OnWeaponReload.RemoveListener(OnWeaponReload);
     }
 
-    private void OnWeaponReload(bool isReloading, Weapons weapons) => this.isReloading = isReloading;
+    private void OnWeaponReload(bool isReloading, WeaponClass weapons) => this.isReloading = isReloading;
 
     public void SetInventoryTooltip(Item_SO item, ItemData itemData, int quantity) {
         PopUpTooltip();

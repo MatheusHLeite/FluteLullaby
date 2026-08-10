@@ -806,6 +806,10 @@ public class SettingsManager : MonoBehaviour {
     }
 
     public void SetOutputDevice(int index, bool initialization = false) {
+        if (allDevices.Length <= 0) {
+            Debug.Log("No devices found or issue with the sound devices");
+            return; 
+        }
         actualMicrophone = allDevices[index];
    
         Singleton.Instance.GameEvents.OnMicrophoneDeviceSwitch?.Invoke(actualMicrophone);

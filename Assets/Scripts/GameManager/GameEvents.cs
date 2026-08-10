@@ -35,7 +35,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<ItemData, int, int> OnInventoryItemSlotChanged { get; private set; } = new();
     public UnityEvent<Weapon_Firearm> OnWeaponChanged { get; private set; } = new();
     public UnityEvent<int> OnSlotSelected { get; private set; } = new();
-    public UnityEvent<Item_SO> OnActualSlotItemSet { get; private set; } = new();
+    public UnityEvent<Item_SO, GameObject> OnActualSlotItemSet { get; private set; } = new();
     public UnityEvent<int> OnDragBegun { get; private set; } = new();
     #endregion
 
@@ -63,7 +63,7 @@ public class GameEvents : MonoBehaviour {
     #endregion
 
     #region Interaction
-    public UnityEvent<bool, Weapons> OnWeaponReload { get; set; } = new();
+    public UnityEvent<bool, WeaponClass> OnWeaponReload { get; set; } = new();
     public UnityEvent<string> OnHoverOverItem { get; set; } = new();
     public UnityEvent OnInteractionReset { get; set; } = new();
     public UnityEvent OnHit { get; private set; } = new();

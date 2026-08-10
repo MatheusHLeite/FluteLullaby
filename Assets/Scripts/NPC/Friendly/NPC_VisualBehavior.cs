@@ -19,19 +19,16 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     private Transform playerCamera;
     private bool isDead;
 
-    private Quaternion initialRotation;
-    private Vector3 initialForward;
+    private Quaternion initialHeadRotation;
+    private Vector3 initialHeadForward;
+
     private Quaternion[] initialEyeRotations;
     private Vector3[] initialEyeForwards;
 
-    private Vector3 direction;
+    private Vector3 localDirection;
     private float angleToPlayer;
-    private Quaternion targetRotation;
-    private Quaternion limitedRotation;
 
-    private float eyeAngleToPlayer;
-    private Quaternion eyeTargetRotation;
-    private Quaternion limitedEyeRotation;
+    private bool targetOutOfView;
 
     private Coroutine playerCheckRoutine;
 
@@ -39,43 +36,24 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     private NetworkVariable<ulong> selectedPlayerId = new NetworkVariable<ulong>(
     0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    #region Network
     public override void OnNetworkSpawn() {
         playersIds.OnListChanged += OnPlayersListChanged;
         selectedPlayerId.OnValueChanged += OnSelectedPlayerChanged;
     }
 
-    public override void OnNetworkDespawn() { 
+    public override void OnNetworkDespawn() {
         playersIds.OnListChanged -= OnPlayersListChanged;
         selectedPlayerId.OnValueChanged -= OnSelectedPlayerChanged;
-    }
-
-    void Start() {
-        initialRotation = m_head.rotation;
-        initialForward = initialRotation * Vector3.forward;
-
-        initialEyeRotations = new Quaternion[m_eyes.Length];
-        initialEyeForwards = new Vector3[m_eyes.Length];
-
-        healthHandler = GetComponentInChildren<Global_HealthHandler>();
-        if (healthHandler != null)
-            healthHandler.m_onDie.AddListener(OnDie);
-
-        for (int i = 0; i < m_eyes.Length; i++) {
-            initialEyeRotations[i] = m_eyes[i].rotation;
-            initialEyeForwards[i] = initialEyeRotations[i] * Vector3.forward;
-        }
-
-        SphereCollider collider = gameObject.AddComponent<SphereCollider>();
-        collider.isTrigger = true;
-        collider.radius = lookRange;
     }
 
     private void OnPlayersListChanged(NetworkListEvent<ulong> changeEvent) {
         if (!IsServer) return;
 
-        if (playersIds.Count > 0 && playerCheckRoutine == null) 
+        if (playersIds.Count > 0 && playerCheckRoutine == null)
             playerCheckRoutine = StartCoroutine(CheckCamera());
-        if (playersIds.Count <= 0 && playerCheckRoutine != null) {
+
+        if (playersIds.Count == 0 && playerCheckRoutine != null) {
             StopCoroutine(playerCheckRoutine);
             playerCheckRoutine = null;
         }
@@ -85,129 +63,173 @@ public class NPC_VisualBehavior : NetworkBehaviour {
 
     private void OnSelectedPlayerChanged(ulong previousId, ulong newId) {
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(newId, out var netObj))
-            playerCamera = netObj.GetComponent<Player_Manager>().GetPlayerCamera().transform;
+            playerCamera = netObj.GetComponent<Player_CameraMovementSystem>().GetPlayerCamera.transform;
         else
             playerCamera = null;
     }
+    #endregion
 
+    #region Initialization
+    void Start() {
+        healthHandler = GetComponentInChildren<Global_HealthHandler>();
+        if (healthHandler != null)
+            healthHandler.m_onDie.AddListener(OnDie);
+
+        initialHeadRotation = m_head.localRotation;
+        initialHeadForward = Vector3.forward;
+
+        initialEyeRotations = new Quaternion[m_eyes.Length];
+        initialEyeForwards = new Vector3[m_eyes.Length];
+
+        for (int i = 0; i < m_eyes.Length; i++) {
+            initialEyeRotations[i] = m_eyes[i].localRotation;
+            initialEyeForwards[i] = Vector3.forward;
+        }
+
+        SphereCollider collider = gameObject.AddComponent<SphereCollider>();
+        collider.isTrigger = true;
+        collider.radius = lookRange;
+    }
+    #endregion
+
+    #region Trigger
     private void OnTriggerEnter(Collider other) {
+        if (!NetworkManager.IsListening) return;
+
         if (other.TryGetComponent(out Player_Manager player))
-            OnPlayerEnterTrigger(player);
+            HandlePlayerEnter(player);
     }
 
     private void OnTriggerExit(Collider other) {
+        if (!NetworkManager.IsListening) return;
+
         if (other.TryGetComponent(out Player_Manager player))
-            OnPlayerExitTrigger(player);
+            HandlePlayerExit(player);
     }
 
-    private void OnPlayerEnterTrigger(Player_Manager player) {
-        if (IsServer) {
+    private void HandlePlayerEnter(Player_Manager player) {
+        if (IsServer)
             if (!playersIds.Contains(player.NetworkObjectId))
                 playersIds.Add(player.NetworkObjectId);
-            return;
-        }
-
-        AddPlayerServerRpc(player.NetworkObjectId);
+            else
+                AddPlayerServerRpc(player.NetworkObjectId);
     }
 
-    private void OnPlayerExitTrigger(Player_Manager player) {
-        if (IsServer) {
-            if (playersIds.Contains(player.NetworkObjectId))
-                playersIds.Remove(player.NetworkObjectId);
-            return;
-        }
-
-        RemovePlayerServerRpc(player.NetworkObjectId);
+    private void HandlePlayerExit(Player_Manager player) {
+        if (IsServer)
+            playersIds.Remove(player.NetworkObjectId);
+        else
+            RemovePlayerServerRpc(player.NetworkObjectId);
     }
+    #endregion
 
+    #region RPC
     [ServerRpc(RequireOwnership = false)]
-    public void AddPlayerServerRpc(ulong playerId) {
+    private void AddPlayerServerRpc(ulong playerId) {
         if (!playersIds.Contains(playerId))
             playersIds.Add(playerId);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RemovePlayerServerRpc(ulong playerId) {
-        if (playersIds.Contains(playerId))
-            playersIds.Remove(playerId);
+    private void RemovePlayerServerRpc(ulong playerId) {
+        playersIds.Remove(playerId);
     }
+    #endregion
 
+    #region Logic
     private IEnumerator CheckCamera() {
         while (playersIds.Count > 0) {
-            int randomDelay = Random.Range(5, 10);
-            yield return new WaitForSeconds(randomDelay);
-
+            yield return new WaitForSeconds(Random.Range(5, 10));
             CheckPlayersList();
         }
     }
 
     private void CheckPlayersList() {
-        if (playersIds.Count > 0)
-            selectedPlayerId.Value = playersIds[Random.Range(0, playersIds.Count)];
-        else
-            selectedPlayerId.Value = 0;
-
-        //if (playersIds.Count > 0) {
-        //    var randomId = playersIds[Random.Range(0, playersIds.Count)];
-        //    if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(randomId, out var netObj))            
-        //        playerCamera = netObj.GetComponent<Player_Manager>().GetPlayerCamera().transform;            
-        //}
-        //else playerCamera = null;
+        selectedPlayerId.Value = playersIds.Count > 0
+            ? playersIds[Random.Range(0, playersIds.Count)]
+            : 0;
     }
 
-    private void HandleVariables() {
-        if (isDead) {
-            if (m_head.localRotation != Quaternion.identity)
-                m_head.localRotation = Quaternion.Slerp(m_head.localRotation, Quaternion.identity, rotationSpeed * Time.deltaTime);
+    private void UpdateDirection() {
+        if (playerCamera == null || isDead) {
+            ResetRotations();
             return;
         }
 
-        if (playerCamera == null) {
-            if (m_head.rotation != initialRotation)
-                m_head.rotation = Quaternion.Slerp(m_head.rotation, initialRotation, rotationSpeed * Time.deltaTime);
+        Vector3 worldDir = playerCamera.position - m_head.position;
+        localDirection = m_head.InverseTransformDirection(worldDir).normalized;
 
-            for (int i = 0; i < m_eyes.Length; i++) {
-                if (m_eyes[i].rotation != initialEyeRotations[i])
-                    m_eyes[i].rotation = Quaternion.Slerp(m_eyes[i].rotation, initialEyeRotations[i], rotationSpeed * 2.15f * Time.deltaTime);
-            }
+        angleToPlayer = Vector3.Angle(initialHeadForward, localDirection);
+        targetOutOfView = angleToPlayer > maxRotationAngle;
+
+        if (targetOutOfView) {
+            ResetRotations();
             return;
         }
+    }
 
-        direction = playerCamera.position - m_head.position;
-        direction.Normalize();
+    private void RotateHead() {
+        if (playerCamera == null || targetOutOfView) return;
 
-        angleToPlayer = Vector3.Angle(initialForward, direction);
-        targetRotation = Quaternion.LookRotation(direction);
+        Quaternion targetRotation =
+            Quaternion.FromToRotation(initialHeadForward, localDirection) * initialHeadRotation;
+
+        if (angleToPlayer > maxRotationAngle) {
+            targetRotation = Quaternion.Slerp(
+                initialHeadRotation,
+                targetRotation,
+                maxRotationAngle / angleToPlayer
+            );
+        }
+
+        m_head.localRotation = Quaternion.Slerp(
+            m_head.localRotation,
+            targetRotation,
+            rotationSpeed * Time.deltaTime
+        );
     }
 
     private void RotateEyes() {
-        if (playerCamera == null) { return; }
+        if (playerCamera == null || targetOutOfView) return;
 
         for (int i = 0; i < m_eyes.Length; i++) {
-            eyeAngleToPlayer = Vector3.Angle(initialEyeForwards[i], direction);
-            eyeTargetRotation = Quaternion.LookRotation(direction);
+            float eyeAngle = Vector3.Angle(initialEyeForwards[i], localDirection);
 
-            if (eyeAngleToPlayer <= maxEyeRotationAngle)            
-                m_eyes[i].rotation = Quaternion.Slerp(m_eyes[i].rotation, eyeTargetRotation, rotationSpeed * 2.15f * Time.deltaTime);            
-            else {
-                limitedEyeRotation = Quaternion.Slerp(Quaternion.LookRotation(initialEyeForwards[i]), eyeTargetRotation, maxEyeRotationAngle / eyeAngleToPlayer);
-                m_eyes[i].rotation = Quaternion.Slerp(m_eyes[i].rotation, limitedEyeRotation, rotationSpeed * Time.deltaTime);
+            Quaternion eyeTargetRotation =
+                Quaternion.FromToRotation(initialEyeForwards[i], localDirection) * initialEyeRotations[i];
+
+            if (eyeAngle > maxEyeRotationAngle) {
+                eyeTargetRotation = Quaternion.Slerp(
+                    initialEyeRotations[i],
+                    eyeTargetRotation,
+                    maxEyeRotationAngle / eyeAngle
+                );
             }
+
+            m_eyes[i].localRotation = Quaternion.Slerp(
+                m_eyes[i].localRotation,
+                eyeTargetRotation,
+                rotationSpeed * 2.15f * Time.deltaTime
+            );
         }
     }
 
-    private void LookAtPlayer() {
-        if (playerCamera == null) { return; }
+    private void ResetRotations() {
+        m_head.localRotation = Quaternion.Slerp(
+            m_head.localRotation,
+            initialHeadRotation,
+            rotationSpeed * Time.deltaTime
+        );
 
-        if (angleToPlayer <= maxRotationAngle) {            
-            if (m_head.rotation != targetRotation)
-                m_head.rotation = Quaternion.Slerp(m_head.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            return;
+        for (int i = 0; i < m_eyes.Length; i++) {
+            m_eyes[i].localRotation = Quaternion.Slerp(
+                m_eyes[i].localRotation,
+                initialEyeRotations[i],
+                rotationSpeed * 2.15f * Time.deltaTime
+            );
         }
-
-        limitedRotation = Quaternion.Slerp(Quaternion.LookRotation(initialForward), targetRotation, maxRotationAngle / angleToPlayer);
-        m_head.rotation = Quaternion.Slerp(m_head.rotation, limitedRotation, rotationSpeed * Time.deltaTime);
     }
+    #endregion
 
     private void OnDie(Vector3 dir, float impact) {
         foreach (var e in m_eyesClosed) {
@@ -218,11 +240,11 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     }
 
     void LateUpdate() {
-        HandleVariables();
+        UpdateDirection();
 
         if (isDead) return;
 
+        RotateHead();
         RotateEyes();
-        LookAtPlayer();
     }
 }

@@ -57,9 +57,9 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     }
 
     private void OnShot(Vector3 initialPoint, RaycastHit targetPos, Vector3 direction) {
-        TrailRenderer newTrail = Singleton.Instance.VFXManager.GetShotTrail();
-        newTrail.transform.position = initialPoint;
+        TrailRenderer newTrail = Singleton.Instance.VFXManager.GetShotTrail();        
         newTrail.transform.rotation = Quaternion.LookRotation(direction);
+        newTrail.transform.position = initialPoint - newTrail.transform.forward;
         newTrail.gameObject.SetActive(true);
 
         StartCoroutine(NewTrail(newTrail));
@@ -86,7 +86,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         Vector3 scale = Vector3.one;
         trail.transform.localScale = Vector3.one;
 
-        while (time < 1) {
+        while (time < trail.time) {
             trail.transform.position += trail.transform.forward * 90f * Time.deltaTime;
             trail.transform.localScale = Vector3.Lerp(trail.transform.localScale, scale, time / Time.deltaTime);
             time += Time.deltaTime / trail.time;

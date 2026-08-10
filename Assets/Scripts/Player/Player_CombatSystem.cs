@@ -1,4 +1,4 @@
-using System.Collections;
+using DelightStudio.Data;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,7 +11,7 @@ public class Player_CombatSystem : NetworkBehaviour {
     private Player_HealthSystem HealthSystem;
     #endregion
 
-    private Item_SO _actualEquippedWeapon;
+    public IWeapon CurrentHandItemAction { private set; get; }
 
     private Transform rightHand;
     private Weapon_Firearm firearm;
@@ -51,50 +51,39 @@ public class Player_CombatSystem : NetworkBehaviour {
     }
     #endregion
 
-    public Item_SO GetActualEquippedWeapon() { return _actualEquippedWeapon; }
-
     public void SetCanSwitch(bool canSwitch) => canSwitchWeapons = canSwitch;
 
     public bool GetCanSwitch() => canSwitchWeapons;
 
     private void HandleAttack() {
-        if (_actualEquippedWeapon == null) return;
-
-        if (_actualEquippedWeapon.m_itemType == ItemType.MeleeWeapon) 
-            HandleMeleeAttack();        
-        else if (_actualEquippedWeapon.m_itemType == ItemType.Firearm)        
-            HandleFirearmAttack();
-    }
-
-    private void HandleMeleeAttack() {
-        if (melee == null) return;
+        if (CurrentHandItemAction == null || !canSwitchWeapons) 
+            return;
 
         if (Input.Attack)
-            melee.CallAttack();
+            CurrentHandItemAction.Fire(this);
+
+        if (Input.Reload)
+            CurrentHandItemAction.Reload(this);
     }
 
-    private void HandleFirearmAttack() {
-        if (firearm == null || !canSwitchWeapons) return;
+    private void OnSlotSelected(Item_SO item, GameObject itemOnHand) {
+        Weapon weapon = item as Weapon;
 
-        if (Input.Attack) 
-            firearm.CallFire();        
+        switch (weapon.m_handUsage) {
+            case HandUsage.OneHanded:
+                
+                break;
+            case HandUsage.TwoHanded:
 
-        if (Input.Reload) 
-            firearm.CallReload();        
-    }
+                break;
+        }
 
-    private void OnSlotSelected(Item_SO item) {        
-        StartCoroutine(DelayedEquip(item));
-    }
+        Animator.ChangeIdleState(weapon);
 
-    private IEnumerator DelayedEquip(Item_SO item) {
-        _actualEquippedWeapon = item;        
-        Animator.ChangeIdleState(item != null ? item.weaponType : Weapons.None);
+        CurrentHandItemAction = itemOnHand.GetComponent<IWeapon>();
 
-        yield return new WaitForEndOfFrame();
-
-        this.firearm = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Firearm firearm) ? firearm : null;
-        this.melee = rightHand.childCount > 0 && rightHand.GetChild(0).TryGetComponent(out Weapon_Melee melee) ? melee : null;
+        firearm = CurrentHandItemAction as Weapon_Firearm;
+        firearm?.SetupWeapon(item, this);
 
         Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.firearm);
     }

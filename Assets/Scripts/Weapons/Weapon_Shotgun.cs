@@ -14,7 +14,7 @@ public class Weapon_Shotgun : Weapon_Firearm {
     protected override void Fire() {
         OnShot();
 
-        AudioSystem.CallPlayShotSFX(Weapons.Shotgun);
+        AudioSystem.CallPlayShotSFX(WeaponClass.Shotgun);
 
         for (int i = 0; i < pelletCount; i++) {
             Vector3 direction = GetSpreadDirection();

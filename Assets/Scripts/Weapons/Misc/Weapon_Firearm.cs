@@ -1,11 +1,12 @@
 using Unity.Cinemachine;
 using UnityEngine;
 
-public abstract class Weapon_Firearm : MonoBehaviour {
+public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     [Header("Weapon setup")]    
     [SerializeField] private ParticleSystem muzzleFlash;
     [SerializeField] private ParticleSystem smokeFX;
-    [SerializeField] private Animator armsAnimator;
+
+    public WeaponClass ThisWeaponClass {  get; private set; }
 
     protected int layerToIgnore;
 
@@ -38,8 +39,8 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     private Player_CombatSystem CombatSystem;    
     private CinemachineImpulseSource impulseSource;
 
-    private const string Shoot = "Shoot";
-    private const string Reload = "Reload";
+    private const string ShootAnimTrigger = "Shoot";
+    private const string ReloadAnimTrigger = "Reload";
 
     private const string FireRate = "FireRate_Multiplier";
     private const string ReloadSpeed = "ReloadSpeed_Multiplier";
@@ -76,7 +77,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         m_weaponRecoilForce = weapon.m_recoilForce;
         m_impact = weapon.m_impactForce;
 
-        armsAnimator.SetTrigger(weapon.weaponType.ToString());
+        //weaponAnimator.SetTrigger(weapon.m_weaponType.ToString());
 
         OnWeaponUpgrade(data);
 
@@ -113,10 +114,10 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     private void StartReload() {
         CombatSystem.SetCanSwitch(false);
 
-        Singleton.Instance.GameEvents.OnWeaponReload?.Invoke(true, weapon.weaponType);
+        Singleton.Instance.GameEvents.OnWeaponReload?.Invoke(true, weapon.m_weaponType);
 
         AnimationSystem.OnReload();
-        animator.SetTrigger(Reload);
+        animator.SetTrigger(ReloadAnimTrigger);
         isReloading = true;
     }
 
@@ -131,28 +132,36 @@ public abstract class Weapon_Firearm : MonoBehaviour {
     #endregion
 
     #region Public functions
-    public virtual void CallFire() {
+    public void Fire(Player_CombatSystem combat) {
         if (isReloading || isShooting || (currentAmmo <= 0 && stockedAmmo <= 0)) return;
 
         if (currentAmmo <= 0 && stockedAmmo > 0) {
-            CallReload();
+            Reload(combat);
             return;
         }
 
         isShooting = true;
 
-        animator.SetTrigger(Shoot);
+        animator.SetTrigger(ShootAnimTrigger);
         AnimationSystem.OnShot();
 
         Fire();
     }
 
-    public virtual void CallReload() {
+    public void Reload(Player_CombatSystem combat) {
         if (isReloading || isShooting || stockedAmmo <= 0) return;
 
         if (currentAmmo < m_maxAmmo)
-            StartReload();        
+            StartReload();
     }
+
+    /*public virtual void CallFire() {
+        
+    }
+
+    public virtual void CallReload() {
+           
+    }*/
     #endregion
 
     #region FireEvents
@@ -194,7 +203,7 @@ public abstract class Weapon_Firearm : MonoBehaviour {
         remainingAmmo = ammoDifference;
         UpdateAmmo();
 
-        Singleton.Instance.GameEvents.OnWeaponReload?.Invoke(false, weapon.weaponType);
+        Singleton.Instance.GameEvents.OnWeaponReload?.Invoke(false, weapon.m_weaponType);
         CombatSystem.SetCanSwitch(true);
     }
 
@@ -205,6 +214,6 @@ public abstract class Weapon_Firearm : MonoBehaviour {
             StartReload();       
 
         isShooting = false;
-    }
+    }    
     #endregion
 }

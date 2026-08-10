@@ -217,6 +217,7 @@ public class Player_MovementSystem : NetworkBehaviour {
             _cameraPivot = CameraMovementSystem.GetPlayerCameraHolder;
 
             Singleton.Instance.GameEvents.OnSprintToggleChanged.AddListener(OnSprintToggleChanged);
+            Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
             return; 
         }
 
@@ -226,6 +227,7 @@ public class Player_MovementSystem : NetworkBehaviour {
     public override void OnNetworkDespawn() {
         if (IsOwner) {
             Singleton.Instance.GameEvents.OnSprintToggleChanged.RemoveListener(OnSprintToggleChanged);
+            Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
             return;
         }
 
@@ -236,6 +238,10 @@ public class Player_MovementSystem : NetworkBehaviour {
 
     private void OnSprintToggleChanged(int i) {
         _sprintToggle = i == 1;
+    }
+
+    private void OnGamePaused() {
+        _rb.linearVelocity = new Vector3(0, _rb.linearVelocity.y, 0);
     }
     #endregion
 
@@ -602,17 +608,20 @@ public class Player_MovementSystem : NetworkBehaviour {
         HandleDash();
         HandleSlide();
 
-        if (!_isSliding) {
-            HandleSprint();
-            HandleStamina();
-        }
+        if (_isSliding) return;
+
+        HandleSprint();
+        HandleStamina();
     }
 
     private void FixedUpdate() {
-        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() == GameState.Paused) return;
+        if (!IsOwner || HealthSystem.IsDead) return;
 
-        HandleMovement();
         RaycastCheck();
+
+        if (GameManager.GetGameState() == GameState.Paused) return;
+
+        HandleMovement();        
     }
     #endregion
 

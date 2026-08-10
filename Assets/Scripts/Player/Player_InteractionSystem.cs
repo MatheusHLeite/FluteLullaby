@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -6,10 +7,16 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private Player_HealthSystem HealthSystem;
     private Player_CombatSystem CombatSystem;
 
+    [Header("References")]
     [SerializeField] private Transform m_playerCamera;
+    [SerializeField] private Transform m_rightHand;
+
+    [Header("Setup")]
     [SerializeField] private float m_interactionRadius;
     [SerializeField] private float m_interactionDistance;
     [SerializeField] private LayerMask m_interactionLayer;
+
+    public static readonly Dictionary<ulong, Player_InteractionSystem> Players = new();
 
     #region Private variables 
     private IInteractable _actualInteractable;
@@ -24,6 +31,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
 
     #region Public variables
     public int ActualSlotSelected { get; private set; }
+    public Transform GetRightPlayerHand => m_rightHand;
+    public Vector3 GetTargetAim() => _target;
     #endregion
 
     #region Initialization
@@ -42,6 +51,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnRespawn);
             Singleton.Instance.GameEvents.OnInteractionReset.AddListener(OnInteractionReset);
         }
+
+        Players[OwnerClientId] = this;
     }
 
     public override void OnNetworkDespawn() {
@@ -51,6 +62,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
             Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnRespawn);
             Singleton.Instance.GameEvents.OnInteractionReset.RemoveListener(OnInteractionReset);
         }
+
+        Players.Remove(OwnerClientId);
     }
     #endregion
 
@@ -141,7 +154,9 @@ public class Player_InteractionSystem : NetworkBehaviour {
         OnSlotSelected(ActualSlotSelected);
     }
 
-    public Vector3 GetTargetAim() => _target;
+    #region RPC
+    
+    #endregion
 
     private void Update() {
         if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
