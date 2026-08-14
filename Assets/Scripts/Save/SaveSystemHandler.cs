@@ -180,7 +180,7 @@ public class PlayerSaveData {
                 playerIndicatorMode = 0,
                 hudSize = 1,
                 cameraBobEnabled = 1,
-                damageIndicatorEnabled = 1,
+                damageIndicatorEnabled = 0,
                 subtitleType = 0,
                 fontSize = 0,
 

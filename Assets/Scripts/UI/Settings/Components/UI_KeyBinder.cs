@@ -12,6 +12,7 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [SerializeField] private TMP_Text m_keyBindName;
     [SerializeField] private TMP_Text m_keyActionName;
     [SerializeField] private Button m_rebindPopUp;
+    [SerializeField] private GameObject m_modifiedIcon;
 
     private const string PopUpTitle = "Press a new button";
     private const string PopUpBody = "Select new key for {0} \nPress 'Escape' to cancel";
@@ -33,6 +34,8 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         thisCanvasGroup = GetComponent<CanvasGroup>();
         popUp = settingsControl.GetPopUp();
         countdown = settingsControl.GetCountdown();
+
+        thisCanvasGroup.alpha = 0.9f;
 
         bodyText = string.Format(PopUpBody, key.m_actionName);
 
@@ -136,7 +139,7 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         }
 
         bool isDefault = NormalizePath(currentPath) == NormalizePath(defaultPath);
-        m_keyBindName.color = isDefault ? Color.white : Color.yellow;
+        m_modifiedIcon.SetActive(!isDefault);
     }
     #endregion
 
@@ -148,7 +151,7 @@ public class UI_KeyBinder : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     public void OnPointerExit(PointerEventData eventData) {
         thisCanvasGroup.DOKill();
-        thisCanvasGroup.DOFade(0, 0.25f);
+        thisCanvasGroup.DOFade(0.9f, 0.25f);
     }
     #endregion
 }
