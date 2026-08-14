@@ -3,11 +3,11 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_AudioSystem : NetworkBehaviour {
-    [Header("AudioSources")]    
-    public AudioSource m_shootAudioSource;    
+    [Header("AudioSources")]
+    [SerializeField] private AudioSource m_shootAudioSource;    
     [Space(10)]
-    public AudioClip[] m_revolverShotSounds;
-    public AudioClip[] m_shotgunShotSounds;
+    [SerializeField] private AudioClip[] m_revolverShotSounds;
+    [SerializeField] private AudioClip[] m_shotgunShotSounds;
 
     private void Awake() {
         PreloadClips(m_revolverShotSounds);

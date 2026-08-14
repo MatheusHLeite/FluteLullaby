@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9362e63ada66294590b1bab435482fe, type: 3}
+  m_Name: Enemy #321
+  m_EditorClassIdentifier: 
+  m_name: The Hungry Reef
+  m_entryIndex: 321
+  m_fullBodyIcon: {fileID: 21300000, guid: 7549cebe4c65e744db6ef43e31306bc5, type: 3}
+  m_description: 'What appears to be a small island may actually be the body of the
+    Hungry Reef. Stone, coral, sand, and shipwrecks conceal its enormous form, while
+    a massive mouth lies beneath the surface.
+
+
+    When awakened, the island itself
+    attacks with coral tentacles, falling rocks, and hidden jaws.
+
+
+    Fire destroys
+    its coral armor, exposing its vulnerable interior. The creature also becomes
+    slower when starved.'
+  m_threatLevel: 4
+  m_statistic:
+    id: 18
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+    monsterId: 3fec352e-b720-4fbd-86b9-f16ac7c1dc30
+  id: 3fec352e-b720-4fbd-86b9-f16ac7c1dc30

@@ -1,4 +1,5 @@
 using DelightStudio.Data;
+using System.Collections;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
@@ -38,20 +39,21 @@ public class Player_AnimationSystem : NetworkBehaviour {
     #region Const strings
     private const string MovementMagnitude = "MovementMagnitude";
     private const string MovementX = "MovementX";
-    private const string MovementY = "MovementY";
     private const string IsGrounded = "IsGrounded";
+    private const string MovementY = "MovementY";
     private const string Jump = "Jump";
-    private const string Crouch = "IsCrouch";    
-    private const string Attack = "Attack_";    
-    private const string HoldingWeapon = "Holding_";
+    private const string Crouch = "IsCrouch";
+    private const string Attack = "Attack_";
 
     private const string Reload = "Reload";
     private const string Shot = "Shot";
     private const string Collect = "Collect";
-    private const string IdleState = "SetIdle";
-    private const string WeaponAnimationIndex = "WeaponHoldingIndex";
-    private const string BothHandBusy = "BothHandBusy";
+    private const string Draw = "Draw";
+    private const string Holster = "Holster";
+    private const string Drop = "Drop";
     #endregion
+
+    private Coroutine changeWeaponRoutine;
 
     private void Awake() {
         Input = GetComponent<Player_InputHandler>();
@@ -204,31 +206,47 @@ public class Player_AnimationSystem : NetworkBehaviour {
         RequestAnimationServerRpc(Shot); 
     }
 
-    public void OnCollect() {
-        m_handsAnimator.SetTrigger(Collect);
-        RequestAnimationServerRpc(Collect);
-    }
-
     public void OnReload() {
         m_handsAnimator.SetTrigger(Reload);
         RequestAnimationServerRpc(Reload); 
     }
 
-    public void ChangeIdleState(Weapon currentWeapon) {
-        //m_handsAnimator.runtimeAnimatorController = currentWeapon.m_overrideController;
+    public void OnCollect() {
+        m_handsAnimator.SetTrigger(Collect);
+        RequestAnimationServerRpc(Collect);
+    }
 
-        m_handsAnimator.SetInteger(WeaponAnimationIndex, (int)currentWeapon.m_weaponType);
-        m_handsAnimator.SetBool(BothHandBusy, currentWeapon.m_handUsage == HandUsage.TwoHanded);
+    public void OnDrop() {
+        ChangeIdleState(null, false);
 
-        m_handsAnimator.SetTrigger(IdleState);
+        m_handsAnimator.SetTrigger(Drop);
+        RequestAnimationServerRpc(Drop);
+    }
 
-        /*if (!string.IsNullOrEmpty(lastState)) 
-            RequestAnimationStateServerRpc(lastState, false);
-        lastState = HoldingWeapon + weapons;
+    public void ChangeIdleState(Weapon currentWeapon, bool hasItemPreviously) { 
+        if (changeWeaponRoutine != null)
+            StopCoroutine(changeWeaponRoutine);
+        changeWeaponRoutine = StartCoroutine(ChangeWeapon(currentWeapon, hasItemPreviously)); 
+    }
 
+    private IEnumerator ChangeWeapon(Weapon currentWeapon, bool hasItemPreviously) {
+        if (hasItemPreviously) {
+            m_handsAnimator.SetTrigger(Holster);
+            RequestAnimationServerRpc(Holster);
 
-        RequestAnimationStateServerRpc(lastState, true);*/
-        RequestAnimationServerRpc(IdleState); 
+            yield return new WaitForSeconds(0.4f);
+        }
+
+        if (currentWeapon != null) {
+            m_handsAnimator.runtimeAnimatorController = currentWeapon.m_overrideController;
+
+            m_handsAnimator.SetTrigger(Draw);
+            RequestAnimationServerRpc(Draw);
+        }
+        else {
+            m_handsAnimator.Play("Weapon Empty");
+            Combat.SetCanSwitch(true);            
+        }
     }
     #endregion
 

@@ -6,8 +6,9 @@ using UnityEngine;
 public class Interactor : NetworkBehaviour, IInteractable {
     [FoldoutGroup("Visual")][SerializeField] private string m_screenShowcaseName;
     [FoldoutGroup("Visual")] [SerializeField] private Material m_outlineMaterial;
-    [FoldoutGroup("Visual")] [SerializeField] private GameObject m_thirdPersonVisual;
-    [FoldoutGroup("Visual")] [SerializeField] private GameObject m_onGroundVisual;
+
+    [FoldoutGroup("3D Inventory showcase")] [SerializeField] private MeshRenderer[] allRenderers;
+    [FoldoutGroup("3D Inventory showcase")] [SerializeField] private Material unlitMaterial;
 
     private float m_outlineWidth = 1.075f;
 
@@ -16,6 +17,7 @@ public class Interactor : NetworkBehaviour, IInteractable {
     private Collider _collider;
     private Rigidbody _rigidbody;
     private NetworkTransform _networkTransform;
+    private NetworkRigidbody _networkRigidbody;
 
     private MaterialPropertyBlock propBlock;
     private Material outlineInstance;
@@ -23,6 +25,7 @@ public class Interactor : NetworkBehaviour, IInteractable {
     public override void OnNetworkSpawn() {
         _collider = GetComponent<Collider>();
         _networkTransform = GetComponent<NetworkTransform>();
+        _networkRigidbody = GetComponent<NetworkRigidbody>();
         _rigidbody = GetComponent<Rigidbody>();
 
         SetMaterials();
@@ -63,10 +66,15 @@ public class Interactor : NetworkBehaviour, IInteractable {
         Destroy(_collider);
         Destroy(_rigidbody);
         Destroy(_networkTransform);
+        Destroy(_networkRigidbody);
         Destroy(this);
+    }
 
-        m_thirdPersonVisual.SetActive(true);
-        m_onGroundVisual.SetActive(false);
+    public void SetAsShowcaseItem() {
+        foreach (var renderer in allRenderers) 
+            renderer.material = unlitMaterial;
+
+        SetThirdPersonViewOnly();
     }
 
     public virtual void OnHoverOverItem(bool isOnTarget) {
@@ -79,6 +87,6 @@ public class Interactor : NetworkBehaviour, IInteractable {
 
     public virtual void Interact(Player_InteractionSystem interactor) {
         Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke("");
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(interactor.ActualSlotSelected);
+        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(interactor.ActualSlotSelected, true);
     }
 }

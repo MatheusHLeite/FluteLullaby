@@ -1,4 +1,3 @@
-using DG.Tweening;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -6,6 +5,7 @@ public class Player_InventorySystem : NetworkBehaviour {
     private Player_InteractionSystem Interaction;
     private Player_CombatSystem Combat;
     private Player_CameraMovementSystem CameraMovement;
+    private Player_AnimationSystem Animator;
 
     [Header("Hands")]
     [SerializeField] private Transform m_rightHand;
@@ -19,10 +19,9 @@ public class Player_InventorySystem : NetworkBehaviour {
     #endregion
 
     #region Private
-    private Transform weaponHolder;
     private Interactor itemOnTPHand;
-    private GameObject itemOnTPHandRef;    
 
+    private Item_SO currentItem;
     private ItemData equippedItem;
 
     private int previousIndex;
@@ -33,8 +32,7 @@ public class Player_InventorySystem : NetworkBehaviour {
         Interaction = GetComponent<Player_InteractionSystem>();
         Combat = GetComponent<Player_CombatSystem>();
         CameraMovement = GetComponent<Player_CameraMovementSystem>();
-
-        weaponHolder = m_rightHand.parent;
+        Animator = GetComponent<Player_AnimationSystem>();
     }
     #endregion
 
@@ -62,46 +60,42 @@ public class Player_InventorySystem : NetworkBehaviour {
     public Transform GetRightHand() => m_rightHand;
     #endregion
 
-    #region Slot handle
-    private void OnSlotSelected(int index) {
-        ItemData itemData = Singleton.Instance.InventoryManager.GetItemFromSlot(index);
-        Item_SO item = Singleton.Instance.GameManager.GetItemByID(itemData == null ? "" : itemData.itemBaseId);
+    
 
-        if (equippedItem == itemData) return;
-        equippedItem = itemData;
+    #region Slot handle
+    private void OnSlotSelected(int index, bool isCollecting) {
+        bool hasPreviousItem =
+            currentItem != null;
+
+        ItemData currentItemData = Singleton.Instance.InventoryManager.GetItemFromSlot(index);
+        currentItem = Singleton.Instance.GameManager.GetItemByID(currentItemData == null ? "" : currentItemData.itemBaseId);
+
+        bool itemCollectedIsWeapon =
+            currentItem != null &&
+            currentItem.m_itemType == (ItemType.MeleeWeapon | ItemType.Firearm);
+
+        if (isCollecting && (_currentHandItem != null || 
+            (_currentHandItem == null && !itemCollectedIsWeapon)))
+            Animator.OnCollect();
+
+        if (equippedItem == currentItemData) return;
+        equippedItem = currentItemData;
 
         Combat.SetCanSwitch(false);
-
         CameraMovement.PlayWeaponSwitchAnimation();
 
-        weaponHolder.DOLocalRotate(new Vector3(45, 0, 0), changeWeaponSpeed).SetEase(Ease.InBack).OnComplete(() => {
-            if (_currentHandItem != null) {
-                DespawnItemOnHandRpc();
-            }
-
-            if (item != null && item.m_itemType != ItemType.Ammo) {
-                SpawnItemOnHandRpc(itemData);
-
-                /*GameObject go = Instantiate(item.m_itemPrefab.gameObject, m_rightHand);
-                _currentHandItem = go.GetComponent<Item_Interactor>();
-                SpawnItemOnHandServerRpc(item.id);*/
-            }
-
-            Singleton.Instance.GameEvents.OnActualSlotItemSet?.Invoke(item, _currentHandItem.gameObject);
-
-            weaponHolder.DOLocalRotate(Vector3.zero, changeWeaponSpeed / 1.75f).SetDelay(0.15f).SetEase(Ease.OutBack).OnComplete(() => {
-                Combat.SetCanSwitch(true);
-            });
-        });
+        Singleton.Instance.GameEvents.OnActualSlotItemSet?.Invoke(currentItem, hasPreviousItem);
     }
 
-    public void RequestSpawnItemOnHand(ItemData item)
-    {
-        //if (GetCurrentItemOnHand(selectedHand) != null) return;
+    public void OnDrawAnimationStarted() {
+        DespawnItemOnHandRpc();
 
-        SpawnItemOnHandRpc(item);
+        if (currentItem != null && currentItem.m_itemType == (ItemType.MeleeWeapon | ItemType.Firearm))
+            SpawnItemOnHandRpc(equippedItem);
+
+        Combat.SetWeapon(_currentWeaponEquipped, currentItem);
     }
-
+    
     [Rpc(SendTo.Server)]
     private void SpawnItemOnHandRpc(ItemData itemData) {
         Item_SO itemBase = Singleton.Instance.GameManager.GetItemByID(itemData.itemBaseId);
@@ -138,19 +132,15 @@ public class Player_InventorySystem : NetworkBehaviour {
     [Rpc(SendTo.Server)]
     private void DespawnItemOnHandRpc() {
         if (!IsServer) return;
+        if (_currentHandItem == null) return;
+
         _currentHandItem.NetworkObject.Despawn();
+        _currentHandItem = null;
     }
 
     private void OnQuickSlotItemUpdated(int previousIndex, int nextIndex) {
-        if (previousIndex == Interaction.ActualSlotSelected) OnSlotSelected(previousIndex);
-        if (nextIndex == Interaction.ActualSlotSelected) OnSlotSelected(nextIndex);
-    }
-
-    private void SetupItemOHand(Item_SO item) {
-        /*if (itemOnHand.transform.TryGetComponent(out Weapon_Firearm firearm)) 
-            firearm.SetupWeapon(item, Combat);
-        if (itemOnHand.transform.TryGetComponent(out Weapon_Melee melee))
-            melee.SetupWeapon(item, Combat);*/
+        if (previousIndex == Interaction.ActualSlotSelected) OnSlotSelected(previousIndex, false);
+        if (nextIndex == Interaction.ActualSlotSelected) OnSlotSelected(nextIndex, false);
     }
 
     private void OnSlotItemDropped(int index) {
@@ -158,9 +148,12 @@ public class Player_InventorySystem : NetworkBehaviour {
         ItemData data = Singleton.Instance.SaveManager.GetItemFromInventory(itemId);
 
         SpawnItemServerRpc(itemId, Interaction.GetTargetAim());
+        DespawnItemOnHandRpc();
 
-        if (index == Interaction.ActualSlotSelected || index == previousIndex && m_rightHand.childCount > 0)        
-            Destroy(m_rightHand.GetChild(0).gameObject);
+        currentItem = null;
+        equippedItem = null;
+
+        Animator.OnDrop();
 
         Singleton.Instance.GameEvents.OnInventoryItemRemoved?.Invoke(data, index);
     }
@@ -174,7 +167,6 @@ public class Player_InventorySystem : NetworkBehaviour {
     private void SpawnItemOnHandClientRpc(string id) {
         if (IsOwner) return;
         itemOnTPHand = Instantiate(Singleton.Instance.GameManager.GetItemByID(id).m_itemPrefab, m_thirdPersonRightHand);
-        itemOnTPHandRef = itemOnTPHand.gameObject;
         itemOnTPHand.SetThirdPersonViewOnly();        
     }
 

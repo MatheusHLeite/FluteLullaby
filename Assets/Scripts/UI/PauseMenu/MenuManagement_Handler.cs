@@ -8,6 +8,10 @@ public class MenuManagement_Handler : MonoBehaviour {
     [Header("Screens")]
     [SerializeField] private GameObject m_mainPauseScreen;
     [SerializeField] private GameObject m_settingsScreen;
+    [SerializeField] private GameObject m_tutorialScreen;
+    [SerializeField] private GameObject m_statisticsScreen;
+    [SerializeField] private GameObject m_inventoryScreen;
+    [SerializeField] private GameObject m_bestiaryScreen;
 
     [Header("References")]
     [SerializeField] private UI_SettingsVideo m_videoSettings;
@@ -16,8 +20,12 @@ public class MenuManagement_Handler : MonoBehaviour {
     [Header("Buttons")]
     [SerializeField] private Button m_resume;
     [SerializeField] private Button m_settings;
+    [SerializeField] private Button m_tutorial;
+    [SerializeField] private Button m_statistics;
+    [SerializeField] private Button m_inventory;
+    [SerializeField] private Button m_bestiary;
     [SerializeField] private Button m_mainMenu;
-    [SerializeField] private Button m_returnToPause;
+    [SerializeField] private Button[] m_returnToPause;
 
     [Header("Pop up")]
     [SerializeField] private PopUp m_popUpWindow;
@@ -37,18 +45,46 @@ public class MenuManagement_Handler : MonoBehaviour {
 
     private void Start() {
         SetupButtons();
+        DisableAllScreens();
     }
 
     private void SetupButtons() {
         m_resume.onClick.RemoveAllListeners();
         m_settings.onClick.RemoveAllListeners();
+        m_tutorial.onClick.RemoveAllListeners();
+        m_statistics.onClick.RemoveAllListeners();
         m_mainMenu.onClick.RemoveAllListeners();
-        m_returnToPause.onClick.RemoveAllListeners();
+        m_inventory.onClick.RemoveAllListeners();
+        m_bestiary.onClick.RemoveAllListeners();
 
         m_resume.onClick.AddListener(CloseMainPauseMenu);
         m_settings.onClick.AddListener(OpenSettingsScreen);
+        m_tutorial.onClick.AddListener(OpenTutorialScreen);
+        m_statistics.onClick.AddListener(OpenStatisticsScreen);
+        m_inventory.onClick.AddListener(OpenInventoryScreen);
+        m_bestiary.onClick.AddListener(OpenBestiaryScreen);
         m_mainMenu.onClick.AddListener(GoBackToMainMenu);
-        m_returnToPause.onClick.AddListener(OpenPauseScreen);
+
+        foreach (var btn in m_returnToPause) {
+            Button thisButton = btn;
+            thisButton.onClick.AddListener(OpenPauseScreen);
+        }        
+    }
+
+    private void OnDestroy() {
+        foreach (var btn in m_returnToPause) {
+            Button thisButton = btn;
+            thisButton.onClick.RemoveAllListeners();
+        }
+    }
+
+    private void DisableAllScreens() {
+        m_mainPauseScreen.SetActive(true);
+        m_settingsScreen.SetActive(false);
+        m_tutorialScreen.SetActive(false);
+        m_statisticsScreen.SetActive(false);
+        m_inventoryScreen.SetActive(true);
+        m_bestiaryScreen.SetActive(false);
     }
 
     public void SetupPlayerReference(Player_PauseHandler reference) => playerReference = reference;
@@ -68,15 +104,37 @@ public class MenuManagement_Handler : MonoBehaviour {
 
         Singleton.Instance.GameEvents.OnGamePaused?.Invoke();
 
-        m_settingsScreen.SetActive(false);
         OpenPauseScreen();
     }
+
+    public void OpenInventoryMenu() {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        Singleton.Instance.GameEvents.OnInventoryOpened?.Invoke();
+
+        OpenInventoryScreen();
+    }
+
+    private void OpenInventoryScreen() => ChangeScreen(m_inventoryScreen);
 
     private void OpenPauseScreen() => ChangeScreen(m_mainPauseScreen);
 
     private void OpenSettingsScreen() {
         ChangeScreen(m_settingsScreen);
         m_tabHandler.OnSettingsScreensOpened();
+    }
+
+    private void OpenTutorialScreen() {
+        ChangeScreen(m_tutorialScreen);
+    }
+
+    private void OpenStatisticsScreen() {
+        ChangeScreen(m_statisticsScreen);
+    }
+
+    private void OpenBestiaryScreen() {
+        ChangeScreen(m_bestiaryScreen);
     }
 
     private void CloseMainPauseMenu() => playerReference.ResumeGame();

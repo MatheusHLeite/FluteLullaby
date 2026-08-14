@@ -29,6 +29,7 @@ public class Item_Interactor : Interactor {
     private NetworkRigidbody networkRigidbody;    
 
     private Transform followTarget;
+    private bool lockRandomize;
 
     protected void Awake() {
         _object = GetComponent<NetworkObject>();
@@ -37,12 +38,24 @@ public class Item_Interactor : Interactor {
         networkTransform = GetComponent<NetworkTransform>();
         networkRigidbody = GetComponent<NetworkRigidbody>();
 
+        if (lockRandomize) 
+            return;
+
         if (m_randomizeAmount) {
             m_amount = Random.Range(1, m_itemVisuals.Length);
 
-            for (int i = 0; i < m_itemVisuals.Length; i++) m_itemVisuals[i].SetActive(false);
-            for (int i = 0; i < m_amount; i++) m_itemVisuals[i].SetActive(true);
+            for (int i = 0; i < m_itemVisuals.Length; i++) 
+                m_itemVisuals[i].SetActive(false);
+            for (int i = 0; i < m_amount; i++)
+                m_itemVisuals[i].SetActive(true);
         }
+    }
+
+    public void SetAs3DView() {
+        lockRandomize = true;
+
+        for (int i = 0; i < m_itemVisuals.Length; i++)
+            m_itemVisuals[i].SetActive(true);
     }
 
     public override void OnHoverOverItem(bool isOnTarget) {
@@ -64,8 +77,9 @@ public class Item_Interactor : Interactor {
             return; 
         }
 
-        m_index = m_item.m_itemType != ItemType.MeleeWeapon && m_item.m_itemType != ItemType.Firearm ? 
-            UI_InventoryManager._quickSlots.Count : 0;
+        bool isQuickSlotItem = m_item.m_itemType != (ItemType.MeleeWeapon | ItemType.Firearm);
+
+        m_index = isQuickSlotItem ? UI_InventoryManager._quickSlots.Count : 0;
         m_slotIndex = Singleton.Instance.InventoryManager.GetEmptySlotIndex(m_index);
 
         Singleton.Instance.GameEvents.OnItemCollected?.Invoke(m_item, m_slotIndex, m_amount, false);

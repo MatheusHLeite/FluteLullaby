@@ -41,7 +41,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnStaminaConsume.AddListener(OnStaminaUsage);
         Singleton.Instance.GameEvents.OnStaminaUISet.AddListener(SetMaxStamina);
         Singleton.Instance.GameEvents.OnAmmoUpdated.AddListener(OnAmmoSpent);
-        Singleton.Instance.GameEvents.OnWeaponChanged.AddListener(OnWeaponChanged);
+        Singleton.Instance.GameEvents.OnAmmoUISet.AddListener(OnWeaponChanged);
         Singleton.Instance.GameEvents.OnGamePaused.AddListener(OnGamePaused);
         Singleton.Instance.GameEvents.OnInventoryOpened.AddListener(OnInventoryOpened);
         Singleton.Instance.GameEvents.OnGameResumed.AddListener(OnGameResumed);
@@ -53,7 +53,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         Singleton.Instance.GameEvents.OnStaminaConsume.RemoveListener(OnStaminaUsage);
         Singleton.Instance.GameEvents.OnStaminaUISet.RemoveListener(SetMaxStamina);
         Singleton.Instance.GameEvents.OnAmmoUpdated.RemoveListener(OnAmmoSpent);
-        Singleton.Instance.GameEvents.OnWeaponChanged.RemoveListener(OnWeaponChanged);
+        Singleton.Instance.GameEvents.OnAmmoUISet.RemoveListener(OnWeaponChanged);
         Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
         Singleton.Instance.GameEvents.OnInventoryOpened.RemoveListener(OnInventoryOpened);
         Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
@@ -62,6 +62,7 @@ public class UI_PlayerHUD : MonoBehaviour {
     private void Start() {        
         _impulseSource = GetComponent<CinemachineImpulseSource>();
         m_ammo.gameObject.SetActive(false);
+        m_defaultCrosshair.gameObject.SetActive(true);
 
         m_healthBar.fillAmount = 1f;
         m_healthBar.color = m_defaultHealthColor;

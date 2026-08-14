@@ -1,5 +1,4 @@
 using DG.Tweening;
-using System.Globalization;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,7 +9,6 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     [SerializeField] private Transform m_playerCameraHolder;
     [SerializeField] private Transform m_weaponsHolder;
     [SerializeField] private Camera m_playerCamera;
-    [SerializeField] private VolumeProfile m_postProcessingVolumeProfile;
 
     [Header("Sway")]
     [SerializeField] private float swayIntensity = 0.075f;
@@ -90,6 +88,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     private Player_MovementSystem Movement;
     private Player_HealthSystem HealthSystem;
     private MotionBlur motionBlur;
+    private VolumeProfile postProcessingVolumeProfile;
     #endregion
 
     #region Performance Cache
@@ -144,9 +143,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         originalRotation = m_weaponsHolder.transform.localRotation;
         initialPosition = m_weaponsHolder.transform.localPosition;
 
-        m_postProcessingVolumeProfile = Singleton.Instance.SettingsManager.VolumeProfile;
+        postProcessingVolumeProfile = Singleton.Instance.SettingsManager.VolumeProfile;
 
-        if (m_postProcessingVolumeProfile != null && m_postProcessingVolumeProfile.TryGet(out MotionBlur mb)) 
+        if (postProcessingVolumeProfile != null && postProcessingVolumeProfile.TryGet(out MotionBlur mb)) 
             motionBlur = mb;        
     }
 

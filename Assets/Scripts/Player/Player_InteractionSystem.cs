@@ -6,6 +6,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private Player_InputHandler Input;
     private Player_HealthSystem HealthSystem;
     private Player_CombatSystem CombatSystem;
+    private Player_AnimationSystem AnimatorSystem;
 
     [Header("References")]
     [SerializeField] private Transform m_playerCamera;
@@ -39,7 +40,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private void Awake() {
         Input = GetComponent<Player_InputHandler>();
         HealthSystem = GetComponent<Player_HealthSystem>();
-        CombatSystem = GetComponent<Player_CombatSystem>();        
+        CombatSystem = GetComponent<Player_CombatSystem>();
+        AnimatorSystem = GetComponent<Player_AnimationSystem>();
     }
     #endregion
 
@@ -110,9 +112,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
     #endregion
 
     private void HandleInteract() {
-        if (Input.Interact && _actualInteractable != null) {
-            _actualInteractable.Interact(this);
-        }
+        if (Input.Interact && _actualInteractable != null) 
+            _actualInteractable.Interact(this);    
     }
 
     private void HandleItemDrop() {
@@ -122,19 +123,26 @@ public class Player_InteractionSystem : NetworkBehaviour {
     }
 
     private void HandleSlotSelection() {
-        if (Time.time < _slotSelectionCooldown) return;
+        if (Time.time < _slotSelectionCooldown) 
+            return;
 
-        if (Input.Slot1) ActualSlotSelected = 0;
-        if (Input.Slot2) ActualSlotSelected = 1;
-        if (Input.Slot3) ActualSlotSelected = 2;
-        if (Input.Slot4) ActualSlotSelected = 3;
-        if (Input.LastSlotUsed) ActualSlotSelected = _lastSlot;
+        if (Input.Slot1) 
+            ActualSlotSelected = 0;
+        if (Input.Slot2) 
+            ActualSlotSelected = 1;
+        if (Input.Slot3) 
+            ActualSlotSelected = 2;
+        if (Input.Slot4) 
+            ActualSlotSelected = 3;
+        if (Input.LastSlotUsed) 
+            ActualSlotSelected = _lastSlot;
 
         SelectSlot(ActualSlotSelected);
     }
 
     private void SelectSlot(int index) {
         if (index == _lastSelectedSlotIndex) return;
+
         OnSlotSelected(index);
     }
 
@@ -143,7 +151,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
         _lastSlot = _lastSelectedSlotIndex;
         _lastSelectedSlotIndex = index;
 
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(index);
+        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(index, false);
     }
 
     private void OnRespawn() {

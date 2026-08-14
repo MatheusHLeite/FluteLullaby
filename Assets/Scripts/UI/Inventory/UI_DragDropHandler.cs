@@ -21,6 +21,14 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
 
     private ItemData itemData;
 
+    private RectTransform canvasRect;
+    private Camera canvasCamera;
+
+    private Vector3 dragOffset;
+    private Vector2 lastPointerPosition;
+
+    private bool isShowingPopUp;
+
     #region Rotation and position
     private Vector3 pointerPosition;
 
@@ -43,14 +51,19 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         canvasGroup = GetComponent<CanvasGroup>();
         mainCanvas = GetComponentInParent<Canvas>();
 
+        canvasRect = mainCanvas.GetComponent<RectTransform>();
+        canvasCamera = mainCanvas.worldCamera;
+
         inventoryItem = GetComponent<UI_InventoryItem>();
         currentItem = inventoryItem.GetCurrentItem();
 
         Singleton.Instance.GameEvents.OnWeaponReload.AddListener(OnWeaponReload);
+        Singleton.Instance.GameEvents.OnGameResumed.AddListener(HideTooltip);
     }
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnWeaponReload.RemoveListener(OnWeaponReload);
+        Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(HideTooltip);
     }
 
     private void OnWeaponReload(bool isReloading, WeaponClass weapons) => this.isReloading = isReloading;
@@ -64,16 +77,50 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     public void OnBeginDrag(PointerEventData eventData) {
         if (isReloading) return;
 
-        originalParent = transform.parent;
+        HideTooltip();
 
         Singleton.Instance.GameEvents.OnDragBegun?.Invoke(index);
 
+        originalParent = transform.parent;
         transform.SetParent(mainCanvas.transform);
+
         canvasGroup.blocksRaycasts = false;
         isDragging = true;
+
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+            canvasRect,
+            eventData.position,
+            canvasCamera,
+            out Vector3 worldPosition)) {
+            dragOffset = transform.position - worldPosition;
+            pointerPosition = transform.position;
+        }
+
+        lastMousePosition = Input.mousePosition;
+        lastPointerPosition = eventData.position;
     }
 
-    public void OnDrag(PointerEventData eventData) => pointerPosition = eventData.position;
+    public void OnDrag(PointerEventData eventData) {
+        if (canvasRect == null)
+            return;
+
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+            canvasRect,
+            eventData.position,
+            canvasCamera,
+            out Vector3 worldPosition)) {
+            pointerPosition = worldPosition + dragOffset;
+        }
+
+        deltaX = eventData.position.x - lastPointerPosition.x;
+        targetRotation = Mathf.Clamp(
+            deltaX * 0.5f,
+            -rotationAmount,
+            rotationAmount
+        );
+
+        lastPointerPosition = eventData.position;
+    }
 
     public void OnEndDrag(PointerEventData eventData) {
         newTransform = originalParent;
@@ -86,16 +133,47 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
                 HandleSlotSwap(otherItem);
                 return;
             }
-            if (eventData.pointerCurrentRaycast.gameObject.TryGetComponent(out UI_DropManager dropManager)) {
-                HandleSlotItemDropped(dropManager);
-                return;
-            }
         }
 
+        HideTooltip();
         OnItemDropped();
     }
 
-    public void OnPointerClick(PointerEventData eventData) => TooltipSystem.ShowInventoryTooltip(currentItem, itemData, quantity);
+    public void OnPointerClick(PointerEventData eventData) {
+        bool shiftPressed =
+            Input.GetKey(KeyCode.LeftShift) ||
+            Input.GetKey(KeyCode.RightShift);
+
+        if (eventData.button == PointerEventData.InputButton.Right && shiftPressed) {
+            HandleItemSplit(itemData);
+            return;
+        }
+
+        if (!isShowingPopUp || TooltipSystem.CurrentTooltipItem != currentItem) {         
+            TooltipSystem.ShowInventoryTooltip(currentItem); 
+            isShowingPopUp = true;
+        }
+        else
+            HideTooltip();
+    }
+
+    private void HideTooltip() {
+        TooltipSystem.HideInventoryTooltip();
+        isShowingPopUp = false;
+    }
+
+    private void HandleItemSplit(ItemData item) {
+        if (isReloading) 
+            return;
+        if (quantity <= 1)
+            return;
+        if (InventoryManager.IsInventoryFull()) {
+            Debug.Log("<color=red>Inventory is full</color>");
+            return;
+        }
+
+        Singleton.Instance.GameEvents.OnItemSplit?.Invoke(item, quantity);
+    }
 
     private void HandleSlotDrop(UI_Slot slot) {
         newTransform = slot.transform;
@@ -137,11 +215,6 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         OnItemDropped();
     }
 
-    private void HandleSlotItemDropped(UI_DropManager dropManager) {
-        Singleton.Instance.GameEvents.OnItemDropped?.Invoke(index);
-        Destroy(gameObject);
-    }
-
     public void OnItemDropped() {
         transform.SetParent(newTransform);
 
@@ -155,12 +228,7 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         if (!isDragging) return;
 
         transform.position = Vector3.Lerp(transform.position, pointerPosition, Time.deltaTime * movementSmooth);
-
-        deltaX = Input.mousePosition.x - lastMousePosition.x;
-        targetRotation = Mathf.Clamp(deltaX * 0.5f, -rotationAmount, rotationAmount);
-
         currentRotation = Mathf.Lerp(currentRotation, targetRotation, Time.deltaTime * rotationSmooth);
         transform.rotation = Quaternion.Euler(0f, 0f, -currentRotation);
-        lastMousePosition = Input.mousePosition;
     }
 }

@@ -28,7 +28,7 @@ public class InventoryManager : MonoBehaviour {
             Singleton.Instance.GameEvents.OnInventoryItemAdded?.Invoke(data.acquiredItems[i], data.acquiredItems[i].index);
         }
 
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(0);
+        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(0, false);
     }
 
     public ItemData GetItemFromSlot(int index) => UI_InventoryManager._allSlots[index].GetItem();
@@ -58,8 +58,11 @@ public class InventoryManager : MonoBehaviour {
         if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = true;
     }
 
-    private void OnInventoryItemRemoved(ItemData item, int index) {   
-        if (index < _itemsOnSlots.Length) _itemsOnSlots[index] = false;
+    private void OnInventoryItemRemoved(ItemData item, int index) {
+        UI_InventoryManager._allSlots[index].ClearSlot();
+
+        if (index < _itemsOnSlots.Length) 
+            _itemsOnSlots[index] = false;
     }
 
     private void OnSlotItemChanged(ItemData item, int prevIndex, int newIndex) {

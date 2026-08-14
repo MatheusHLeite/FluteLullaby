@@ -9,8 +9,14 @@ public class TooltipSystem : MonoBehaviour {
         m_current = this;
     }
 
-    public static void ShowInventoryTooltip(Item_SO item, ItemData itemData, int quantity) {
-        m_current.m_inventoryTooltip.SetInventoryTooltip(item, itemData, quantity);
-        m_current.m_inventoryTooltip.gameObject.SetActive(true);
+    public static Item_SO CurrentTooltipItem;
+
+    public static void ShowInventoryTooltip(Item_SO item) {
+        m_current.m_inventoryTooltip.SetInventoryTooltip(item);
+        CurrentTooltipItem = item;
+    }
+
+    public static void HideInventoryTooltip(bool immediate = false) {
+        m_current.m_inventoryTooltip.OnHideTooltip(immediate);
     }
 }

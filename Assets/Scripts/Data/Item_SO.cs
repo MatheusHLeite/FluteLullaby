@@ -13,6 +13,9 @@ public class Item_SO : ScriptableObject {
     [FoldoutGroup("Item Offset")] public Vector3 m_itemRotationOffset;
     [FoldoutGroup("Item Offset")] public Vector3 m_itemSpawnRotation;
 
+    [FoldoutGroup("Item showcase")] public Vector3 m_showcaseItemPosition;
+    [FoldoutGroup("Item showcase")] public Vector3 m_showcaseItemScale;
+
     [FoldoutGroup("Item setup")][GUIColor("#FFFF00")][ReadOnly] public string id;
     [FoldoutGroup("Item setup")][Button("Generate ID")]
     public void GenerateNewID() => id = System.Guid.NewGuid().ToString();

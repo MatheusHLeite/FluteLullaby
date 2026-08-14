@@ -30,7 +30,17 @@ public class UI_InventoryItem : MonoBehaviour {
 
     private void OnWeaponReload(bool isReloading, WeaponClass weapon) {
         Weapon thisWeapon = currentItem as Weapon;
-        if (currentItem.m_itemType == ItemType.Ammo && weapon == thisWeapon.m_weaponType) blockItemOverlay.SetActive(isReloading);
+        Ammo_SO thisAmmo = currentItem as Ammo_SO;
+
+        if (currentItem.m_itemType != ItemType.Ammo)
+            return;
+
+        if (thisWeapon != null && 
+            thisWeapon.m_weaponType == weapon)
+            blockItemOverlay.SetActive(isReloading);
+        else if (thisAmmo != null &&
+            thisAmmo.m_weapon == weapon)
+            blockItemOverlay.SetActive(isReloading);
     }
 
     public void SetItem(ItemData itemData, int index, UI_Slot slot) {

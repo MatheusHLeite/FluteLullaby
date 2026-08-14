@@ -104,7 +104,113 @@ public enum Size { Small, Normal, Big }
 
 public enum EnemyState { Idle, Wandering, Chasing, Searching }
 
-public enum HandUsage { OneHanded, TwoHanded }
+public enum StatisticType { Number, Text, Progress, Time, Percentage }
+
+public enum StatisticId {
+    TotalPlaytime,
+    GameProgression,
+    SecondaryMissions,
+    PuzzlesSolved,
+    Achievements,
+
+    Deaths,
+    Revives,
+    Downs,
+
+    CriticalHits,
+    Accuracy,
+    ShotsFired,
+    MeleeKills,
+    RangedKills,
+    FavoriteWeapon,
+    FavoriteWeaponKills,
+
+    Collectables,
+    CollectedSongs,
+    SecretsFound,
+    EnemiesKilled
+}
+
+[System.Serializable]
+public struct Statistic {
+    public StatisticId id;
+    public StatisticType type;
+
+    public int value;
+    public int maxValue;
+    public string textValue;
+
+    public string monsterId;
+
+    public string GetLabelValue() {
+        switch (id) {
+            case StatisticId.TotalPlaytime:
+                return "Total playtime";
+            case StatisticId.GameProgression:
+                return "Game progression";
+            case StatisticId.SecondaryMissions:
+                return "Secondary missions completed";
+            case StatisticId.PuzzlesSolved:
+                return "Puzzles solved";
+            case StatisticId.Achievements:
+                return "Achievements";
+            case StatisticId.Deaths:
+                return "Deaths";
+            case StatisticId.Revives:
+                return "Revives";
+            case StatisticId.Downs:
+                return "Downs";
+            case StatisticId.CriticalHits:
+                return "Critical hits";
+            case StatisticId.Accuracy:
+                return "Accuracy";
+            case StatisticId.ShotsFired:
+                return "Shots fired";
+            case StatisticId.MeleeKills:
+                return "Melee kills";
+            case StatisticId.RangedKills:
+                return "Ranged kills";
+            case StatisticId.FavoriteWeapon:
+                return "Favorite weapon";
+            case StatisticId.FavoriteWeaponKills:
+                return "Favorite weapon kills";
+            case StatisticId.Collectables:
+                return "Collectables";
+            case StatisticId.CollectedSongs:
+                return "Collected songs";
+            case StatisticId.SecretsFound:
+                return "Secrets found";
+            case StatisticId.EnemiesKilled:
+                return "";
+            default:
+                return "";
+        }
+    }
+
+    public string GetDisplayValue() {
+        switch (type) {
+            case StatisticType.Number:
+                return value.ToString();
+            case StatisticType.Percentage:
+                return $"{value}%";
+            case StatisticType.Time:
+                return FormatTime(value);
+            case StatisticType.Progress:
+                return $"{value}/{maxValue}";
+            case StatisticType.Text:
+                return textValue;
+            default:
+                return "";
+        }
+    }
+
+    private string FormatTime(int totalSeconds) {
+        int hours = totalSeconds / 3600;
+        int minutes = (totalSeconds % 3600) / 60;
+
+        return $"{hours}h{minutes}m";
+    }
+}
 
 public struct BodyPartDamageMultiplier {
     public BodyPart m_bodyPart;

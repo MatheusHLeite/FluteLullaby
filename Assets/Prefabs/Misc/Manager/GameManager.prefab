@@ -132,6 +132,8 @@ GameObject:
   - component: {fileID: 2436691046570829008}
   - component: {fileID: 7626948230465159475}
   - component: {fileID: -7106299170615028422}
+  - component: {fileID: -7028072234936906504}
+  - component: {fileID: -4708907142585160215}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -181,7 +183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2489532751
+  GlobalObjectIdHash: 810390217
   InScenePlacedSourceGlobalObjectIdHash: 810390217
   DeferredDespawnTick: 0
   Ownership: 1
@@ -384,6 +386,129 @@ MonoBehaviour:
       m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
     - m_talkerMood: 2
       m_voice: {fileID: 8300000, guid: 24def9f228455314b82116e7672ce33f, type: 3}
+--- !u!114 &-7028072234936906504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f9180b3fb3bf3d4aa3299c3b942a9a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_allEnemies:
+  - {fileID: 11400000, guid: 6fe59125c82d6394382f04dbdeacc9c2, type: 2}
+  - {fileID: 11400000, guid: bb1157239dde7184b83e43ab65b98afc, type: 2}
+  - {fileID: 11400000, guid: b7ebde6081af30e40a63ccd895126876, type: 2}
+  - {fileID: 11400000, guid: 2cf88122f5ef39e47a316997775f32f5, type: 2}
+  - {fileID: 11400000, guid: 81d8d8b88afda50468957c18088c0e28, type: 2}
+  - {fileID: 11400000, guid: 46e5ff6e949af7f418c3f3307fd81cc9, type: 2}
+  debugEnemy: {fileID: 0}
+--- !u!114 &-4708907142585160215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 567a8245e22a3154ea86a547cb93848c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_allGameStatistics:
+  - id: 0
+    type: 3
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 1
+    type: 4
+    value: 0
+    maxValue: 100
+    textValue: 
+  - id: 2
+    type: 2
+    value: 0
+    maxValue: 10
+    textValue: 
+  - id: 3
+    type: 2
+    value: 0
+    maxValue: 25
+    textValue: 
+  - id: 4
+    type: 2
+    value: 0
+    maxValue: 40
+    textValue: 
+  - id: 5
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 6
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 7
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 8
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 9
+    type: 4
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 10
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 11
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 12
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 13
+    type: 1
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 14
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+  - id: 15
+    type: 2
+    value: 0
+    maxValue: 12
+    textValue: 
+  - id: 16
+    type: 2
+    value: 0
+    maxValue: 5
+    textValue: 
+  - id: 17
+    type: 2
+    value: 0
+    maxValue: 8
+    textValue: 
 --- !u!1 &3816262137598194366
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,8 @@
+using DelightStudio.Data;
 using Sirenix.OdinInspector;
 using System.Collections;
-using Unity.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -19,6 +21,9 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.AddListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.AddListener(OnItemSplit);
         Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
+        Singleton.Instance.GameEvents.OnUpdateEnemyFound.AddListener(UpdateEnemyFound);
+        Singleton.Instance.GameEvents.OnUpdateBestiaryRead.AddListener(UpdateBestiaryRead);
+        Singleton.Instance.GameEvents.OnStatisticUpdated.AddListener(UpdatePlayerStatistics);
 
         LoadData();
     }
@@ -29,6 +34,9 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnInventoryItemRemoved.RemoveListener(OnItemRemoved);
         Singleton.Instance.GameEvents.OnItemSplit.RemoveListener(OnItemSplit);
         Singleton.Instance.GameEvents.OnSensitivityChanged.RemoveListener(OnSensitivityChanged);
+        Singleton.Instance.GameEvents.OnUpdateEnemyFound.RemoveListener(UpdateEnemyFound);
+        Singleton.Instance.GameEvents.OnUpdateBestiaryRead.RemoveListener(UpdateBestiaryRead);
+        Singleton.Instance.GameEvents.OnStatisticUpdated.RemoveListener(UpdatePlayerStatistics);
     }
     #endregion
 
@@ -136,7 +144,8 @@ public class SaveManager : MonoBehaviour {
         int splitResult = quantity - originalSplit;
 
         for (int i = 0; i < PlayerData.acquiredItems.Count; i++) {
-            if (PlayerData.acquiredItems[i].itemBaseId == itemData.itemBaseId && PlayerData.acquiredItems[i].uniqueId == itemData.uniqueId) {
+            if (PlayerData.acquiredItems[i].itemBaseId == 
+                itemData.itemBaseId && PlayerData.acquiredItems[i].uniqueId == itemData.uniqueId) {
                 PlayerData.acquiredItems[i].quantity = splitResult;
                 Singleton.Instance.GameEvents.OnItemUpdated?.Invoke(PlayerData.acquiredItems[i]);
                 break;
@@ -238,6 +247,10 @@ public class SaveManager : MonoBehaviour {
                 quantity += PlayerData.acquiredItems[i].quantity;           
         return quantity;
     }
+
+    public List<BestiaryData> GetBestiaryDatas() {
+        return PlayerData.allMonstersData;
+    }
     #endregion
 
     #region Settings management
@@ -251,6 +264,64 @@ public class SaveManager : MonoBehaviour {
         SaveSystemHandler.SaveData(PlayerData);
     }
     #endregion
+
+    private void UpdateEnemyFound(Enemy_SO enemy) {
+        int currentIndex;
+        BestiaryData currentData = GetCurrentBeastData(enemy, out currentIndex);
+        
+        if (currentData == null || currentData.enemyDiscovered)
+            return;
+
+        currentData.enemyDiscovered = true;
+        PlayerData.allMonstersData[currentIndex] = currentData;
+
+        Singleton.Instance.GameEvents.OnNewEnemyFound?.Invoke(currentData);
+
+        SaveSystemHandler.SaveData(PlayerData);        
+    }
+
+    private void UpdateBestiaryRead(Enemy_SO enemy) {
+        int currentIndex;
+        BestiaryData currentData = GetCurrentBeastData(enemy, out currentIndex);
+
+        if (currentData == null || currentData.notificationRead)
+            return;
+
+        currentData.notificationRead = true;
+        PlayerData.allMonstersData[currentIndex] = currentData;
+
+        Singleton.Instance.GameEvents.OnBestiaryNotificationRead?.Invoke(currentData);
+
+        SaveSystemHandler.SaveData(PlayerData);        
+    }
+
+    private BestiaryData GetCurrentBeastData(Enemy_SO enemy, out int currentIndex) {
+        currentIndex = -1;
+        for (int i = 0; i < PlayerData.allMonstersData.Count; i++) {
+            if (PlayerData.allMonstersData[i].enemy == enemy) {                
+                currentIndex = i;
+                return PlayerData.allMonstersData[i];
+            }
+        }
+        return null;
+    }
+
+    private void UpdatePlayerStatistics(Statistic stat) {
+        for (int i = 0; i < PlayerData.allGameStatistics.Count; i++) {
+            Statistic currentStat = PlayerData.allGameStatistics[i];
+            if (currentStat.id == stat.id && currentStat.monsterId == stat.monsterId) {
+                PlayerData.allGameStatistics[i] = stat;
+                break;
+            }
+        }
+
+        SaveSystemHandler.SaveData(PlayerData);
+    }
+
+    public bool IsMonsterDiscovered(string enemyId) {
+        BestiaryData data = PlayerData.allMonstersData.FirstOrDefault(enemy => enemy.enemy.id == enemyId);
+        return data.enemyDiscovered;
+    }
 }
 
 #region Data classes
@@ -287,13 +358,12 @@ public class InventoryItemData {
     
 }
 
-/*[System.Serializable]
-public class ItemData {
-    public string itemBaseId;
-    public string uniqueId;
-    public int quantity;
-    public int index;
-}*/
+[System.Serializable]
+public class BestiaryData {
+    public Enemy_SO enemy;
+    public bool enemyDiscovered;
+    public bool notificationRead;
+}
 
 [System.Serializable]
 public class ItemData : INetworkSerializable {
@@ -394,6 +464,7 @@ public class Settings {
     public int fontSize;
 }
 
+[System.Serializable]
 public class Volume {
     public VolumeMixer volumeMixer;
     public float volume;

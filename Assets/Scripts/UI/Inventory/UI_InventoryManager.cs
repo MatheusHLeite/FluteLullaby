@@ -43,7 +43,7 @@ public class UI_InventoryManager : MonoBehaviour {
     #endregion
 
     #region UI
-    private void OnSlotSelected(int index)  {
+    private void OnSlotSelected(int index, bool i)  {
         if (_lastSlot == null) _lastSlot = m_quickSlots[0];
 
         _lastSlot.transform.DOScale(Vector3.one, _slotChangeTime);

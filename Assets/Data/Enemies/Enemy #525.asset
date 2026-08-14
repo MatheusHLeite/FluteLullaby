@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9362e63ada66294590b1bab435482fe, type: 3}
+  m_Name: Enemy #525
+  m_EditorClassIdentifier: 
+  m_name: The drowned King
+  m_entryIndex: 525
+  m_fullBodyIcon: {fileID: 21300000, guid: ad213a1d2513cc54c94f82bc9ac7192b, type: 3}
+  m_description: 'A colossal drowned monarch covered in coral, shells, and the remains
+    of an entire ship fused to its back. An enormous crown of rusted anchors rests
+    upon its head, while one arm has become a massive tentacle and the other wields
+    an anchor larger than a house.
+
+
+    The King can command lesser drowned creatures
+    and is nearly invulnerable. Its crown and the ship fused to its body must be
+    destroyed before its true weakness is exposed: the Abyss Heart within its chest.'
+  m_threatLevel: 5
+  m_statistic:
+    id: 18
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+    monsterId: ea6f0620-a5fa-41d2-9ed0-abf2bb430a19
+  id: ea6f0620-a5fa-41d2-9ed0-abf2bb430a19

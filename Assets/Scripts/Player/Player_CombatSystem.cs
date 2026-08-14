@@ -62,26 +62,16 @@ public class Player_CombatSystem : NetworkBehaviour {
             CurrentHandItemAction.Reload(this);
     }
 
-    private void OnSlotSelected(Item_SO item, GameObject itemOnHand) {
-        Weapon weapon = item as Weapon;
+    private void OnSlotSelected(Item_SO item, bool hasItemPreviously) => Animator.ChangeIdleState(item as Weapon, hasItemPreviously);
 
-        switch (weapon.m_handUsage) {
-            case HandUsage.OneHanded:
-                
-                break;
-            case HandUsage.TwoHanded:
-
-                break;
-        }
-
-        Animator.ChangeIdleState(weapon);
-
-        CurrentHandItemAction = itemOnHand.GetComponent<IWeapon>();
-
+    public void SetWeapon(IWeapon weaponEquipped, Item_SO item) {
+        CurrentHandItemAction = weaponEquipped;
         firearm = CurrentHandItemAction as Weapon_Firearm;
-        firearm?.SetupWeapon(item, this);
 
-        Singleton.Instance.GameEvents.OnWeaponChanged?.Invoke(this.firearm);
+        if (firearm != null && item != null)
+            firearm.SetupWeapon(item, this);
+
+        Singleton.Instance.GameEvents.OnAmmoUISet?.Invoke(this.firearm);
     }
 
     public void Tick(bool isOwner) {

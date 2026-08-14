@@ -55,7 +55,7 @@ MonoBehaviour:
   m_DecalLayerMask: 1
   m_ScaleMode: 0
   m_Offset: {x: 0, y: 0, z: 0}
-  m_Size: {x: 0.35, y: 0.35, z: 0.15}
+  m_Size: {x: 0.3, y: 0.3, z: 0.15}
   m_FadeFactor: 1
 --- !u!1001 &5514855058002572641
 PrefabInstance:

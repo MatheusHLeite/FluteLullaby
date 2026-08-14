@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9362e63ada66294590b1bab435482fe, type: 3}
+  m_Name: Enemy #098
+  m_EditorClassIdentifier: 
+  m_name: The castaway
+  m_entryIndex: 98
+  m_fullBodyIcon: {fileID: 21300000, guid: 32b00145f22637242a29397d6c79ff00, type: 3}
+  m_description: 'Thin, scarred, and covered in ropes and hooks, the Castaway is
+    believed to be what remains of someone who survived alone for far too long. Its
+    wooden ship-mask hides its face, while a harpoon allows it to pull victims toward
+    it.
+
+
+    It has poor vision at a distance and becomes vulnerable when its harpoon
+    is trapped. Fire can also force it from hiding. Damaging its mask, however, sends
+    it into a violent frenzy.'
+  m_threatLevel: 2
+  m_statistic:
+    id: 18
+    type: 0
+    value: 0
+    maxValue: 0
+    textValue: 
+    monsterId: d0b7e32d-e081-4c8e-9664-9cc4f76afe0a
+  id: d0b7e32d-e081-4c8e-9664-9cc4f76afe0a

@@ -126,7 +126,7 @@ public class Dialogue_Interactor : MonoBehaviour, IInteractable {
         if (onDialogue || disabled) return;
 
         Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke("");
-        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(interactor.ActualSlotSelected);
+        Singleton.Instance.GameEvents.OnSlotSelected?.Invoke(interactor.ActualSlotSelected, false);
 
         actualDialogue = m_dialogue;
 

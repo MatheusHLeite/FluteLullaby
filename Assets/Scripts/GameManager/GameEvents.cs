@@ -1,3 +1,4 @@
+using DelightStudio.Data;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -33,9 +34,9 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<ItemData, int> OnItemSplit { get; private set; } = new();        
     public UnityEvent<int, int> OnQuickSlotItemUpdated { get; private set; } = new();
     public UnityEvent<ItemData, int, int> OnInventoryItemSlotChanged { get; private set; } = new();
-    public UnityEvent<Weapon_Firearm> OnWeaponChanged { get; private set; } = new();
-    public UnityEvent<int> OnSlotSelected { get; private set; } = new();
-    public UnityEvent<Item_SO, GameObject> OnActualSlotItemSet { get; private set; } = new();
+    public UnityEvent<Weapon_Firearm> OnAmmoUISet { get; private set; } = new();
+    public UnityEvent<int, bool> OnSlotSelected { get; private set; } = new();
+    public UnityEvent<Item_SO, bool> OnActualSlotItemSet { get; private set; } = new();
     public UnityEvent<int> OnDragBegun { get; private set; } = new();
     #endregion
 
@@ -71,7 +72,18 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<Vector3, RaycastHit, Vector3> OnShot { get; private set; } = new();
     #endregion
 
-    public UnityEvent<bool> LockNavigationInputs { get; set; } = new();
+    #region UI
+    public UnityEvent<Item_SO> OnItemShowcaseSet { get; private set; } = new();
+    public UnityEvent OnItemShowcaseUnset { get; private set; } = new();
+    #endregion
 
+    public UnityEvent<bool> LockNavigationInputs { get; set; } = new();
     public UnityEvent<ImportantDecision> OnImportantDecisionTaken { get; set; } = new();
+
+    public UnityEvent<BestiaryData> OnNewEnemyFound { get; private set; } = new();
+    public UnityEvent<BestiaryData> OnBestiaryNotificationRead { get; private set; } = new();
+    public UnityEvent<Enemy_SO> OnUpdateEnemyFound { get; private set; } = new();
+    public UnityEvent<Enemy_SO> OnUpdateBestiaryRead { get; private set; } = new();
+
+    public UnityEvent<Statistic> OnStatisticUpdated { get; private set; } = new();
 }

@@ -6,7 +6,8 @@ public class Player_PauseHandler : MonoBehaviour {
     private Player_CameraMovementSystem Camera;
 
     [Header("Setup")]
-    [SerializeField] private GameObject m_diary;
+    [SerializeField] private DiaryPageSurface m_diaryCollider;
+    [SerializeField] private GameObject m_diaryVisual;
     [SerializeField] private Animator m_handsAnimator;
 
     private const string DIARY_ON_TRIGGER = "Pause";
@@ -25,7 +26,9 @@ public class Player_PauseHandler : MonoBehaviour {
     public void InitializeNetwork(bool isOwner) {
         if (!isOwner) return;
 
-        PauseInteractionProcessor.Instance.SetPlayerCamera(Camera.GetPlayerCamera);
+        SetDiaryVisibility(false);
+
+        PauseInteractionProcessor.Instance.SetPlayerReferences(Camera.GetPlayerCamera, m_diaryCollider);
         MenuManagement_Handler.Instance.SetupPlayerReference(this);
     }
     #endregion
@@ -33,8 +36,10 @@ public class Player_PauseHandler : MonoBehaviour {
     private void HandleDiaryAnimation(bool putOnAnimation) {
         m_handsAnimator.SetBool(DIARY_ON_BOOL, putOnAnimation);
 
-        if (putOnAnimation)
-            m_handsAnimator.SetTrigger(DIARY_ON_TRIGGER);        
+        if (putOnAnimation) {
+            m_handsAnimator.SetTrigger(DIARY_ON_TRIGGER);
+            SetDiaryVisibility(true);
+        }      
     }
 
     #region Pause
@@ -68,12 +73,8 @@ public class Player_PauseHandler : MonoBehaviour {
     }
 
     private void OpenInventory() {
+        MenuManagement_Handler.Instance.OpenInventoryMenu();
         HandleDiaryAnimation(true);
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        Singleton.Instance.GameEvents.OnInventoryOpened?.Invoke();
     }
     #endregion
 
@@ -82,6 +83,8 @@ public class Player_PauseHandler : MonoBehaviour {
             HandleDiaryAnimation(false);
         });
     }
+
+    public void SetDiaryVisibility(bool visible) => m_diaryVisual.SetActive(visible);
 
     public void Tick(bool isOwner) {
         if (!isOwner) return;

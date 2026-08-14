@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -9,20 +8,30 @@ namespace DelightStudio.UI {
     public class PauseInteractionProcessor : MonoBehaviour {
         public static PauseInteractionProcessor Instance;
 
-        [Header("Setup")]
+        [Header("UI")]
         [SerializeField] private Canvas m_canvas;
-        [SerializeField] private RenderTexture m_renderTexture;
+        [SerializeField] private Camera m_canvasCamera;
+
+        [Header("Book")]
+        [SerializeField] private LayerMask m_bookLayer;
 
         [Header("Screens")]
         [SerializeField] private GameObject m_pauseMenu;
         [SerializeField] private GameObject m_inventoryMenu;
 
-        private GraphicRaycaster graphicRaycaster;
         private Camera playerCamera;
+        private DiaryPageSurface pageSurface;
+        private GraphicRaycaster graphicRaycaster;
 
         private bool interacting;
 
-        void Awake() {
+        private GameObject currentPointerObject; 
+        private GameObject pressedObject;
+
+        public static PointerEventData pointerData;
+
+        #region Initialization
+        private void Awake() {
             Instance = this;
 
             graphicRaycaster = m_canvas.GetComponent<GraphicRaycaster>();
@@ -37,19 +46,34 @@ namespace DelightStudio.UI {
             Singleton.Instance.GameEvents.OnInventoryOpened.RemoveListener(OnInventoryOpened);
             Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
         }
+        #endregion
 
-        public void SetPlayerCamera(Camera cam) {
-            playerCamera = cam;            
+        #region Events
+        private void OnGamePaused() {
+            SelectCurrentScreen(true);
         }
 
-        private void OnGamePaused() => SelectCurrentScreen(true);
+        private void OnInventoryOpened() {
+            SelectCurrentScreen(false);
+        }
 
-        private void OnInventoryOpened() => SelectCurrentScreen(false);
+        private void OnGameResumed() {
+           SetScreenState(false);
+        }
+        #endregion
 
-        private void OnGameResumed() => SetScreenState(false);
+        #region Sets
+        public void SetPlayerReferences(Camera cam, DiaryPageSurface surface) {
+            pageSurface = surface;
+            playerCamera = cam;
+        }
 
+        public void SetScreenState(bool isPaused) {
+            interacting = isPaused;
 
-        public void SetScreenState(bool isPaused) => interacting = isPaused;
+            if (!isPaused)
+                ClearPointer();
+        }
 
         public void SelectCurrentScreen(bool isPauseMenu) {
             SetScreenState(true);
@@ -57,43 +81,156 @@ namespace DelightStudio.UI {
             m_pauseMenu.SetActive(isPauseMenu);
             m_inventoryMenu.SetActive(!isPauseMenu);
         }
+        #endregion
 
-        #region Interaction
-        void ProcessInteraction(Vector2 screenPosition) {
-            Ray ray = playerCamera.ScreenPointToRay(screenPosition);
+        #region Cleanup
 
-            if (!Physics.Raycast(ray, out RaycastHit hit))
+        private void ClearHover(PointerEventData pointerData) {
+            if (currentPointerObject == null)
                 return;
 
-            Vector2 uv = hit.textureCoord;
+            if (pointerData == null) {
+                pointerData =
+                    new PointerEventData(
+                        EventSystem.current
+                    );
+            }
 
-            Vector2 rtPosition = new Vector2(
-                uv.x * m_renderTexture.width,
-                uv.y * m_renderTexture.height
+            ExecuteEvents.Execute(
+                currentPointerObject,
+                pointerData,
+                ExecuteEvents.pointerExitHandler
             );
 
-            PointerEventData pointerData = new PointerEventData(EventSystem.current);
-
-            pointerData.position = rtPosition;
-            pointerData.button = PointerEventData.InputButton.Left;
-
-            List<RaycastResult> results = new();
-
-            graphicRaycaster.Raycast(pointerData, results);
-
-            foreach (RaycastResult result in results) {
-                ExecuteEvents.Execute(result.gameObject, pointerData, ExecuteEvents.pointerDownHandler);
-                ExecuteEvents.Execute(result.gameObject, pointerData, ExecuteEvents.pointerUpHandler);
-                ExecuteEvents.Execute(result.gameObject, pointerData, ExecuteEvents.pointerClickHandler);
-            }
+            currentPointerObject = null;
         }
 
-        void Update() {
-            if (!interacting) return;
+        private void ClearPress() {
+            pressedObject = null;
+        }
 
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-                ProcessInteraction(Mouse.current.position.ReadValue());
+        private void ClearPointer() {
+            currentPointerObject = null;
+            pressedObject = null;
         }
         #endregion
+
+        #region Input
+        private void ProcessInput()  {
+            if (Mouse.current == null)
+                return;
+
+            Vector2 screenPosition = Mouse.current.position.ReadValue();
+
+            if (Mouse.current.leftButton.wasPressedThisFrame)            
+                ProcessPointerDown(screenPosition);            
+
+            ProcessPointerMove(screenPosition);
+
+            if (Mouse.current.leftButton.wasReleasedThisFrame)            
+                ProcessPointerUp(screenPosition);            
+        }
+        #endregion
+
+        #region Pointer
+        private void ProcessPointerMove(Vector2 screenPosition) {
+            if (!TryGetPointerData(screenPosition, out pointerData, out List<RaycastResult> results)) {
+                ClearHover(pointerData);
+                return;
+            }
+
+            GameObject newObject = results.Count > 0 ? results[0].gameObject : null;
+
+            if (newObject == currentPointerObject)
+                return;
+
+            if (currentPointerObject != null) 
+                ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerExitHandler);            
+
+            currentPointerObject = newObject;
+
+            if (currentPointerObject != null) 
+                ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerEnterHandler);            
+        }
+
+        private void ProcessPointerDown(Vector2 screenPosition) {
+            if (!TryGetPointerData(screenPosition, out PointerEventData pointerData, out List<RaycastResult> results)) 
+                return;
+            
+            if (results.Count == 0)
+                return;
+
+            GameObject target = results[0].gameObject;
+           
+            pointerData.button = PointerEventData.InputButton.Left;
+
+            pressedObject = target;
+
+            pointerData.pointerPress = target;
+            pointerData.rawPointerPress = target;
+
+            ExecuteEvents.Execute(target, pointerData, ExecuteEvents.pointerDownHandler);
+        }
+
+        private void ProcessPointerUp(Vector2 screenPosition) {
+            if (!TryGetPointerData(screenPosition, out PointerEventData pointerData, out List<RaycastResult> results)) {
+                ClearPress();
+                return;
+            }
+
+            GameObject currentObject =results.Count > 0 ? results[0].gameObject : null;
+
+            pointerData.button = PointerEventData.InputButton.Left;
+
+            if (pressedObject != null) {
+                ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerUpHandler);
+
+                if (currentObject == pressedObject)
+                    ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerClickHandler);
+            }
+
+            ClearPress();
+        }
+        #endregion
+
+        #region Raycast
+        private bool TryGetPointerData(Vector2 mouseScreenPosition, out PointerEventData pointerData, out List<RaycastResult> results) {
+            pointerData = null;
+            results = null;
+            Ray ray = playerCamera.ScreenPointToRay(mouseScreenPosition);
+
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, m_bookLayer, QueryTriggerInteraction.Ignore))            
+                return false;            
+
+            if (!pageSurface.TryGetNormalizedPosition(hit.point, out Vector2 normalizedPosition)) 
+                return false;            
+
+            RectTransform canvasRect = m_canvas.GetComponent<RectTransform>();
+            Rect rect = canvasRect.rect;
+            Vector2 canvasLocalPosition = 
+                new Vector2(Mathf.Lerp(rect.xMin, rect.xMax, normalizedPosition.x),
+                Mathf.Lerp(rect.yMin, rect.yMax, normalizedPosition.y));
+
+            Vector3 worldPosition = canvasRect.TransformPoint(canvasLocalPosition);
+            Vector2 canvasScreenPosition = m_canvasCamera.WorldToScreenPoint(worldPosition);
+
+            pointerData = new PointerEventData(EventSystem.current) {
+                position = canvasScreenPosition,
+                button = PointerEventData.InputButton.Left
+            };
+
+            results = new List<RaycastResult>();
+
+            graphicRaycaster.Raycast(pointerData, results);
+            return true;
+        }
+        #endregion
+
+        private void Update() {
+            if (!interacting || playerCamera == null)
+                return;
+
+            ProcessInput();
+        }
     }
 }

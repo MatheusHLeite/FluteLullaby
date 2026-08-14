@@ -1,3 +1,4 @@
+using DelightStudio.Manager;
 using UnityEngine;
 
 public class Singleton : MonoBehaviour {
@@ -13,6 +14,8 @@ public class Singleton : MonoBehaviour {
     public SettingsManager SettingsManager { get; private set; }
     public RebindManager RebindManager { get; private set; }
     public DialogueManager DialogueManager { get; private set; }
+    public EnemiesManager EnemiesManager { get; private set; }
+    public StatisticsManager StatisticsManager { get; private set; }
 
     private void Awake() {
         if (Instance) {
@@ -38,5 +41,7 @@ public class Singleton : MonoBehaviour {
         SettingsManager = GetComponent<SettingsManager>();
         RebindManager = GetComponent<RebindManager>();
         DialogueManager = GetComponent<DialogueManager>();
+        EnemiesManager = GetComponent<EnemiesManager>();
+        StatisticsManager = GetComponent<StatisticsManager>();
     }
 }
