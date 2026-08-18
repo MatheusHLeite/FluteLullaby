@@ -162,7 +162,7 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_damageTakenScreenEffect[index].alpha = 1;
         m_damageTakenScreenEffect[index].DOFade(0, 0.5f).SetDelay(1.7f);
     
-        _impulseSource.GenerateImpulse(new Vector3(Random.Range(.1f, .35f), Random.Range(-.15f, .15f), 0f));
+        _impulseSource.GenerateImpulse();
     }
 
     private void OnDamageTaken(float currentHealth, float maxHealth) {

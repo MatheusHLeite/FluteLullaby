@@ -75,6 +75,7 @@ public class GameEvents : MonoBehaviour {
     #region UI
     public UnityEvent<Item_SO> OnItemShowcaseSet { get; private set; } = new();
     public UnityEvent OnItemShowcaseUnset { get; private set; } = new();
+    public UnityEvent OnScreenSwitch { get; private set; } = new();
     #endregion
 
     public UnityEvent<bool> LockNavigationInputs { get; set; } = new();
@@ -86,4 +87,8 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<Enemy_SO> OnUpdateBestiaryRead { get; private set; } = new();
 
     public UnityEvent<Statistic> OnStatisticUpdated { get; private set; } = new();
+
+    public UnityEvent<NotesSaveData> OnNoteDataSaved { get; private set; } = new();
+
+    public UnityEvent<Enemy_SO> OnEnemyKilled { get; private set; } = new();
 }

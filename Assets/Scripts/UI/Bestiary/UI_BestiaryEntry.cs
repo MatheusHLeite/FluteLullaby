@@ -26,10 +26,10 @@ namespace DelightStudio.UI {
             notificationRead = data.notificationRead;
 
             bestiaryHandler = bestiary;
-            bestiaryEnemy = data.enemy;
+            bestiaryEnemy = Singleton.Instance.EnemiesManager.GetEnemyByID(data.enemyID);
 
-            m_enemyName.text = enemyDiscovered ? data.enemy.m_name : "???????";
-            m_enemyIndex.text = $"#{data.enemy.m_entryIndex.ToString("000")}";
+            m_enemyName.text = enemyDiscovered ? bestiaryEnemy.m_name : "???????";
+            m_enemyIndex.text = $"#{bestiaryEnemy.m_entryIndex.ToString("000")}";
 
             m_newEntryNotification.SetActive(enemyDiscovered && !notificationRead);
             
@@ -39,12 +39,12 @@ namespace DelightStudio.UI {
         }
 
         public void UpdateBestiary(BestiaryData enemy) {
-            if (enemy.enemy != bestiaryEnemy) return;
+            if (enemy.enemyID != bestiaryEnemy.id) return;
 
             enemyDiscovered = enemy.enemyDiscovered;
             notificationRead = enemy.notificationRead;
 
-            m_enemyName.text = enemy.enemy.m_name;
+            m_enemyName.text = bestiaryEnemy.m_name;
 
             m_newEntryNotification.SetActive(!notificationRead);
 

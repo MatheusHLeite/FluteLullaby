@@ -138,6 +138,7 @@ public class PlayerSaveData {
     public List<MeleeWeapon> acquiredMeleeWeapons;
     public List<BestiaryData> allMonstersData;
     public List<Statistic> allGameStatistics;
+    public NotesSaveData notesData;
 
     public static PlayerSaveData Default() {
         return new PlayerSaveData {
@@ -191,6 +192,7 @@ public class PlayerSaveData {
             acquiredMeleeWeapons = new List<MeleeWeapon>(),
             allMonstersData = Singleton.Instance.EnemiesManager.DefaultData(),
             allGameStatistics = Singleton.Instance.StatisticsManager.GetAllGameStatistics().ToList(),
+            notesData = new NotesSaveData(),
         };
     }
 }

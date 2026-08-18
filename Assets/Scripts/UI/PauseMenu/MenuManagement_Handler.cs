@@ -1,3 +1,4 @@
+using DelightStudio.UI;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -16,6 +17,7 @@ public class MenuManagement_Handler : MonoBehaviour {
     [Header("References")]
     [SerializeField] private UI_SettingsVideo m_videoSettings;
     [SerializeField] private UI_SettingsTabHandler m_tabHandler;
+    [SerializeField] private UI_Drawing m_notes;
 
     [Header("Buttons")]
     [SerializeField] private Button m_resume;
@@ -91,11 +93,16 @@ public class MenuManagement_Handler : MonoBehaviour {
     #endregion
 
     private void ChangeScreen(GameObject newScreen) {
+        if (currentScreen == m_mainPauseScreen)
+            m_notes.OnNotesEnabled(false);
+
         if (currentScreen != null)
             currentScreen.SetActive(false);
         currentScreen = newScreen;
 
         newScreen.SetActive(true);
+
+        Singleton.Instance.GameEvents.OnScreenSwitch?.Invoke();
     }
 
     public void OpenMainPauseMenu() {   
@@ -118,7 +125,10 @@ public class MenuManagement_Handler : MonoBehaviour {
 
     private void OpenInventoryScreen() => ChangeScreen(m_inventoryScreen);
 
-    private void OpenPauseScreen() => ChangeScreen(m_mainPauseScreen);
+    private void OpenPauseScreen() {
+        ChangeScreen(m_mainPauseScreen);
+        m_notes.OnNotesEnabled(true);
+    }
 
     private void OpenSettingsScreen() {
         ChangeScreen(m_settingsScreen);
@@ -148,6 +158,8 @@ public class MenuManagement_Handler : MonoBehaviour {
     private void SaveSettingsOnClose() {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        Singleton.Instance.GameEvents.OnScreenSwitch?.Invoke();
 
         m_videoSettings.OnSettingsClosed();
         m_tabHandler.OnSettingsScreensClosed();

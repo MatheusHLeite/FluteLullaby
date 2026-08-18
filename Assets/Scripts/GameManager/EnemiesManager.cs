@@ -11,7 +11,7 @@ namespace DelightStudio.Manager {
             List<BestiaryData> data = new List<BestiaryData>();
             foreach (var e in m_allEnemies) {
                 BestiaryData newData = new BestiaryData {                     
-                    enemy = e,
+                    enemyID = e.id,
                     enemyDiscovered = false,
                     notificationRead = false,
                 };
@@ -28,10 +28,12 @@ namespace DelightStudio.Manager {
         }
 
         [SerializeField] private Enemy_SO debugEnemy;
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.M))
+        private void Update() {
+            if (debugEnemy == null) return;
+            if (Input.GetKeyDown(KeyCode.M)) {
                 Singleton.Instance.GameEvents.OnUpdateEnemyFound?.Invoke(debugEnemy);
+                Singleton.Instance.GameEvents.OnEnemyKilled?.Invoke(debugEnemy);
+            }
         }
     }
 }

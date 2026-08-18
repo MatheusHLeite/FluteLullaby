@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db65b2c11796d9f4cb84ba217cab207f, type: 3}
+  m_Name: Tutorial_Movement
+  m_EditorClassIdentifier: 
+  m_title: Movement
+  m_description: 'Use <sprite name=w><sprite name=a><sprite name=s><sprite name=d> 
+    to walk
+
+    Hold <sprite name=shift> to run
+
+    Press <sprite name=space> to
+    jump
+
+    Press <sprite name=shift> to evade
+
+    Press <sprite name=ctrl> to
+    crouch
+
+    Press <sprite name=c> while running (<sprite name=shift>) to slide'
+  m_video: {fileID: 32900000, guid: 22ed5a16067cbf54f83dd1461d77ab1d, type: 3}
+  id: 158caf6d-8b49-4f84-9361-24324c1a4145

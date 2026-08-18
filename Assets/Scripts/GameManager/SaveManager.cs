@@ -24,6 +24,7 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnUpdateEnemyFound.AddListener(UpdateEnemyFound);
         Singleton.Instance.GameEvents.OnUpdateBestiaryRead.AddListener(UpdateBestiaryRead);
         Singleton.Instance.GameEvents.OnStatisticUpdated.AddListener(UpdatePlayerStatistics);
+        Singleton.Instance.GameEvents.OnNoteDataSaved.AddListener(SaveNotesData);
 
         LoadData();
     }
@@ -37,6 +38,7 @@ public class SaveManager : MonoBehaviour {
         Singleton.Instance.GameEvents.OnUpdateEnemyFound.RemoveListener(UpdateEnemyFound);
         Singleton.Instance.GameEvents.OnUpdateBestiaryRead.RemoveListener(UpdateBestiaryRead);
         Singleton.Instance.GameEvents.OnStatisticUpdated.RemoveListener(UpdatePlayerStatistics);
+        Singleton.Instance.GameEvents.OnNoteDataSaved.RemoveListener(SaveNotesData);
     }
     #endregion
 
@@ -298,7 +300,7 @@ public class SaveManager : MonoBehaviour {
     private BestiaryData GetCurrentBeastData(Enemy_SO enemy, out int currentIndex) {
         currentIndex = -1;
         for (int i = 0; i < PlayerData.allMonstersData.Count; i++) {
-            if (PlayerData.allMonstersData[i].enemy == enemy) {                
+            if (PlayerData.allMonstersData[i].enemyID == enemy.id) {
                 currentIndex = i;
                 return PlayerData.allMonstersData[i];
             }
@@ -319,8 +321,13 @@ public class SaveManager : MonoBehaviour {
     }
 
     public bool IsMonsterDiscovered(string enemyId) {
-        BestiaryData data = PlayerData.allMonstersData.FirstOrDefault(enemy => enemy.enemy.id == enemyId);
+        BestiaryData data = PlayerData.allMonstersData.FirstOrDefault(enemy => enemy.enemyID == enemyId);
         return data.enemyDiscovered;
+    }
+
+    private void SaveNotesData(NotesSaveData data) { 
+        PlayerData.notesData = data;
+        SaveSystemHandler.SaveData(PlayerData);
     }
 }
 
@@ -360,9 +367,15 @@ public class InventoryItemData {
 
 [System.Serializable]
 public class BestiaryData {
-    public Enemy_SO enemy;
+    public string enemyID;
     public bool enemyDiscovered;
     public bool notificationRead;
+}
+
+[System.Serializable]
+public class NotesSaveData {
+    public string textureData;
+    public string notesData;
 }
 
 [System.Serializable]

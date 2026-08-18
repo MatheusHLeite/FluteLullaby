@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db65b2c11796d9f4cb84ba217cab207f, type: 3}
+  m_Name: Tutorial_RangedCombat
+  m_EditorClassIdentifier: 
+  m_title: Ranged combat
+  m_description: 'Press <sprite name=ml> to shoot
+
+    Press <sprite name=r> to reload'
+  m_video: {fileID: 32900000, guid: 85d15ef74ffd0134482a19ca4dd96607, type: 3}
+  id: b59e872a-62c9-45c0-875f-0e6d19983af4

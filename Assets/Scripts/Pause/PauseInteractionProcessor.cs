@@ -141,16 +141,21 @@ namespace DelightStudio.UI {
 
             GameObject newObject = results.Count > 0 ? results[0].gameObject : null;
 
-            if (newObject == currentPointerObject)
-                return;
+            if (newObject != currentPointerObject) {
+                if (currentPointerObject != null)
+                    ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerExitHandler);
 
-            if (currentPointerObject != null) 
-                ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerExitHandler);            
+                currentPointerObject = newObject;
 
-            currentPointerObject = newObject;
+                if (currentPointerObject != null)
+                    ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerEnterHandler);
+            }
 
-            if (currentPointerObject != null) 
-                ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerEnterHandler);            
+            if (pressedObject != null) { 
+                pointerData.button = PointerEventData.InputButton.Left;
+
+                ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.dragHandler);
+            }
         }
 
         private void ProcessPointerDown(Vector2 screenPosition) {

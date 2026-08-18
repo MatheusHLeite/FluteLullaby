@@ -73,8 +73,6 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
         if (currentHealth.Value <= 0) return;
 
-        Singleton.Instance.GameEvents.OnHit?.Invoke();
-
         if (IsServer && NetworkManager.Singleton.LocalClientId == OwnerClientId)
             HandleDamage(damage, hitPoint, hitDirection, impact, OwnerClientId);   
         else 
@@ -82,14 +80,14 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void TakeDamageServerRpc(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ServerRpcParams rpcParams = default) {
-        HandleDamage(damage, hitPoint, hitDirection, impact, rpcParams.Receive.SenderClientId);        
-    }
+    private void TakeDamageServerRpc(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ServerRpcParams rpcParams = default) 
+        => HandleDamage(damage, hitPoint, hitDirection, impact, rpcParams.Receive.SenderClientId);
 
     private void HandleDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ulong killerClientId) {
         this.hitPoint.Value = hitPoint;
         this.hitDirection.Value = hitDirection;
         this.impact.Value = impact;
+
         currentHealth.Value -= damage;
 
         if (currentHealth.Value <= 0f && isDead.Value == false) {
@@ -113,17 +111,17 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
         Singleton.Instance.GameEvents.OnPlayerDie?.Invoke(hitPoint, hitDirection, impact);
         IsDead = true;
 
-        StartCoroutine(RespawnCoroutine());
+        //StartCoroutine(RespawnCoroutine());
     }
 
-    private IEnumerator RespawnCoroutine() {
+    /*private IEnumerator RespawnCoroutine() {
         yield return new WaitForSeconds(respawnDelay);
 
         RequestTeleportServerRpc();
 
         Singleton.Instance.GameEvents.OnPlayerRespawn?.Invoke();
         IsDead = false;
-    }
+    }*/
 
     [ServerRpc(RequireOwnership = false)]
     public void RequestTeleportServerRpc() {

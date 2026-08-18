@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: -7106299170615028422}
   - component: {fileID: -7028072234936906504}
   - component: {fileID: -4708907142585160215}
+  - component: {fileID: -6820525999394147466}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -424,91 +425,128 @@ MonoBehaviour:
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 1
     type: 4
     value: 0
     maxValue: 100
     textValue: 
+    monsterId: 
   - id: 2
     type: 2
     value: 0
     maxValue: 10
     textValue: 
+    monsterId: 
   - id: 3
     type: 2
     value: 0
     maxValue: 25
     textValue: 
+    monsterId: 
   - id: 4
     type: 2
     value: 0
     maxValue: 40
     textValue: 
+    monsterId: 
   - id: 5
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 6
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 7
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 8
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 9
     type: 4
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 10
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 11
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 12
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 13
     type: 1
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 14
     type: 0
     value: 0
     maxValue: 0
     textValue: 
+    monsterId: 
   - id: 15
     type: 2
     value: 0
     maxValue: 12
     textValue: 
+    monsterId: 
   - id: 16
     type: 2
     value: 0
     maxValue: 5
     textValue: 
+    monsterId: 
   - id: 17
     type: 2
     value: 0
     maxValue: 8
     textValue: 
+    monsterId: 
+  debugEnemy: {fileID: 0}
+--- !u!114 &-6820525999394147466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3159252282902578743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e483d6018a427684fa9d0147c9ad810a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tutorials:
+  - {fileID: 11400000, guid: 9684a2ab446fc624fa461a5818d305f2, type: 2}
+  - {fileID: 11400000, guid: b2e304d54c8086a4c8662f78c57d4f00, type: 2}
+  - {fileID: 11400000, guid: 22db29797e104a844b4622b4fe015988, type: 2}
+  - {fileID: 11400000, guid: 3273e5a5a9b8403448d5671a0613fd9f, type: 2}
+  - {fileID: 11400000, guid: c89946cb60f361d4cb9798631ee815ee, type: 2}
 --- !u!1 &3816262137598194366
 GameObject:
   m_ObjectHideFlags: 0

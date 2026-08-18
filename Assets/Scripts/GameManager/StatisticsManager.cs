@@ -17,6 +17,14 @@ namespace DelightStudio.Manager {
             return currentStatistics; 
         }
 
+        private void Awake() {
+            Singleton.Instance.GameEvents.OnEnemyKilled.AddListener(UpdateEnemyKilled);
+        }
+
+        private void OnDestroy() {
+            Singleton.Instance.GameEvents.OnEnemyKilled.RemoveListener(UpdateEnemyKilled);
+        }
+
         #region Get
         private int GetGameTime() {
             return 0;
@@ -43,12 +51,6 @@ namespace DelightStudio.Manager {
             stat.value++;
 
             Singleton.Instance.GameEvents.OnStatisticUpdated?.Invoke(stat);
-        }
-
-        [SerializeField] private Enemy_SO debugEnemy;
-        private void Update() {
-            if (Input.GetKeyDown(KeyCode.N))
-                UpdateEnemyKilled(debugEnemy);
         }
     }
 }

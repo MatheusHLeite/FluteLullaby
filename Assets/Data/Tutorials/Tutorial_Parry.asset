@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db65b2c11796d9f4cb84ba217cab207f, type: 3}
+  m_Name: Tutorial_Parry
+  m_EditorClassIdentifier: 
+  m_title: Parry
+  m_description: If you press <sprite name=mr> in the last perfect second when enemies
+    attack you, you can parry it's attack, making it vunerable
+  m_video: {fileID: 32900000, guid: 3c6dd4fb84e5e1f46824df0ae1dd1a26, type: 3}
+  id: d8acfcde-8eb4-4591-9901-99f4f4a5bc79

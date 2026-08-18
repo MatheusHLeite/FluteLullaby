@@ -42,7 +42,7 @@ namespace DelightStudio.UI {
         }
 
         private void CheckEnemyEntry(BestiaryData data) {
-            if (data.enemy.id != monsterId) return;
+            if (data.enemyID != monsterId) return;
 
             UpdateEnemyCover();
         }

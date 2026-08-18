@@ -1,42 +1,75 @@
+using DelightStudio.Data;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DelightStudio.UI {
     public class UI_TutorialHandler : MonoBehaviour {
-        [Header("Setup")]
-        [SerializeField] private TutorialSetup[] m_allTutorials;
+        [Header("References")]
+        [SerializeField] private UI_TutorialVideoPlayer videoPlayer;
+
+        [Header("UI")]
+        [SerializeField] private UI_TutorialButton tutorialButtonPrefab;
+        [SerializeField] private Transform tutorialButtonContainer;
+
+        private readonly List<UI_TutorialButton> spawnedButtons = new();
+
+        private void Awake() {
+            Singleton.Instance.GameEvents.OnScreenSwitch.AddListener(StopTutorial);
+        }
+
+        private void OnDestroy() {
+            Singleton.Instance.GameEvents.OnScreenSwitch.RemoveListener(StopTutorial);
+        }
 
         private void Start() {
-            SetupButtons();
+            CreateTutorialButtons();
+
+            Singleton.Instance.GameEvents.OnScreenSwitch?.Invoke();
         }
 
-        private void OnEnable() {
-            foreach (var t in m_allTutorials)
-                t.screen.SetActive(false);
-        }
+        private void CreateTutorialButtons() {
+            ClearButtons();
 
-        private void SetupButtons() {
-            foreach (var t in m_allTutorials) {
-                Button btn = t.button;
+            List<Tutorial_SO> tutorials = Singleton.Instance.TutorialManager.GetAllTutorials();
 
-                btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(() => {
-                    SetTutorial(t.screen);
-                });
+            foreach (Tutorial_SO tutorial in tutorials) {
+                if (tutorial == null)
+                    continue;
+
+                UI_TutorialButton button = Instantiate(tutorialButtonPrefab, tutorialButtonContainer);
+
+                button.Initialize(tutorial, SelectTutorial);
+                spawnedButtons.Add(button);
             }
         }
 
-        private void SetTutorial(GameObject screen) {
-            foreach (var t in m_allTutorials)
-                t.screen.SetActive(false);
+        public void SelectTutorial(Tutorial_SO tutorial) {
+            if (tutorial == null)
+                return;
 
-            screen.SetActive(true);
+            StopTutorial();
+
+            videoPlayer.PlayTutorial(tutorial);
+            UpdateSelectedButton(tutorial);
+        }
+
+        private void UpdateSelectedButton(Tutorial_SO tutorial) {
+            foreach (UI_TutorialButton button in spawnedButtons)            
+                button.SetSelected(button.Tutorial == tutorial);            
+        }
+
+        public void StopTutorial() {
+            videoPlayer.ResetTutorial();
+            videoPlayer.Stop();
+        }
+
+        private void ClearButtons() {
+            foreach (UI_TutorialButton button in spawnedButtons) {
+                if (button != null)
+                    Destroy(button.gameObject);
+            }
+
+            spawnedButtons.Clear();
         }
     }
-}
-
-[System.Serializable]
-public struct TutorialSetup {
-    public Button button;
-    public GameObject screen;
 }

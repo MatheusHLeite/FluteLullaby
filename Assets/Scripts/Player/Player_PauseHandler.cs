@@ -10,6 +10,9 @@ public class Player_PauseHandler : MonoBehaviour {
     [SerializeField] private GameObject m_diaryVisual;
     [SerializeField] private Animator m_handsAnimator;
 
+    private float minTime;
+    private float cooldownTime;
+
     private const string DIARY_ON_TRIGGER = "Pause";
     private const string DIARY_ON_BOOL = "Paused";
 
@@ -24,9 +27,9 @@ public class Player_PauseHandler : MonoBehaviour {
     }
 
     public void InitializeNetwork(bool isOwner) {
-        if (!isOwner) return;
-
         SetDiaryVisibility(false);
+
+        if (!isOwner) return;
 
         PauseInteractionProcessor.Instance.SetPlayerReferences(Camera.GetPlayerCamera, m_diaryCollider);
         MenuManagement_Handler.Instance.SetupPlayerReference(this);
@@ -35,6 +38,8 @@ public class Player_PauseHandler : MonoBehaviour {
 
     private void HandleDiaryAnimation(bool putOnAnimation) {
         m_handsAnimator.SetBool(DIARY_ON_BOOL, putOnAnimation);
+
+        
 
         if (putOnAnimation) {
             m_handsAnimator.SetTrigger(DIARY_ON_TRIGGER);
@@ -52,10 +57,14 @@ public class Player_PauseHandler : MonoBehaviour {
         if (isResumed) 
             PauseGame();        
         else if (isPaused) 
-            ResumeGame();        
+            ResumeGame();
+
+        SetCooldown();
     }
 
     private void PauseGame() {
+        cooldownTime = 0.2f;
+
         MenuManagement_Handler.Instance.OpenMainPauseMenu();
         HandleDiaryAnimation(true);
     }
@@ -70,15 +79,21 @@ public class Player_PauseHandler : MonoBehaviour {
             OpenInventory();
         else if (isInventoryOpened)
             ResumeGame();
+
+        SetCooldown();
     }
 
     private void OpenInventory() {
+        cooldownTime = 0.2f;
+
         MenuManagement_Handler.Instance.OpenInventoryMenu();
         HandleDiaryAnimation(true);
     }
     #endregion
 
     public void ResumeGame() {
+        cooldownTime = 0.355f;
+
         MenuManagement_Handler.Instance.ClosePauseMenu(() => {
             HandleDiaryAnimation(false);
         });
@@ -86,11 +101,17 @@ public class Player_PauseHandler : MonoBehaviour {
 
     public void SetDiaryVisibility(bool visible) => m_diaryVisual.SetActive(visible);
 
+    private void SetCooldown() {
+        minTime = Time.time + cooldownTime;
+    }
+
     public void Tick(bool isOwner) {
         if (!isOwner) return;
 
+        if (Time.time < minTime) return;
+
         if (Input.Pause) {
-            HandlePause();            
+            HandlePause();
             return;
         }
 

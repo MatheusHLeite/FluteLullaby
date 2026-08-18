@@ -64,7 +64,7 @@ namespace DelightStudio.UI {
             for (int i = 0; i < allBestiaryEntries.Count; i++) {
                 UI_BestiaryEntry newEntry = allBestiaryEntries[i];
 
-                if (newEntry.GetEnemy() == data.enemy) {
+                if (newEntry.GetEnemy().id == data.enemyID) {
                     newEntry.UpdateBestiary(data);
                     break;
                 }
