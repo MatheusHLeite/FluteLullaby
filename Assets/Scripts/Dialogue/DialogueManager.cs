@@ -28,40 +28,29 @@ public class DialogueManager : MonoBehaviour {
     public Material GetOutlineMaterial() => m_outlineMaterial;
 
     private Color GetTalkerColor(Characters character) {
-        switch (character) {
-            case Characters.None:
-                return Color.white;
-            case Characters.Bean:
-                return Color.green;
-            default:
-                return Color.black;
-        }
+        return character switch {
+            Characters.None => Color.white,
+            Characters.Bean => Color.green,
+            _ => Color.black
+        };
     }
 
     private Vector2 GetVoicePitch(TalkerMood talkerMood) {
-        switch (talkerMood) {
-            case TalkerMood.Normal:
-                return new Vector2(0.9f, 1.2f);
-            case TalkerMood.Angry:
-                return new Vector2(0.75f, .6f);
-            case TalkerMood.Sad:
-                return new Vector2(0.4f, 0.8f);
-            default:
-                return Vector2.one;
-        }
+        return talkerMood switch {
+            TalkerMood.Normal => new Vector2(0.9f, 1.2f),
+            TalkerMood.Angry => new Vector2(0.75f, .6f),
+            TalkerMood.Sad => new Vector2(0.4f, 0.8f),
+            _ => Vector2.one
+        };
     }
 
     private float GetVoiceSpeed(TalkerMood talkerMood) {
-        switch (talkerMood) {
-            case TalkerMood.Normal:
-                return 0.03f;
-            case TalkerMood.Angry:
-                return 0.06f;
-            case TalkerMood.Sad:
-                return 0.09f;
-            default:
-                return 0.03f;
-        }
+        return talkerMood switch {
+            TalkerMood.Normal => 0.03f,
+            TalkerMood.Angry => 0.06f,
+            TalkerMood.Sad => 0.09f,
+            _ => 0.03f
+        };
     }
 
     public CharacterData GetTalker(Dialogue dialogue) {

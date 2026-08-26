@@ -1,4 +1,6 @@
+using DelightStudio.Item;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,6 +11,10 @@ public class GameManager : MonoBehaviour {
     [SerializeField] private List<Item_SO> m_allGameItems = new List<Item_SO>();
     [SerializeField] private List<BodyPartDamageMultiplier> m_bodyPartDamageMultiplier = new List<BodyPartDamageMultiplier>();
     [SerializeField] private List<Transform> m_spawnPoints = new List<Transform>();
+    [SerializeField] private List<Rarities> m_rarities = new List<Rarities>();
+
+    [Header("Prefabs references")]
+    [SerializeField] private Item_Highlight m_itemHighlightPrefab;
 
     private static bool initialized = false;
 
@@ -60,6 +66,12 @@ public class GameManager : MonoBehaviour {
     public List<Item_SO> GetAllItems() => m_allGameItems;
 
     public static GameState GetGameState() => GameState;
+
+    public Color GetRarityColor(ItemRarity rarity) {
+        return m_rarities.Where(r => r.rarity == rarity) .Select(r => r.color).FirstOrDefault();
+    }
+
+    public Item_Highlight GetItemHightLight() => m_itemHighlightPrefab;
     #endregion
 
     #region Set
@@ -91,6 +103,8 @@ public enum WeaponClass { None = 0, Revolver = 1, Shotgun = 2, Melee = 3 }
 public enum Language { English, Portuguese, Spanish }
 
 public enum ItemType { MeleeWeapon, Firearm, PuzzlePiece, Collectible, Ammo }
+
+public enum ItemRarity { Common, Uncommon, Rare, Epic, Legendary, Relic, Unique }
 
 public enum BodyPart { UpperBody, LowerBody, Head, Arm, Leg }
 
@@ -130,6 +144,7 @@ public enum StatisticId {
     SecretsFound,
     EnemiesKilled
 }
+
 
 [System.Serializable]
 public struct Statistic {
@@ -181,27 +196,20 @@ public struct Statistic {
             case StatisticId.SecretsFound:
                 return "Secrets found";
             case StatisticId.EnemiesKilled:
-                return "";
             default:
                 return "";
         }
     }
 
     public string GetDisplayValue() {
-        switch (type) {
-            case StatisticType.Number:
-                return value.ToString();
-            case StatisticType.Percentage:
-                return $"{value}%";
-            case StatisticType.Time:
-                return FormatTime(value);
-            case StatisticType.Progress:
-                return $"{value}/{maxValue}";
-            case StatisticType.Text:
-                return textValue;
-            default:
-                return "";
-        }
+        return type switch {
+            StatisticType.Number => value.ToString(),
+            StatisticType.Percentage => $"{value}%",
+            StatisticType.Time => FormatTime(value),
+            StatisticType.Progress => $"{value}/{maxValue}",
+            StatisticType.Text => textValue,
+            _ => ""
+        };
     }
 
     private string FormatTime(int totalSeconds) {
@@ -229,6 +237,12 @@ public struct MovementAnimationParameters : INetworkSerializable {
         serializer.SerializeValue(ref m_moveY);
         serializer.SerializeValue(ref m_isGrounded);
     }
+}
+
+[System.Serializable]
+public struct Rarities {
+    public ItemRarity rarity;
+    public Color color;
 }
 
 public struct UIOption {

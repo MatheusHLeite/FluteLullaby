@@ -534,13 +534,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  m_screenShowcaseName: 
   m_outlineMaterial: {fileID: 2100000, guid: 3dd6c2228bd03e243ae32058fabf4073, type: 2}
-  m_thirdPersonVisual: {fileID: 7911476537652282119}
-  m_onGroundVisual: {fileID: 6752005437105541031}
+  allRenderers: []
+  unlitMaterial: {fileID: 0}
   m_item: {fileID: 11400000, guid: 5521447aa413e99499dcced905ddca49, type: 2}
   m_randomizeAmount: 0
   m_amount: 1
   m_itemVisuals: []
+  scriptsToDisableOnHand: []
+  scriptsToEnableOnHand: []
+  m_highlightPrefab: {fileID: 7761007666820285488, guid: 49557d266de283f429e1da43f4950a94, type: 3}
 --- !u!114 &3635955688020534299
 MonoBehaviour:
   m_ObjectHideFlags: 0

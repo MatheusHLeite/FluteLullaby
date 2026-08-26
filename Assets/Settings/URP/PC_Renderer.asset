@@ -51,7 +51,6 @@ MonoBehaviour:
   - {fileID: 5830760591328028385}
   m_RendererFeatureMap: ad6b866f10d7b46cc590fed1de4395e8e1267478dd05eb50
   m_UseNativeRenderPass: 1
-  xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 2
   m_OpaqueLayerMask:
@@ -103,7 +102,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   m_Settings:
-    AOMethod: 0
+    AOMethod: 1
     Downsample: 1
     AfterOpaque: 1
     Source: 0

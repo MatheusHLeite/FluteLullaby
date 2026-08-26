@@ -18,6 +18,7 @@ MonoBehaviour:
     devastating up close.
   m_itemPrefab: {fileID: 8580961907081263343, guid: 4e5477c4d5ca66440bb54f0e4a7928a6, type: 3}
   m_itemType: 1
+  m_itemRarity: 4
   m_itemPositionOffset: {x: 0.017, y: -0.03, z: 0}
   m_itemRotationOffset: {x: 16.44, y: 2.4, z: 9.12}
   m_itemSpawnRotation: {x: 0, y: 0, z: 0}

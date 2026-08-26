@@ -1,3 +1,4 @@
+using DelightStudio.Item;
 using Sirenix.OdinInspector;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -31,12 +32,20 @@ public class Item_Interactor : Interactor {
     private Transform followTarget;
     private bool lockRandomize;
 
+    private Item_Highlight highlightReference;
+
     protected void Awake() {
         _object = GetComponent<NetworkObject>();
         rb = GetComponent<Rigidbody>();
         colliders = GetComponents<Collider>();
         networkTransform = GetComponent<NetworkTransform>();
         networkRigidbody = GetComponent<NetworkRigidbody>();
+
+        var itemH = Singleton.Instance.GameManager.GetItemHightLight();
+
+        highlightReference = Instantiate(itemH, transform);
+        highlightReference.Setup(m_item.m_itemRarity);
+        highlightReference.SetOnHandItem(displayItem);
 
         if (lockRandomize) 
             return;
@@ -96,6 +105,8 @@ public class Item_Interactor : Interactor {
         networkRigidbody.enabled = false;
         networkTransform.enabled = false;
         RemoveColliders();
+
+        highlightReference.SetOnHandItem(true);
 
         foreach (var s in scriptsToDisableOnHand)
             s.enabled = false;

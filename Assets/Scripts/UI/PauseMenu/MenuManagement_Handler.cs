@@ -27,7 +27,6 @@ public class MenuManagement_Handler : MonoBehaviour {
     [SerializeField] private Button m_inventory;
     [SerializeField] private Button m_bestiary;
     [SerializeField] private Button m_mainMenu;
-    [SerializeField] private Button[] m_returnToPause;
 
     [Header("Pop up")]
     [SerializeField] private PopUp m_popUpWindow;
@@ -59,25 +58,13 @@ public class MenuManagement_Handler : MonoBehaviour {
         m_inventory.onClick.RemoveAllListeners();
         m_bestiary.onClick.RemoveAllListeners();
 
-        m_resume.onClick.AddListener(CloseMainPauseMenu);
+        m_resume.onClick.AddListener(ResumeGame);
         m_settings.onClick.AddListener(OpenSettingsScreen);
         m_tutorial.onClick.AddListener(OpenTutorialScreen);
         m_statistics.onClick.AddListener(OpenStatisticsScreen);
         m_inventory.onClick.AddListener(OpenInventoryScreen);
         m_bestiary.onClick.AddListener(OpenBestiaryScreen);
-        m_mainMenu.onClick.AddListener(GoBackToMainMenu);
-
-        foreach (var btn in m_returnToPause) {
-            Button thisButton = btn;
-            thisButton.onClick.AddListener(OpenPauseScreen);
-        }        
-    }
-
-    private void OnDestroy() {
-        foreach (var btn in m_returnToPause) {
-            Button thisButton = btn;
-            thisButton.onClick.RemoveAllListeners();
-        }
+        m_mainMenu.onClick.AddListener(GoBackToMainMenu);     
     }
 
     private void DisableAllScreens() {
@@ -145,6 +132,15 @@ public class MenuManagement_Handler : MonoBehaviour {
 
     private void OpenBestiaryScreen() {
         ChangeScreen(m_bestiaryScreen);
+    }
+
+    private void ResumeGame() {
+        if (currentScreen == m_mainPauseScreen) {
+            CloseMainPauseMenu();
+            return;
+        }
+
+        OpenPauseScreen();
     }
 
     private void CloseMainPauseMenu() => playerReference.ResumeGame();

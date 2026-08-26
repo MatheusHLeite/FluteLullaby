@@ -210,6 +210,7 @@ MonoBehaviour:
   m_itemVisuals: []
   scriptsToDisableOnHand: []
   scriptsToEnableOnHand: []
+  m_highlightPrefab: {fileID: 7761007666820285488, guid: 49557d266de283f429e1da43f4950a94, type: 3}
 --- !u!95 &1346409050631322422
 Animator:
   serializedVersion: 7

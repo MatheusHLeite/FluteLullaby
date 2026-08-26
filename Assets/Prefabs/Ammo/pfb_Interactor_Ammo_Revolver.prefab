@@ -405,6 +405,7 @@ MonoBehaviour:
   - {fileID: 2999175751821310570}
   scriptsToDisableOnHand: []
   scriptsToEnableOnHand: []
+  m_highlightPrefab: {fileID: 7761007666820285488, guid: 49557d266de283f429e1da43f4950a94, type: 3}
 --- !u!114 &8581637336805133826
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -17,6 +17,7 @@ MonoBehaviour:
   m_description: A sturdy six-shooter. Slow to reload, but deadly in the right hands.
   m_itemPrefab: {fileID: 2045073489969995249, guid: 43508486004163947b1ffaa5cf282f55, type: 3}
   m_itemType: 1
+  m_itemRarity: 3
   m_itemPositionOffset: {x: -0.013, y: 0, z: 0.003}
   m_itemRotationOffset: {x: 14.45, y: 2.77, z: 8.8}
   m_itemSpawnRotation: {x: 0, y: 0, z: 0}

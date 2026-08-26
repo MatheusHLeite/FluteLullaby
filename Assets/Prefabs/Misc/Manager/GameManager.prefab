@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 810390217
+  GlobalObjectIdHash: 2489532751
   InScenePlacedSourceGlobalObjectIdHash: 810390217
   DeferredDespawnTick: 0
   Ownership: 1
@@ -222,6 +222,22 @@ MonoBehaviour:
   - {fileID: 2541594219128408190}
   - {fileID: 2392101669907749291}
   - {fileID: 9189162290565139760}
+  m_rarities:
+  - rarity: 0
+    color: {r: 0.6792453, g: 0.6792453, b: 0.6792453, a: 1}
+  - rarity: 1
+    color: {r: 0, g: 1, b: 0.0027880669, a: 1}
+  - rarity: 2
+    color: {r: 0, g: 0.52991295, b: 1, a: 1}
+  - rarity: 3
+    color: {r: 0.5870366, g: 0, b: 1, a: 1}
+  - rarity: 4
+    color: {r: 1, g: 0.77952445, b: 0, a: 1}
+  - rarity: 5
+    color: {r: 1, g: 0, b: 0, a: 1}
+  - rarity: 6
+    color: {r: 0.4198113, g: 1, b: 0.9736278, a: 1}
+  m_itemHighlightPrefab: {fileID: 7761007666820285488, guid: 49557d266de283f429e1da43f4950a94, type: 3}
 --- !u!114 &6145359763180074455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -528,7 +544,6 @@ MonoBehaviour:
     maxValue: 8
     textValue: 
     monsterId: 
-  debugEnemy: {fileID: 0}
 --- !u!114 &-6820525999394147466
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -18,6 +18,7 @@ MonoBehaviour:
     close range.
   m_itemPrefab: {fileID: 8447772049309928926, guid: e89ff9355f3b088458e1fae5e16afe8c, type: 3}
   m_itemType: 4
+  m_itemRarity: 1
   m_itemPositionOffset: {x: 0, y: 0, z: 0}
   m_itemRotationOffset: {x: 0, y: 0, z: 0}
   m_itemSpawnRotation: {x: 0, y: 0, z: 0}

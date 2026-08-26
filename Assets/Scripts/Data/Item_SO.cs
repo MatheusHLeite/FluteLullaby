@@ -7,8 +7,9 @@ public class Item_SO : ScriptableObject {
     [FoldoutGroup("Item setup")][TextArea] public string m_description;
     [Space(10)]
     [FoldoutGroup("Item setup")] public Interactor m_itemPrefab;
-    [FoldoutGroup("Item setup")] public ItemType m_itemType; 
-    
+    [FoldoutGroup("Item setup")] public ItemType m_itemType;
+    [FoldoutGroup("Item setup")] public ItemRarity m_itemRarity;
+
     [FoldoutGroup("Item Offset")] public Vector3 m_itemPositionOffset;
     [FoldoutGroup("Item Offset")] public Vector3 m_itemRotationOffset;
     [FoldoutGroup("Item Offset")] public Vector3 m_itemSpawnRotation;
