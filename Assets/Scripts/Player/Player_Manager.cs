@@ -97,9 +97,6 @@ public class Player_Manager : NetworkBehaviour {
         PlayerMovementSystem.Tick(isOwner);
         playerPauseHandler.Tick(isOwner);
         playerVisualManagementSystem.Tick(isOwner);
-
-        //[TODO] Remove debug mode
-        Debug();
     }
 
     private void FixedUpdate() {
@@ -113,10 +110,5 @@ public class Player_Manager : NetworkBehaviour {
         bool isOwner = IsOwner;
 
         playerInputHandler.LateTick(isOwner);
-    }
-
-    private void Debug() {
-        if (Input.GetKeyDown(KeyCode.U))
-            PlayerHealthSystem.TakeDamage(10, transform.position + Vector3.up, -transform.forward, 15f);
     }
 }

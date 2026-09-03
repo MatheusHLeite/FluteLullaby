@@ -88,6 +88,7 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         Singleton.Instance.GameEvents.OnItemDropped.AddListener(i => OnAmmoCollected());
 
         weaponMuzzle = muzzleFlash.transform;
+        currentAmmo = 999;
     }
 
     private void OnDestroy() {

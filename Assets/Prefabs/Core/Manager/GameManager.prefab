@@ -215,6 +215,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f56fc13465b48bf4cb26cf048e085f2d, type: 2}
   - {fileID: 11400000, guid: e44370350b4395c4faba237aae2bc481, type: 2}
   - {fileID: 11400000, guid: 20a81a40735b486469897699f72fdd0c, type: 2}
+  m_bodyPartDamageMultiplier:
+  - m_bodyPart: 2
+    m_damageMultiplier: 2
+  - m_bodyPart: 0
+    m_damageMultiplier: 1.3
+  - m_bodyPart: 1
+    m_damageMultiplier: 1.15
+  - m_bodyPart: 3
+    m_damageMultiplier: 0.8
+  - m_bodyPart: 4
+    m_damageMultiplier: 0.9
   m_spawnPoints:
   - {fileID: 6893310222785881508}
   - {fileID: 5932067207051863513}

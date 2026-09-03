@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_name: The Sailjelly
   m_entryIndex: 186
-  m_fullBodyIcon: {fileID: 21300000, guid: 2d84659b76fc2ff4a80482691bf6c5de, type: 3}
   m_description: "A colossal jellyfish fused with the remains of a sailing ship.
     Its translucent body carries a torn organic sail, while rope-like tentacles drag
     anchors, bones, and wreckage through the water.\n\nIt attacks by electrifying
@@ -22,6 +21,12 @@ MonoBehaviour:
     is the sail itself\u2014damaging it makes the creature unstable and vulnerable.
     It is also highly vulnerable outside the water."
   m_threatLevel: 2
+  m_fullBodyIcon: {fileID: 21300000, guid: 2d84659b76fc2ff4a80482691bf6c5de, type: 3}
+  m_maxHealth: 600
+  m_attackDamage: 14
+  m_movementSpeed: 3
+  m_maxStaggerAmount: 200
+  m_maxStaggerTime: 3
   m_statistic:
     id: 18
     type: 0

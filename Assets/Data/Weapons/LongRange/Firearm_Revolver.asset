@@ -24,7 +24,7 @@ MonoBehaviour:
   m_showcaseItemPosition: {x: 0, y: -0.13, z: 0.128}
   m_showcaseItemScale: {x: 1.55, y: 1.55, z: 1.55}
   id: e8d2d96a-12de-40b6-afb5-e57031720e42
-  m_damage: 25
+  m_damage: 20
   m_weaponType: 1
   m_overrideController: {fileID: 22100000, guid: 6c4d538d9f65c2746ab51402f9904637, type: 2}
   m_maxAmmo: 6

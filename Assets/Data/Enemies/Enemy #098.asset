@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_name: The castaway
   m_entryIndex: 98
-  m_fullBodyIcon: {fileID: 21300000, guid: 32b00145f22637242a29397d6c79ff00, type: 3}
   m_description: 'Thin, scarred, and covered in ropes and hooks, the Castaway is
     believed to be what remains of someone who survived alone for far too long. Its
     wooden ship-mask hides its face, while a harpoon allows it to pull victims toward
@@ -25,6 +24,12 @@ MonoBehaviour:
     is trapped. Fire can also force it from hiding. Damaging its mask, however, sends
     it into a violent frenzy.'
   m_threatLevel: 2
+  m_fullBodyIcon: {fileID: 21300000, guid: 32b00145f22637242a29397d6c79ff00, type: 3}
+  m_maxHealth: 600
+  m_attackDamage: 14
+  m_movementSpeed: 3
+  m_maxStaggerAmount: 200
+  m_maxStaggerTime: 3
   m_statistic:
     id: 18
     type: 0

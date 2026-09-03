@@ -1,3 +1,4 @@
+using DelightStudio.AI;
 using Steamworks;
 using System.Collections;
 using TMPro;
@@ -69,7 +70,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     }
 
     private void OnWeaponHit(RaycastHit hit) {
-        if (hit.collider.GetComponent<Damagable_BodyPart>() || hit.collider.GetComponent<Enemy>()) return;
+        if (hit.collider.GetComponent<Damagable_BodyPart>() || hit.collider.GetComponent<Enemy_VisualHandler>()) return;
 
         GameObject newDecal = Singleton.Instance.VFXManager.GetShotDecal();
         newDecal.transform.position = hit.point;

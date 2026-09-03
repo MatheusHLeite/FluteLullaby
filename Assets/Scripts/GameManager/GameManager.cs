@@ -54,11 +54,7 @@ public class GameManager : MonoBehaviour {
     }
 
     public float GetDamageMultiplier(BodyPart bodyPart) {
-        for (int i = 0; i < m_bodyPartDamageMultiplier.Count; i++) {
-            if (m_bodyPartDamageMultiplier[i].m_bodyPart == bodyPart)
-                return m_bodyPartDamageMultiplier[i].m_damageMultiplier;            
-        }
-        return 0;
+        return m_bodyPartDamageMultiplier.Where(bp => bp.m_bodyPart == bodyPart).Select(bp => bp.m_damageMultiplier).FirstOrDefault();
     }
 
     public Vector3 GetRandomSpawnPos() => m_spawnPoints[UnityEngine.Random.Range(0, m_spawnPoints.Count)].position;
@@ -116,7 +112,7 @@ public enum Quality { Low, Medium, High, Ultra }
 
 public enum Size { Small, Normal, Big }
 
-public enum EnemyState { Idle, Wandering, Chasing, Searching }
+public enum EnemyState { Idle, Wandering, Chasing, Searching, Attacking, Staggered }
 
 public enum StatisticType { Number, Text, Progress, Time, Percentage }
 
@@ -220,6 +216,7 @@ public struct Statistic {
     }
 }
 
+[System.Serializable]
 public struct BodyPartDamageMultiplier {
     public BodyPart m_bodyPart;
     public float m_damageMultiplier;

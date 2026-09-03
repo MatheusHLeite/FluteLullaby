@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_name: The Hungry Reef
   m_entryIndex: 321
-  m_fullBodyIcon: {fileID: 21300000, guid: 7549cebe4c65e744db6ef43e31306bc5, type: 3}
   m_description: 'What appears to be a small island may actually be the body of the
     Hungry Reef. Stone, coral, sand, and shipwrecks conceal its enormous form, while
     a massive mouth lies beneath the surface.
@@ -28,6 +27,12 @@ MonoBehaviour:
     its coral armor, exposing its vulnerable interior. The creature also becomes
     slower when starved.'
   m_threatLevel: 4
+  m_fullBodyIcon: {fileID: 21300000, guid: 7549cebe4c65e744db6ef43e31306bc5, type: 3}
+  m_maxHealth: 600
+  m_attackDamage: 14
+  m_movementSpeed: 3
+  m_maxStaggerAmount: 200
+  m_maxStaggerTime: 3
   m_statistic:
     id: 18
     type: 0

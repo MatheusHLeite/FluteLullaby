@@ -26,14 +26,5 @@ namespace DelightStudio.Manager {
         internal Enemy_SO GetEnemyByID(string monsterId) {
             return m_allEnemies.FirstOrDefault(enemy => enemy.id == monsterId);
         }
-
-        [SerializeField] private Enemy_SO debugEnemy;
-        private void Update() {
-            if (debugEnemy == null) return;
-            if (Input.GetKeyDown(KeyCode.M)) {
-                Singleton.Instance.GameEvents.OnUpdateEnemyFound?.Invoke(debugEnemy);
-                Singleton.Instance.GameEvents.OnEnemyKilled?.Invoke(debugEnemy);
-            }
-        }
     }
 }

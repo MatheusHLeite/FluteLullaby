@@ -70,10 +70,12 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     #endregion
 
     #region Initialization
-    void Start() {
+    private void Awake() {
         healthHandler = GetComponentInChildren<Global_HealthHandler>();
-        if (healthHandler != null)
-            healthHandler.m_onDie.AddListener(OnDie);
+    }
+
+    void Start() {
+        healthHandler.m_onDie.AddListener(OnDie);
 
         initialHeadRotation = m_head.localRotation;
         initialHeadForward = Vector3.forward;
@@ -89,6 +91,10 @@ public class NPC_VisualBehavior : NetworkBehaviour {
         SphereCollider collider = gameObject.AddComponent<SphereCollider>();
         collider.isTrigger = true;
         collider.radius = lookRange;
+    }
+
+    private void OnDestroy() {
+        healthHandler.m_onDie.RemoveListener(OnDie);
     }
     #endregion
 
@@ -231,7 +237,7 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     }
     #endregion
 
-    private void OnDie(Vector3 dir, float impact) {
+    private void OnDie(Vector3 point, Vector3 dir, float impact) {
         foreach (var e in m_eyesClosed) {
             e.gameObject.SetActive(true);
         }

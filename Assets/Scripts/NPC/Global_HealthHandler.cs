@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public class Global_HealthHandler : NetworkBehaviour, IDamageable {
-    [Header("Setup")]
-    [SerializeField] private float m_maxHealth;
-    public UnityEvent<Vector3, float> m_onDie;
+    public UnityEvent<Vector3, Vector3, float> m_onDie;
+    public UnityEvent m_onTargetKilled;
+    public UnityEvent<Vector3, Vector3, float, float> m_damageTaken;
 
     private bool isDead;
 
@@ -16,20 +16,11 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
 
     public override void OnDestroy() {
         m_onDie.RemoveAllListeners();
+        m_damageTaken.RemoveAllListeners();
     }
 
     #region Network Initialization
-    public override void OnNetworkSpawn() {
-        if (IsServer) {
-            SetHealth(m_maxHealth, m_maxHealth);
-        }
-    }
-
-    public override void OnNetworkDespawn() {
-        
-    }
-
-    private void SetHealth(float actualHealth, float maxHealth) {
+    public void SetHealth(float actualHealth) {
         if (IsServer) {
             OnHealthSet(actualHealth);
             return;
@@ -46,7 +37,8 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
 
     #region Damage
     public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
-        if (currentHealth.Value <= 0) return;
+        if (currentHealth.Value <= 0) 
+            return;
 
         Singleton.Instance.GameEvents.OnHit?.Invoke();
 
@@ -61,33 +53,37 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
         HandleDamage(damage, hitPoint, hitDirection, impact, rpcParams.Receive.SenderClientId);
 
     private void HandleDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ulong killerClientId) {
+        if (isDead) 
+            return;
+
         this.hitPoint.Value = hitPoint;
         this.hitDirection.Value = hitDirection;
         this.impact.Value = impact;
         currentHealth.Value -= damage;
 
-        if (currentHealth.Value <= 0f && !isDead) {
-            isDead = true;
+        TakeDamageClientRpc(hitPoint, hitDirection, damage, currentHealth.Value);
 
-            DieClientRpc(hitPoint, hitDirection, impact);
+        if (currentHealth.Value <= 0f) {
+            isDead = true;
 
             var clientParams = new ClientRpcParams {
                 Send = new ClientRpcSendParams {
                     TargetClientIds = new[] { killerClientId }
                 }
             };
+
             NotifyKillClientRpc(clientParams);
+            DieClientRpc(hitPoint, hitDirection, impact);
         }
     }
 
     [ClientRpc]
-    private void NotifyKillClientRpc(ClientRpcParams clientRpcParams = default) => 
-        Singleton.Instance.GameEvents.OnKill?.Invoke();
+    private void NotifyKillClientRpc(ClientRpcParams clientRpcParams = default) => m_onTargetKilled?.Invoke();
 
     [ClientRpc]
-    private void DieClientRpc(Vector3 hitPoint, Vector3 hitDirection, float impact) => 
-        Die(hitPoint, hitDirection, impact);
- 
-    private void Die(Vector3 hitPoint, Vector3 hitDirection, float impact) => m_onDie?.Invoke(hitDirection, impact);    
+    private void DieClientRpc(Vector3 hitPoint, Vector3 hitDirection, float impact) => m_onDie?.Invoke(hitPoint, hitDirection, impact);
+
+    [ClientRpc]
+    private void TakeDamageClientRpc(Vector3 hitPosition, Vector3 hitDirection, float staggerAmount, float currentHp) => m_damageTaken?.Invoke(hitPosition, hitDirection, staggerAmount, currentHp);
     #endregion;
 }

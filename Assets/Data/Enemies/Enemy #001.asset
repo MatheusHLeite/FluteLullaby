@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_name: The Drowned
   m_entryIndex: 1
-  m_fullBodyIcon: {fileID: 21300000, guid: 3aabdb1e29071674c867c301e23785f0, type: 3}
   m_description: 'Once sailors, the Drowned are corpses dragged back from the ocean
     floor. Their swollen, blue-gray bodies are covered in barnacles and seaweed,
     while seawater constantly pours from their open mouths. They wield broken anchors
@@ -24,11 +23,17 @@ MonoBehaviour:
     They are weakened by fire and
     sunlight, and severe wounds to the chest can bring them down quickly.'
   m_threatLevel: 1
+  m_fullBodyIcon: {fileID: 21300000, guid: 3aabdb1e29071674c867c301e23785f0, type: 3}
+  m_maxHealth: 60000
+  m_attackDamage: 14
+  m_movementSpeed: 3
+  m_maxStaggerAmount: 200
+  m_maxStaggerTime: 3
   m_statistic:
     id: 18
     type: 0
     value: 0
     maxValue: 0
     textValue: 
-    monsterId: b28996c3-00dd-40a2-812e-d9c1ba5d4ad1
-  id: b28996c3-00dd-40a2-812e-d9c1ba5d4ad1
+    monsterId: 222e052d-0e3e-4af0-95c4-7e2f083420e7
+  id: 222e052d-0e3e-4af0-95c4-7e2f083420e7
