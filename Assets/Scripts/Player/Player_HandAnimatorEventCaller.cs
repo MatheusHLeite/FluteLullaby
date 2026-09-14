@@ -5,11 +5,13 @@ namespace DelightStudio.Player {
         private Player_CombatSystem _combatSystem;
         private Player_InventorySystem _inventorySystem;
         private Player_PauseHandler _pauseHandler;
+        private Player_FlaskManager _flaskManager;
 
         private void Awake() {
             _combatSystem = transform.root.GetComponent<Player_CombatSystem>();
             _inventorySystem = transform.root.GetComponent<Player_InventorySystem>();
             _pauseHandler = transform.root.GetComponent<Player_PauseHandler>();
+            _flaskManager = transform.root.GetComponent<Player_FlaskManager>();
         }
 
         public void OnDrawAnimationStarted() {
@@ -22,6 +24,14 @@ namespace DelightStudio.Player {
 
         public void SetDiaryVisibility() {
             _pauseHandler.SetDiaryVisibility(false);
+        }
+
+        public void OnHealDrank() {
+            _flaskManager.OnFlashDrankEvent();
+        }
+
+        public void OnHealDrankAnimationEnded() {
+            _flaskManager.OnEndFlaskDrinkAnimation();
         }
     }
 }

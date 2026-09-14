@@ -37,11 +37,20 @@ MonoBehaviour:
   m_slideCooldown: 1.2
   m_slideStaminaCost: 0.5
   m_minSprintSpeedToSlide: 4
+  m_slideSpeedBoost: 2
+  m_slideDownhillAcceleration: 4
+  m_slideDownhillAngleThreshold: 10
+  m_slideMaxDownhillSpeed: 20
   m_mouseSensitivity: 2
   m_invertCamera: 0
   m_sensitivityMultiplier: 0.045
   m_maxPositiveLookAngle: 75
   m_maxNegativeLookAngle: 60
-  m_defaultFov: 70
+  m_defaultFov: 60
   m_zoomFOV: 30
   m_zoomStepTime: 5
+  m_enableSpeedShake: 1
+  m_shakeSpeedThreshold: 10
+  m_shakeMaxSpeed: 20
+  m_shakeIntensity: 0.15
+  m_shakeFrequency: 25

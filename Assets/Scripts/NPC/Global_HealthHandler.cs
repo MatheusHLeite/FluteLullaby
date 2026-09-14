@@ -3,9 +3,9 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public class Global_HealthHandler : NetworkBehaviour, IDamageable {
-    public UnityEvent<Vector3, Vector3, float> m_onDie;
+    public UnityEvent<Vector3, Vector3, float, BodyPart> m_onDie;
     public UnityEvent m_onTargetKilled;
-    public UnityEvent<Vector3, Vector3, float, float> m_damageTaken;
+    public UnityEvent<DamageParameters> m_damageTaken;
 
     private bool isDead;
 
@@ -36,32 +36,37 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
     #endregion
 
     #region Damage
-    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact) {
-        if (currentHealth.Value <= 0) 
-            return;
-
-        Singleton.Instance.GameEvents.OnHit?.Invoke();
-
-        if (IsServer && NetworkManager.Singleton.LocalClientId == OwnerClientId)
-            HandleDamage(damage, hitPoint, hitDirection, impact, OwnerClientId);
+    public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, NetworkObject networkObject) {
+        if (IsServer)
+            HandleDamage(damage, hitPoint, hitDirection, impact, part, NetworkManager.Singleton.LocalClientId);
         else
-            TakeDamageServerRpc(damage, hitPoint, hitDirection, impact);
+            TakeDamageServerRpc(damage, hitPoint, hitDirection, impact, part);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void TakeDamageServerRpc(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ServerRpcParams rpcParams = default) =>
-        HandleDamage(damage, hitPoint, hitDirection, impact, rpcParams.Receive.SenderClientId);
+    private void TakeDamageServerRpc(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, ServerRpcParams rpcParams = default) =>
+        HandleDamage(damage, hitPoint, hitDirection, impact, part, rpcParams.Receive.SenderClientId);
 
-    private void HandleDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, ulong killerClientId) {
-        if (isDead) 
+    private void HandleDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, ulong killerClientId) {
+        DamageParameters damageParameters = new DamageParameters {
+            hitPosition = hitPoint,
+            hitDirection = hitDirection,
+            impact = impact,
+            staggerAmount = damage,
+            currentHp = currentHealth.Value,
+            killerClientId = killerClientId,
+            bodyPart = part
+        };
+
+        TakeDamageClientRpc(damageParameters);
+
+        if (isDead || currentHealth.Value <= 0) 
             return;
 
         this.hitPoint.Value = hitPoint;
         this.hitDirection.Value = hitDirection;
         this.impact.Value = impact;
         currentHealth.Value -= damage;
-
-        TakeDamageClientRpc(hitPoint, hitDirection, damage, currentHealth.Value);
 
         if (currentHealth.Value <= 0f) {
             isDead = true;
@@ -73,7 +78,7 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
             };
 
             NotifyKillClientRpc(clientParams);
-            DieClientRpc(hitPoint, hitDirection, impact);
+            DieClientRpc(hitPoint, hitDirection, impact, part);
         }
     }
 
@@ -81,9 +86,29 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
     private void NotifyKillClientRpc(ClientRpcParams clientRpcParams = default) => m_onTargetKilled?.Invoke();
 
     [ClientRpc]
-    private void DieClientRpc(Vector3 hitPoint, Vector3 hitDirection, float impact) => m_onDie?.Invoke(hitPoint, hitDirection, impact);
+    private void DieClientRpc(Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part) => m_onDie?.Invoke(hitPoint, hitDirection, impact, part);
 
     [ClientRpc]
-    private void TakeDamageClientRpc(Vector3 hitPosition, Vector3 hitDirection, float staggerAmount, float currentHp) => m_damageTaken?.Invoke(hitPosition, hitDirection, staggerAmount, currentHp);
+    private void TakeDamageClientRpc(DamageParameters damageParams) => m_damageTaken?.Invoke(damageParams);
     #endregion;
+}
+
+public struct DamageParameters : INetworkSerializable {
+    public Vector3 hitPosition;
+    public Vector3 hitDirection;
+    public float impact;
+    public float staggerAmount;
+    public float currentHp;
+    public ulong killerClientId;
+    public BodyPart bodyPart;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
+        serializer.SerializeValue(ref hitPosition);
+        serializer.SerializeValue(ref hitDirection);
+        serializer.SerializeValue(ref impact);
+        serializer.SerializeValue(ref staggerAmount);
+        serializer.SerializeValue(ref currentHp);
+        serializer.SerializeValue(ref killerClientId);
+        serializer.SerializeValue(ref bodyPart);
+    }
 }

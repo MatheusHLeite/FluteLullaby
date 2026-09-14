@@ -16,6 +16,7 @@ namespace DelightStudio.UI {
         private Enemy_SO bestiaryEnemy;
         private bool enemyDiscovered;
         private bool notificationRead;
+        private float minCooldownToClick;
 
         public Enemy_SO GetEnemy() => bestiaryEnemy;
 
@@ -53,6 +54,11 @@ namespace DelightStudio.UI {
         }
 
         public void OnPointerClick(PointerEventData eventData) {
+            if (Time.time < minCooldownToClick)
+                return;
+
+            minCooldownToClick = Time.time + 0.25f;
+
             if (!bestiaryHandler.IsShowingPopUp || bestiaryHandler.CurrentBeast != bestiaryEnemy) {
                 bestiaryHandler.SetBeastVisualizationOn(bestiaryEnemy, enemyDiscovered);
 

@@ -1,4 +1,5 @@
 using DelightStudio.Data;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace DelightStudio.AI {
@@ -16,10 +17,12 @@ namespace DelightStudio.AI {
 
         private Enemy_Movement movement;
         private Enemy_Animator animator;
+        private Enemy_MotionSync motionSync;
 
         public void Initialize(Enemy_SO enemy) {
             movement = GetComponent<Enemy_Movement>();
             animator = GetComponent<Enemy_Animator>();
+            motionSync = GetComponent<Enemy_MotionSync>();
 
             DisableHitBox();
 
@@ -27,18 +30,19 @@ namespace DelightStudio.AI {
             maxStaggerAmount = enemy.m_maxStaggerAmount;
             staggerMaxTime = enemy.m_maxStaggerTime;
 
-            m_hitBox.Setup(enemy.m_attackDamage, impact);            
+            m_hitBox.Setup(enemy.m_attackDamage, impact, GetComponent<NetworkObject>());            
         }
 
         public void DisableHitBox() {
             m_hitBox.SetHitBoxState(false);
+            motionSync.EndAttack();
         }
 
         public void EnableHitBox() {
             if (isDead)
                 return;
 
-            m_hitBox.SetHitBoxState(true);
+            m_hitBox.SetHitBoxState(true);            
         }
 
         public void OnDied() {
@@ -54,6 +58,8 @@ namespace DelightStudio.AI {
         }
 
         private void ApplyStagger() {
+            DisableHitBox();
+
             currentStaggerAmount = 0;
 
             staggerTime = staggerMaxTime;
@@ -79,8 +85,6 @@ namespace DelightStudio.AI {
 
             if (currentStaggerAmount >= maxStaggerAmount)            
                 ApplyStagger();
-
-            print($"{currentStaggerAmount}/{maxStaggerAmount}");
         }
 
         private void HandleStagger() {

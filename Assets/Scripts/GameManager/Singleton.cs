@@ -17,6 +17,7 @@ public class Singleton : MonoBehaviour {
     public EnemiesManager EnemiesManager { get; private set; }
     public StatisticsManager StatisticsManager { get; private set; }
     public TutorialManager TutorialManager { get; private set; }
+    public GlobalTimeManager GlobalTimeManager { get; private set; }
 
     private void Awake() {
         if (Instance) {
@@ -45,5 +46,6 @@ public class Singleton : MonoBehaviour {
         EnemiesManager = GetComponent<EnemiesManager>();
         StatisticsManager = GetComponent<StatisticsManager>();
         TutorialManager = GetComponent<TutorialManager>();
+        GlobalTimeManager = GetComponent<GlobalTimeManager>();
     }
 }

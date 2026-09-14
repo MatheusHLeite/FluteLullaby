@@ -70,7 +70,16 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     }
 
     private void OnWeaponHit(RaycastHit hit) {
-        if (hit.collider.GetComponent<Damagable_BodyPart>() || hit.collider.GetComponent<Enemy_VisualHandler>()) return;
+        if (hit.collider.GetComponent<Damagable_BodyPart>()) {
+            ParticleSystem bloodVFX = Singleton.Instance.VFXManager.GetBloodSplatFX();
+            bloodVFX.transform.position = hit.point;
+            bloodVFX.transform.rotation = Quaternion.LookRotation(hit.normal);
+            bloodVFX.gameObject.SetActive(true);
+            bloodVFX.Play();
+
+            Singleton.Instance.VFXManager.ReturnBloodSplatFX(bloodVFX);
+            return; 
+        }
 
         GameObject newDecal = Singleton.Instance.VFXManager.GetShotDecal();
         newDecal.transform.position = hit.point;

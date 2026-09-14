@@ -28,6 +28,8 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     private Vector2 lastPointerPosition;
 
     private bool isShowingPopUp;
+    private float minCooldownToDrag;
+    private float minCooldownToClick;
 
     #region Rotation and position
     private Vector3 pointerPosition;
@@ -75,6 +77,11 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     public void UpdateQuantity(int quantity) { this.quantity = quantity; }
 
     public void OnBeginDrag(PointerEventData eventData) {
+        if (Time.time < minCooldownToDrag)
+            return;
+
+        minCooldownToDrag = Time.time + 0.1f;
+
         if (isReloading) return;
 
         HideTooltip();
@@ -101,7 +108,7 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     public void OnDrag(PointerEventData eventData) {
-        if (canvasRect == null)
+        if (canvasRect == null || Time.time < minCooldownToDrag)
             return;
 
         if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
@@ -140,6 +147,13 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     public void OnPointerClick(PointerEventData eventData) {
+        minCooldownToDrag = Time.time + 0.1f;
+        
+        if (Time.time < minCooldownToClick) 
+            return;
+
+        minCooldownToClick = Time.time + 0.25f;
+
         bool shiftPressed =
             Input.GetKey(KeyCode.LeftShift) ||
             Input.GetKey(KeyCode.RightShift);

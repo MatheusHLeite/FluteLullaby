@@ -3,26 +3,52 @@ using UnityEngine.AI;
 
 namespace DelightStudio.AI {
     public class Enemy_MotionSync : MonoBehaviour {
-        private Animator animator;
-        private NavMeshAgent agent;
+        [SerializeField] private float m_minAttackDistance = 1.3f;
+
+        private Animator _animator;
+        private NavMeshAgent _agent;
+
+        private bool _isAttacking;
+        private Transform _targetPlayer;
 
         private void Awake() {
-            animator = GetComponent<Animator>();
-            agent = GetComponent<NavMeshAgent>();
+            _animator = GetComponent<Animator>();
+            _agent = GetComponent<NavMeshAgent>();
 
-            agent.updatePosition = false;
-            agent.updateRotation = true;
+            _agent.updatePosition = false;
+            _agent.updateRotation = true;
+        }
+
+        public void StartAttack(Transform target) {
+            _isAttacking = true;
+            _targetPlayer = target;
+        }
+
+        public void EndAttack() {
+            _isAttacking = false;
+            _targetPlayer = null;
         }
 
         private void OnAnimatorMove() {
-            if (animator == null || agent == null || !agent.enabled) 
+            if (!_agent.enabled) 
                 return;
 
-            Vector3 position = animator.rootPosition;
-            position.y = agent.nextPosition.y;
+            Vector3 deltaPosition = _animator.deltaPosition;
 
-            transform.position = position;
-            agent.nextPosition = transform.position;
+            if (_isAttacking && _targetPlayer != null) {
+                float distance = Vector3.Distance(transform.position, _targetPlayer.position);
+
+                if (distance <= m_minAttackDistance) {
+                    deltaPosition.x = 0f;
+                    deltaPosition.z = 0f;
+                }
+            }
+
+            Vector3 newPosition = transform.position + deltaPosition;
+            newPosition.y = _agent.nextPosition.y;
+
+            transform.position = newPosition;
+            _agent.nextPosition = transform.position;
         }
     }
 }

@@ -1,20 +1,25 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Tooltip : MonoBehaviour {
     [Header("UI")]
     [SerializeField] private TMP_Text txt_title;
     [SerializeField] private TMP_Text txt_description;
     [SerializeField] private TMP_Text txt_itemType;
+    [SerializeField] private Image img_rarityBackground;
+    [SerializeField] private GameObject m_rarityStarsHolder;
+    [SerializeField] private Image[] m_rarities;
 
     [Header("Setup")]
     [SerializeField] private float m_multiplier = 0.0275f;
 
+    private Color defaultStarColor = new Color(1f, .85f, 0f, 1f);
+    private Color specialStarColor = new Color(1f, 0f, 0f, 1f);
+
     #region Private
     private CanvasGroup cg;
-
-    private Color color = Color.white;
     private string typeText;
     #endregion
 
@@ -32,30 +37,34 @@ public class Tooltip : MonoBehaviour {
         cg.DOKill();
         cg.DOFade(1, 0.45f);
 
-        switch (item.m_itemType) {
-            case ItemType.MeleeWeapon:
-            case ItemType.Firearm:
-                color = Color.red;
-                typeText = "Weapon";
-                break;
-            case ItemType.PuzzlePiece:
-                color = Color.magenta;
-                typeText = "Puzzle piece";
-                break;
-            case ItemType.Collectible:
-                color = Color.yellow;
-                typeText = "Collectible";
-                break;
-            case ItemType.Ammo:
-                color = Color.white;
-                typeText = "Ammo";
-                break;
-        }
+        typeText = item.m_itemType switch {
+            ItemType.Firearm => "Weapon",
+            ItemType.MeleeWeapon => "Weapon",
+            ItemType.PuzzlePiece => "Puzzle piece",
+            ItemType.Collectible => "Collectible",
+            ItemType.Ammo => "Ammo",
+            _ => string.Empty
+        };
+
+        bool hasPublicRarity = item.m_itemType == ItemType.MeleeWeapon || item.m_itemType == ItemType.Firearm;
+        int rarityLevel = (int)item.m_itemRarity + 1;
+        Color color = Singleton.Instance.GameManager.GetRarityColor(item.m_itemRarity);
 
         txt_title.text = item.m_itemName;
         txt_description.text = item.m_description;
         txt_itemType.text = typeText;
-        txt_itemType.color = color;
+        img_rarityBackground.color = color;
+
+        m_rarityStarsHolder.SetActive(hasPublicRarity);
+        for (int i = 0; i < m_rarities.Length; i++) {
+            m_rarities[i].color = rarityLevel == m_rarities.Length ? specialStarColor : defaultStarColor;
+            m_rarities[i].gameObject.SetActive(i < rarityLevel);
+        }
+
+        bool isMissingItemType = string.IsNullOrEmpty(typeText);
+
+        txt_itemType.gameObject.SetActive(!isMissingItemType);
+        img_rarityBackground.gameObject.SetActive(!isMissingItemType);
     }
 
     public void OnHideTooltip(bool immediate) {

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem.EnhancedTouch;
 
 public class Player_AnimationSystem : NetworkBehaviour {
     [Header("References")]
@@ -43,11 +44,14 @@ public class Player_AnimationSystem : NetworkBehaviour {
     private const string MovementY = "MovementY";
     private const string Jump = "Jump";
     private const string Crouch = "IsCrouch";
+    private const string Block = "IsBlocking";
     private const string Attack = "Attack_";
 
     private const string Reload = "Reload";
     private const string Shot = "Shot";
+    private const string Parry = "Parry";
     private const string Collect = "Collect";
+    private const string FlaskDrink = "FlaskDrink";
     private const string Draw = "Draw";
     private const string Holster = "Holster";
     private const string Drop = "Drop";
@@ -199,11 +203,21 @@ public class Player_AnimationSystem : NetworkBehaviour {
  
     public void OnCrouch(bool crouch) => RequestAnimationStateServerRpc(Crouch, crouch);
 
+    public void OnBlock(bool isBlocking) {
+        m_handsAnimator.SetBool(Block, isBlocking);
+        RequestAnimationStateServerRpc(Block, isBlocking);
+    }
+
     public void OnJump() => RequestAnimationServerRpc(Jump);
 
     public void OnShot() {
         m_handsAnimator.SetTrigger(Shot);
         RequestAnimationServerRpc(Shot); 
+    }
+
+    public void OnParry() {
+        m_handsAnimator.SetTrigger(Parry);
+        RequestAnimationServerRpc(Parry);
     }
 
     public void OnReload() {
@@ -221,6 +235,11 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
         m_handsAnimator.SetTrigger(Drop);
         RequestAnimationServerRpc(Drop);
+    }
+
+    public void OnFlaskDrink() {
+        m_handsAnimator.SetTrigger(FlaskDrink);
+        RequestAnimationServerRpc(FlaskDrink);
     }
 
     public void ChangeIdleState(Weapon currentWeapon, bool hasItemPreviously) { 
@@ -256,7 +275,7 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
     [ClientRpc]
     void PlayAnimationClientRpc(string animationTrigger) => m_fullBodyAnimator.SetTrigger(animationTrigger);
-    
+
     [ServerRpc(RequireOwnership = false)]
     void RequestAnimationStateServerRpc(string state, bool condition) => SetAnimationStateClientRpc(state, condition);
     

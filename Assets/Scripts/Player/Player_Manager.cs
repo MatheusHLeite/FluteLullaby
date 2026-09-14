@@ -1,3 +1,4 @@
+using DelightStudio.Player;
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -19,6 +20,7 @@ public class Player_Manager : NetworkBehaviour {
     private Player_PauseHandler playerPauseHandler;
     private Player_VisualManagementSystem playerVisualManagementSystem;
     private Player_VoiceChat playerVoiceChat;
+    private Player_FlaskManager playerFlaskManager;
 
     private void Awake() {
         playerAnimationSystem = GetComponent<Player_AnimationSystem>();
@@ -33,6 +35,7 @@ public class Player_Manager : NetworkBehaviour {
         playerPauseHandler = GetComponent<Player_PauseHandler>();
         playerVisualManagementSystem = GetComponent<Player_VisualManagementSystem>();
         playerVoiceChat = GetComponent<Player_VoiceChat>();
+        playerFlaskManager = GetComponent<Player_FlaskManager>();
     }
 
     public override void OnNetworkSpawn() => InitializeComponents();
@@ -56,6 +59,7 @@ public class Player_Manager : NetworkBehaviour {
         playerPauseHandler.InitializeNetwork(isOwner);
         playerVisualManagementSystem.InitializeNetwork(isOwner);
         playerVoiceChat.InitializeNetwork(isOwner);
+        playerFlaskManager.SetInitialFlaskAmount(isOwner);
 
         if (!isOwner) return;
 
@@ -97,6 +101,7 @@ public class Player_Manager : NetworkBehaviour {
         PlayerMovementSystem.Tick(isOwner);
         playerPauseHandler.Tick(isOwner);
         playerVisualManagementSystem.Tick(isOwner);
+        playerFlaskManager.Tick(isOwner);
     }
 
     private void FixedUpdate() {

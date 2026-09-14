@@ -25,10 +25,11 @@ MonoBehaviour:
   m_showcaseItemScale: {x: 1.55, y: 1.55, z: 1.55}
   id: e8d2d96a-12de-40b6-afb5-e57031720e42
   m_damage: 20
+  m_impactForce: 45
   m_weaponType: 1
   m_overrideController: {fileID: 22100000, guid: 6c4d538d9f65c2746ab51402f9904637, type: 2}
   m_maxAmmo: 6
   m_range: 100
   m_recoilForce: 22.5
-  m_impactForce: 120
+  m_fireRate: 0
   m_ammo: {fileID: 11400000, guid: e44370350b4395c4faba237aae2bc481, type: 2}

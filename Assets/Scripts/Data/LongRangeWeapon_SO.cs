@@ -7,6 +7,6 @@ public class LongRangeWeapon_SO : Weapon {
     [BoxGroup("Firearm setup")] [Min(0)] public int m_maxAmmo = 6;
     [BoxGroup("Firearm setup")] [Min(0)] public float m_range = 100f;    
     [BoxGroup("Firearm setup")] [Min(0)] public float m_recoilForce = 45f;
-    [BoxGroup("Firearm setup")] [Range(120f, 350f)] public float m_impactForce = 120;    
+    [BoxGroup("Firearm setup")] [Min(0)] public float m_fireRate = 0.1f;    
     [BoxGroup("Firearm data")] public Item_SO m_ammo;
 }

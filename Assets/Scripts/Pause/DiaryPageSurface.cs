@@ -1,50 +1,19 @@
 using UnityEngine;
 
 namespace DelightStudio.UI {
-    [RequireComponent(typeof(BoxCollider))]
     public class DiaryPageSurface : MonoBehaviour {
-        private BoxCollider interactionCollider;
+        [Header("Interaction Compensation")]
+        [Tooltip("Defina a área interna ativa da textura (0-1). Comece com (0,0,1,1).")]
+        [SerializeField] private Rect _interactionSubRect = new Rect(0, 0, 1, 1);
 
-        private void Awake() {
-            interactionCollider = GetComponent<BoxCollider>();
-        }
+        public bool TryGetNormalizedPosition(RaycastHit hit, out Vector2 normalizedPosition) {
+            Vector2 rawUv = hit.textureCoord;
+            
+            float localX = Mathf.InverseLerp(_interactionSubRect.xMin, _interactionSubRect.xMax, rawUv.x);
+            float localY = Mathf.InverseLerp(_interactionSubRect.yMin, _interactionSubRect.yMax, rawUv.y);
 
-        public bool TryGetNormalizedPosition(
-            Vector3 worldPoint,
-            out Vector2 normalizedPosition) {
-            normalizedPosition = Vector2.zero;
-
-            if (interactionCollider == null)
-                return false;
-
-            Vector3 localPoint =
-                transform.InverseTransformPoint(worldPoint);
-
-            Vector3 center = interactionCollider.center;
-            Vector3 size = interactionCollider.size;
-
-            float minX = center.x - size.x * 0.5f;
-            float maxX = center.x + size.x * 0.5f;
-
-            float minY = center.y - size.y * 0.5f;
-            float maxY = center.y + size.y * 0.5f;
-
-            float x = Mathf.InverseLerp(minX, maxX, localPoint.x);
-            float y = Mathf.InverseLerp(minY, maxY, localPoint.y);
-
-            normalizedPosition = new Vector2(
-                Mathf.Clamp01(x),
-                Mathf.Clamp01(y)
-            );
-
+            normalizedPosition = new Vector2(localX, localY);
             return true;
-        }
-
-        public bool Contains(Vector2 normalizedPosition) {
-            return normalizedPosition.x >= 0f &&
-                   normalizedPosition.x <= 1f &&
-                   normalizedPosition.y >= 0f &&
-                   normalizedPosition.y <= 1f;
         }
     }
 }

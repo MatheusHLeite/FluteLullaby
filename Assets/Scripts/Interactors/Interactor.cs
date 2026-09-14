@@ -6,6 +6,7 @@ using UnityEngine;
 public class Interactor : NetworkBehaviour, IInteractable {
     [FoldoutGroup("Visual")][SerializeField] private string m_screenShowcaseName;
     [FoldoutGroup("Visual")] [SerializeField] private Material m_outlineMaterial;
+    [FoldoutGroup("Visual")] [SerializeField] private GameObject m_itemRarityFX;
 
     [FoldoutGroup("3D Inventory showcase")] [SerializeField] private MeshRenderer[] allRenderers;
     [FoldoutGroup("3D Inventory showcase")] [SerializeField] private Material unlitMaterial;
@@ -67,6 +68,7 @@ public class Interactor : NetworkBehaviour, IInteractable {
         Destroy(_rigidbody);
         Destroy(_networkTransform);
         Destroy(_networkRigidbody);
+        Destroy(m_itemRarityFX);
         Destroy(this);
     }
 

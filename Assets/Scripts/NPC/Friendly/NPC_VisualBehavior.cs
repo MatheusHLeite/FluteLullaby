@@ -237,7 +237,7 @@ public class NPC_VisualBehavior : NetworkBehaviour {
     }
     #endregion
 
-    private void OnDie(Vector3 point, Vector3 dir, float impact) {
+    private void OnDie(Vector3 point, Vector3 dir, float impact, BodyPart part) {
         foreach (var e in m_eyesClosed) {
             e.gameObject.SetActive(true);
         }

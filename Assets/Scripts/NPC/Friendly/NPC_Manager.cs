@@ -28,7 +28,7 @@ public class NPC_Manager : NetworkBehaviour {
         healthHandler.m_onDie.RemoveListener(OnDie);
     }
 
-    private void OnDie(Vector3 hitPoint, Vector3 hitDirection, float impact) {
+    private void OnDie(Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part) {
         rgbd.isKinematic = false;
         rgbd.AddForce(hitDirection * impact, ForceMode.Impulse);
     }

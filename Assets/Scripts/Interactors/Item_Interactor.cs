@@ -41,14 +41,14 @@ public class Item_Interactor : Interactor {
         networkTransform = GetComponent<NetworkTransform>();
         networkRigidbody = GetComponent<NetworkRigidbody>();
 
+        if (lockRandomize) 
+            return;
+
         var itemH = Singleton.Instance.GameManager.GetItemHightLight();
 
         highlightReference = Instantiate(itemH, transform);
         highlightReference.Setup(m_item.m_itemRarity);
         highlightReference.SetOnHandItem(displayItem);
-
-        if (lockRandomize) 
-            return;
 
         if (m_randomizeAmount) {
             m_amount = Random.Range(1, m_itemVisuals.Length);
@@ -62,6 +62,9 @@ public class Item_Interactor : Interactor {
 
     public void SetAs3DView() {
         lockRandomize = true;
+
+        if (highlightReference != null)
+            Destroy(highlightReference.gameObject);
 
         for (int i = 0; i < m_itemVisuals.Length; i++)
             m_itemVisuals[i].SetActive(true);

@@ -69,6 +69,7 @@ providers = {
 objectSelectors = {
 }
 recentSearches = [
+	"h: layer=<$layer:16, Diary$>"
 ]
 searchItemFavorites = [
 ]

@@ -13,8 +13,12 @@ namespace DelightStudio.Data {
         [BoxGroup("Gameplay setup")] [Min(10)] public int m_maxHealth;
         [BoxGroup("Gameplay setup")] [Min(0)] public int m_attackDamage;
         [BoxGroup("Gameplay setup")] [Min(0)] public int m_movementSpeed;
+        [Space(5)]
         [BoxGroup("Gameplay setup")] [Min(0)] public float m_maxStaggerAmount;
         [BoxGroup("Gameplay setup")] [Min(0)] public float m_maxStaggerTime;
+        [Space(5)]
+        [BoxGroup("Gameplay setup")] [Range(90f, 199f)] public float m_legResistanceAmount = 150;
+        [BoxGroup("Gameplay setup")] [Range(15f, 100f)] public float m_legShotReactionChance = 20;
 
         [BoxGroup("Enemy data setup")] public Statistic m_statistic;
         [BoxGroup("Enemy data setup")][GUIColor("#FFFF00")][ReadOnly] public string id;

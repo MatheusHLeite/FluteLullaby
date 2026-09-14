@@ -6,8 +6,6 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     [SerializeField] private ParticleSystem muzzleFlash;
     [SerializeField] private ParticleSystem smokeFX;
 
-    public WeaponClass ThisWeaponClass {  get; private set; }
-
     protected int layerToIgnore;
 
     #region Protected variables
@@ -29,11 +27,14 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     private int currentAmmo;   
     private int stockedAmmo;
     private int remainingAmmo;
-    private int m_maxAmmo;
+    private int maxAmmo;
 
-    private float m_fireRateMultiplier;
-    private float m_reloadSpeedMultiplier;
-    private float m_weaponRecoilForce;
+    private float minimumShotTimeCooldown;
+    private float minimumShotTime;
+
+    private float fireRateMultiplier;
+    private float reloadSpeedMultiplier;
+    private float weaponRecoilForce;
 
     private Animator animator;
     private Player_CombatSystem CombatSystem;    
@@ -72,12 +73,11 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         impulseSource = GetComponent<CinemachineImpulseSource>();
 
         m_damage = weapon.m_damage;
-        m_maxAmmo = weapon.m_maxAmmo;
+        maxAmmo = weapon.m_maxAmmo;
         m_range = weapon.m_range;
-        m_weaponRecoilForce = weapon.m_recoilForce;
+        weaponRecoilForce = weapon.m_recoilForce;
         m_impact = weapon.m_impactForce;
-
-        //weaponAnimator.SetTrigger(weapon.m_weaponType.ToString());
+        minimumShotTimeCooldown = weapon.m_fireRate;
 
         OnWeaponUpgrade(data);
 
@@ -97,8 +97,8 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     }
 
     public void OnWeaponUpgrade(FirearmWeaponData data) {
-        m_fireRateMultiplier = data.m_fireRateMultiplier < 1 ? 1 : data.m_fireRateMultiplier;
-        m_reloadSpeedMultiplier = data.m_reloadSpeedMultiplier < 1 ? 1 : data.m_reloadSpeedMultiplier;
+        fireRateMultiplier = data.m_fireRateMultiplier < 1 ? 1 : data.m_fireRateMultiplier;
+        reloadSpeedMultiplier = data.m_reloadSpeedMultiplier < 1 ? 1 : data.m_reloadSpeedMultiplier;
 
         HandleWeaponMultipliers();
     }
@@ -106,8 +106,8 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
 
     #region Private calls
     private void HandleWeaponMultipliers() {
-        animator.SetFloat(FireRate, m_fireRateMultiplier);
-        animator.SetFloat(ReloadSpeed, m_reloadSpeedMultiplier);
+        animator.SetFloat(FireRate, fireRateMultiplier);
+        animator.SetFloat(ReloadSpeed, reloadSpeedMultiplier);
     }
 
     private void StartReload() {
@@ -139,6 +139,9 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
             return;
         }
 
+        if (Time.time < minimumShotTime) return;
+        minimumShotTime = Time.time + minimumShotTimeCooldown;
+
         isShooting = true;
 
         animator.SetTrigger(ShootAnimTrigger);
@@ -150,7 +153,7 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     public void Reload(Player_CombatSystem combat) {
         if (isReloading || isShooting || stockedAmmo <= 0) return;
 
-        if (currentAmmo < m_maxAmmo)
+        if (currentAmmo < maxAmmo)
             StartReload();
     }
 
@@ -175,7 +178,7 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         muzzleFlash.Play();
         smokeFX.Play();
 
-        impulseSource.GenerateImpulse(new Vector3(-m_weaponRecoilForce, 0, 0));
+        impulseSource.GenerateImpulse(new Vector3(-weaponRecoilForce, 0, 0));
 
         ray = CameraMovement.GetPlayerCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
     }
@@ -191,9 +194,9 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
 
     public virtual void OnReloadEnd() {
         int prevCurrentAmmo = currentAmmo;
-        currentAmmo = stockedAmmo + currentAmmo >= m_maxAmmo ? m_maxAmmo : currentAmmo + stockedAmmo;
+        currentAmmo = stockedAmmo + currentAmmo >= maxAmmo ? maxAmmo : currentAmmo + stockedAmmo;
 
-        int ammoDifference = m_maxAmmo - prevCurrentAmmo;
+        int ammoDifference = maxAmmo - prevCurrentAmmo;
         stockedAmmo -= ammoDifference;
         if (stockedAmmo <= 0) stockedAmmo = 0;
 

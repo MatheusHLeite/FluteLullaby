@@ -42,9 +42,9 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Zoom",
+                    "name": "Crouch",
                     "type": "Button",
-                    "id": "e1f558b1-c373-4695-9cb2-20c1492c97c5",
+                    "id": "a11fad90-dfbb-4792-9e13-5af15c90cba4",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -54,6 +54,24 @@
                     "name": "Attack",
                     "type": "Button",
                     "id": "6c2ab1b8-8984-453a-af3d-a3c78ae1679a",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Reload",
+                    "type": "Button",
+                    "id": "710c6cab-0583-4f97-b430-cc20b3c7ff60",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Block",
+                    "type": "Button",
+                    "id": "e568a265-aa38-4669-bc48-d26f1d9c20ff",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -78,27 +96,27 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Zoom",
+                    "type": "Button",
+                    "id": "e1f558b1-c373-4695-9cb2-20c1492c97c5",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DrinkFlask",
+                    "type": "Button",
+                    "id": "fff1b8d6-4d14-4310-a3c4-c68d0b3b4d08",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "LastSlotUsed",
                     "type": "Button",
                     "id": "7cb953c4-ecd4-40da-b6b4-5c24e466cc2e",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Reload",
-                    "type": "Button",
-                    "id": "710c6cab-0583-4f97-b430-cc20b3c7ff60",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Crouch",
-                    "type": "Button",
-                    "id": "a11fad90-dfbb-4792-9e13-5af15c90cba4",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -298,17 +316,6 @@
                 },
                 {
                     "name": "",
-                    "id": "4c09dcd2-976e-4f96-8c63-82f123c9e5f6",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard&Mouse",
-                    "action": "Zoom",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "9ea9d84e-2da8-4732-a5ca-8eb78cf09b90",
                     "path": "<Keyboard>/1",
                     "interactions": "",
@@ -387,11 +394,44 @@
                 {
                     "name": "",
                     "id": "2f35cc96-8b5f-4643-a4e5-7b42fd416369",
-                    "path": "<Keyboard>/c",
+                    "path": "<Keyboard>/ctrl",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4c09dcd2-976e-4f96-8c63-82f123c9e5f6",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Block",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a9f2262a-03c2-4d36-9cf3-276ccb66c8ac",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "11defe8d-57ca-446f-9764-7f833f4ecaa4",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "DrinkFlask",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

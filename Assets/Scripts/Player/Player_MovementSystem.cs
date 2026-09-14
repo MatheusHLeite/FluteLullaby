@@ -1,8 +1,8 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Player_MovementSystem : NetworkBehaviour {
-
     [Header("Sprint System")]
     [Tooltip("Tempo em segundos que o jogador precisa segurar Shift para começar a correr")]
     [SerializeField] private float m_sprintHoldDelay = 0.3f;
@@ -34,6 +34,8 @@ public class Player_MovementSystem : NetworkBehaviour {
     private Player_AnimationSystem Animation;
     private Player_HealthSystem HealthSystem;
     private Player_CameraMovementSystem CameraMovementSystem;
+
+    private PhysicsMaterial _frictionMaterial;
     #endregion
 
     #region Private variables         
@@ -45,7 +47,6 @@ public class Player_MovementSystem : NetworkBehaviour {
     private float m_sprintCooldown;
     private float m_toCrouchSpeed;
 
-    private float _actualPlayerSpeed;
     private float _staminaRemaining;
     private float _sprintCooldownReset;
     private bool _sprintOnCooldown;
@@ -69,6 +70,8 @@ public class Player_MovementSystem : NetworkBehaviour {
 
     private float _staminaRegenCooldown;
     private float _lastStaminaConsumption;
+
+    private bool _isPaused => GameManager.GetGameState() == GameState.Paused;
     #endregion
 
     #region Private upgradable/modifiable variables
@@ -114,6 +117,7 @@ public class Player_MovementSystem : NetworkBehaviour {
     public bool IsCrouched { get; private set; }
     public bool IsDashing => _isDashing;
     public bool IsSliding => _isSliding;
+    public float StaminaRemaining => _staminaRemaining;
     #endregion
 
     #region Network variables
@@ -151,6 +155,17 @@ public class Player_MovementSystem : NetworkBehaviour {
     private void Awake() {
         _rb = GetComponent<Rigidbody>();
         _thisCollider = GetComponent<CapsuleCollider>();
+
+        _frictionMaterial = new PhysicsMaterial("PlayerFriction");
+        _frictionMaterial.dynamicFriction = 0f;
+        _frictionMaterial.staticFriction = 0f;
+        _frictionMaterial.bounciness = 0f;
+        _frictionMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
+        _frictionMaterial.bounceCombine = PhysicsMaterialCombine.Minimum;
+
+        _thisCollider.material = _frictionMaterial;
+
+
         Input = GetComponent<Player_InputHandler>();
         Animation = GetComponent<Player_AnimationSystem>();
         HealthSystem = GetComponent<Player_HealthSystem>();
@@ -248,31 +263,39 @@ public class Player_MovementSystem : NetworkBehaviour {
         if (!m_playerCanMove || _isDashing) return;
 
         if (_isSliding) {
-            HandleSlideMovement();
+            if (_isPaused) CancelSlide();
+            else HandleSlideMovement();
             return;
         }
-        
-        if (_sprintToggle) {
-            if (Input.Sprint && movementInput.magnitude > 0) sprintButton = true;
-            else if (movementInput.magnitude <= 0 || !canSprint) sprintButton = false;
+
+        if (_isPaused) {
+            movementInput = Vector3.zero;
+            sprintButton = false;
+            canSprint = false;
         }
         else {
-            if (Input.Sprint && movementInput.magnitude > 0) {
-                _sprintHoldTimer += Time.deltaTime;
-                if (_sprintHoldTimer >= m_sprintHoldDelay) {
-                    _sprintHoldActive = true;
-                }
+            if (_sprintToggle) {
+                if (Input.Sprint && movementInput.magnitude > 0) sprintButton = true;
+                else if (movementInput.magnitude <= 0 || !canSprint) sprintButton = false;
             }
             else {
-                _sprintHoldTimer = 0f;
-                _sprintHoldActive = false;
+                if (Input.Sprint && movementInput.magnitude > 0) {
+                    _sprintHoldTimer += Time.deltaTime;
+                    if (_sprintHoldTimer >= m_sprintHoldDelay)                    
+                        _sprintHoldActive = true;                    
+                }
+                else {
+                    _sprintHoldTimer = 0f;
+                    _sprintHoldActive = false;
+                }
+
+                sprintButton = _sprintHoldActive;
             }
-            
-            sprintButton = _sprintHoldActive;
+
+            movementInput = new Vector3(Input.MoveInput.x, 0, Input.MoveInput.y);
+            canSprint = m_enableSprint && _staminaRemaining > 0f && !_sprintOnCooldown && !IsCrouched;
         }
 
-        movementInput = new Vector3(Input.MoveInput.x, 0, Input.MoveInput.y);
-        canSprint = m_enableSprint && _staminaRemaining > 0f && !_sprintOnCooldown && !IsCrouched;
         sprintFlag = sprintButton && IsGrounded && (canSprint || m_unlimitedSprint);
         speedMultiplierBase = sprintFlag ? m_sprintSpeed : m_walkSpeed;
         speedMultiplier = IsCrouched ? m_crouchSpeed : speedMultiplierBase;
@@ -334,6 +357,23 @@ public class Player_MovementSystem : NetworkBehaviour {
         }
 
         m_sprintCooldown = _sprintCooldownReset;
+    }
+
+    public bool ConsumeStamina(float stamina = 2f, UnityAction onDefenseBroken = default) {
+        _staminaRemaining -= stamina;
+        _staminaRemaining = Mathf.Clamp(_staminaRemaining, 0, m_maxStamina);
+
+        _staminaRegenCooldown = Time.time + (m_staminaRegenCooldownTime * 2f);
+
+        if (_staminaRemaining <= 0) {
+            IsSprinting = false;
+            _sprintOnCooldown = true;
+
+            onDefenseBroken?.Invoke();
+            return false;
+        }
+
+        return true;
     }
 
     private void HandleJump() {
@@ -582,6 +622,23 @@ public class Player_MovementSystem : NetworkBehaviour {
     }
     #endregion
 
+    #region Physics
+    private void HandlePlayerPhysicsMaterial() {
+        bool isIdle = movementInput.magnitude == 0;
+
+        if (IsGrounded && (isIdle || _isPaused)) {
+            _frictionMaterial.dynamicFriction = 10f;
+            _frictionMaterial.staticFriction = 10f;
+            _frictionMaterial.frictionCombine = PhysicsMaterialCombine.Maximum;
+        }
+        else {
+            _frictionMaterial.dynamicFriction = 0f;
+            _frictionMaterial.staticFriction = 0f;
+            _frictionMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
+        }
+    }
+    #endregion
+
     #region Raycast
     private void RaycastCheck() {
         Vector3 baseCenter = transform.position + _thisCollider.center - (Vector3.up * ((_thisCollider.height / 2f) - _thisCollider.radius));
@@ -616,9 +673,7 @@ public class Player_MovementSystem : NetworkBehaviour {
         if (!isOwner || HealthSystem.IsDead) return;
 
         RaycastCheck();
-
-        if (GameManager.GetGameState() == GameState.Paused) return;
-
+        HandlePlayerPhysicsMaterial();
         HandleMovement();        
     }
     #endregion

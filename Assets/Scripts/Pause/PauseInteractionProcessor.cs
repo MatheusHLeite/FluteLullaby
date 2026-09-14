@@ -8,9 +8,10 @@ namespace DelightStudio.UI {
     public class PauseInteractionProcessor : MonoBehaviour {
         public static PauseInteractionProcessor Instance;
 
-        [Header("UI")]
+        [Header("References")]
         [SerializeField] private Canvas m_canvas;
         [SerializeField] private Camera m_canvasCamera;
+        [SerializeField] private UI_Drawing m_drawing;
 
         [Header("Book")]
         [SerializeField] private LayerMask m_bookLayer;
@@ -66,6 +67,8 @@ namespace DelightStudio.UI {
         public void SetPlayerReferences(Camera cam, DiaryPageSurface surface) {
             pageSurface = surface;
             playerCamera = cam;
+
+            m_drawing.Setup(pageSurface, playerCamera, m_bookLayer);
         }
 
         public void SetScreenState(bool isPaused) {
@@ -84,24 +87,14 @@ namespace DelightStudio.UI {
         #endregion
 
         #region Cleanup
-
         private void ClearHover(PointerEventData pointerData) {
             if (currentPointerObject == null)
                 return;
 
-            if (pointerData == null) {
-                pointerData =
-                    new PointerEventData(
-                        EventSystem.current
-                    );
-            }
+            if (pointerData == null) 
+                pointerData = new PointerEventData(EventSystem.current);            
 
-            ExecuteEvents.Execute(
-                currentPointerObject,
-                pointerData,
-                ExecuteEvents.pointerExitHandler
-            );
-
+            ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerExitHandler);
             currentPointerObject = null;
         }
 
@@ -122,7 +115,7 @@ namespace DelightStudio.UI {
 
             Vector2 screenPosition = Mouse.current.position.ReadValue();
 
-            if (Mouse.current.leftButton.wasPressedThisFrame)            
+            if (Mouse.current.leftButton.wasPressedThisFrame) 
                 ProcessPointerDown(screenPosition);            
 
             ProcessPointerMove(screenPosition);
@@ -153,7 +146,6 @@ namespace DelightStudio.UI {
 
             if (pressedObject != null) { 
                 pointerData.button = PointerEventData.InputButton.Left;
-
                 ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.dragHandler);
             }
         }
@@ -166,7 +158,22 @@ namespace DelightStudio.UI {
                 return;
 
             GameObject target = results[0].gameObject;
-           
+
+
+
+
+            string uiLog = $"<color=green>[UI Click] Clique na UI registrado!</color>\n";
+            uiLog += $"Alvo principal (O que foi efetivamente clicado): <b>{target.name}</b>\n";
+            uiLog += "Fila de elementos da UI sob o ponteiro (do mais à frente pro fundo):\n";
+            for (int i = 0; i < results.Count; i++)
+            {
+                uiLog += $"  {i}. {results[i].gameObject.name}\n";
+            }
+            Debug.Log(uiLog);
+
+
+
+
             pointerData.button = PointerEventData.InputButton.Left;
 
             pressedObject = target;
@@ -202,21 +209,28 @@ namespace DelightStudio.UI {
         private bool TryGetPointerData(Vector2 mouseScreenPosition, out PointerEventData pointerData, out List<RaycastResult> results) {
             pointerData = null;
             results = null;
+
+            if (playerCamera == null || pageSurface == null || m_canvas == null || m_canvasCamera == null)
+                return false;
+
             Ray ray = playerCamera.ScreenPointToRay(mouseScreenPosition);
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, m_bookLayer, QueryTriggerInteraction.Ignore))            
-                return false;            
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, m_bookLayer, QueryTriggerInteraction.Ignore))
+                return false;
 
-            if (!pageSurface.TryGetNormalizedPosition(hit.point, out Vector2 normalizedPosition)) 
-                return false;            
+            if (!pageSurface.TryGetNormalizedPosition(hit, out Vector2 normalizedPosition))
+                return false;
 
             RectTransform canvasRect = m_canvas.GetComponent<RectTransform>();
             Rect rect = canvasRect.rect;
-            Vector2 canvasLocalPosition = 
-                new Vector2(Mathf.Lerp(rect.xMin, rect.xMax, normalizedPosition.x),
-                Mathf.Lerp(rect.yMin, rect.yMax, normalizedPosition.y));
+
+            Vector2 canvasLocalPosition = new Vector2(
+                Mathf.Lerp(rect.xMin, rect.xMax, normalizedPosition.x),
+                Mathf.Lerp(rect.yMin, rect.yMax, normalizedPosition.y)
+            );
 
             Vector3 worldPosition = canvasRect.TransformPoint(canvasLocalPosition);
+
             Vector2 canvasScreenPosition = m_canvasCamera.WorldToScreenPoint(worldPosition);
 
             pointerData = new PointerEventData(EventSystem.current) {
@@ -225,7 +239,6 @@ namespace DelightStudio.UI {
             };
 
             results = new List<RaycastResult>();
-
             graphicRaycaster.Raycast(pointerData, results);
             return true;
         }

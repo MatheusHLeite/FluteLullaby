@@ -60,8 +60,6 @@ public class Player_InventorySystem : NetworkBehaviour {
     public Transform GetRightHand() => m_rightHand;
     #endregion
 
-    
-
     #region Slot handle
     private void OnSlotSelected(int index, bool isCollecting) {
         bool hasPreviousItem =

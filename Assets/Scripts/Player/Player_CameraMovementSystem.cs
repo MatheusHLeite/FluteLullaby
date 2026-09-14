@@ -87,8 +87,10 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     private Player_InputHandler Input;
     private Player_MovementSystem Movement;
     private Player_HealthSystem HealthSystem;
+
     private MotionBlur motionBlur;
     private VolumeProfile postProcessingVolumeProfile;
+    private Camera firstPersonCamera;
     #endregion
 
     #region Performance Cache
@@ -125,6 +127,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     #region Public variables
     public bool IsZoomed { get; private set; }
     public Camera GetPlayerCamera => m_playerCamera;
+    public Camera GetFirstPersonCamera => firstPersonCamera;
     public Transform GetPlayerCameraHolder => m_playerCameraHolder;
     #endregion
 
@@ -139,6 +142,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         Input = GetComponent<Player_InputHandler>();
         Movement = GetComponent<Player_MovementSystem>();
         HealthSystem = GetComponent<Player_HealthSystem>();
+        firstPersonCamera = m_playerCamera.transform.GetChild(0).GetComponent<Camera>();
 
         originalRotation = m_weaponsHolder.transform.localRotation;
         initialPosition = m_weaponsHolder.transform.localPosition;
@@ -166,6 +170,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         m_cameraCanMove = true;
         m_enableZoom = true;
         m_playerCamera.fieldOfView = m_defaultFov;
+        firstPersonCamera.fieldOfView = 50f;
     }
     #endregion
     
@@ -343,6 +348,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         if (m_playerCamera.fieldOfView != targetFOV)
             m_playerCamera.fieldOfView = Mathf.Lerp(m_playerCamera.fieldOfView, targetFOV, m_zoomStepTime * Time.deltaTime);
+
+       /* if (firstPersonCamera.fieldOfView != targetFOV)
+            firstPersonCamera.fieldOfView = Mathf.Lerp(m_playerCamera.fieldOfView, targetFOV, m_zoomStepTime * Time.deltaTime);*/        
     }
 
     private void HandleNetworkCameraRotation() {
@@ -545,7 +553,6 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         if (Cursor.lockState == CursorLockMode.None) return;
  
         HandleCameraMovement();
-        HandleCameraZoom();
     }
 
     public void FixedTick(bool isOwner) {

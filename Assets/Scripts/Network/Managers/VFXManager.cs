@@ -7,9 +7,12 @@ public class VFXManager : MonoBehaviour {
     [SerializeField] private TrailRenderer m_shotTrail;
     [Header("Decals")]
     [SerializeField] private GameObject m_shotDecal;
+    [Header("Particle system")]
+    [SerializeField] private ParticleSystem m_bloodSplatFX;
 
     private Queue<GameObject> _shotDecalPool = new Queue<GameObject>();
     private Queue<TrailRenderer> _shotTrailPool = new Queue<TrailRenderer>();
+    private Queue<ParticleSystem> _bloodSplatFxPool = new Queue<ParticleSystem>();
 
     private int _poolSize = 90;
     private GameObject decalsParentTransform;
@@ -37,6 +40,11 @@ public class VFXManager : MonoBehaviour {
             trail.gameObject.SetActive(false);
             _shotTrailPool.Enqueue(trail);
             trail.transform.SetParent(decalsParentTransform.transform);
+
+            ParticleSystem bloodSplat = Instantiate(m_bloodSplatFX);
+            bloodSplat.gameObject.SetActive(false);
+            _bloodSplatFxPool.Enqueue(bloodSplat);
+            bloodSplat.transform.SetParent(decalsParentTransform.transform);
         }
     }
 
@@ -71,6 +79,26 @@ public class VFXManager : MonoBehaviour {
     public void ReturnTrail(TrailRenderer trail) {
         trail.gameObject.SetActive(false);
         _shotTrailPool.Enqueue(trail);
+    }
+    #endregion
+
+    #region Blood splat PS Pool
+    public ParticleSystem GetBloodSplatFX() {
+        if (_bloodSplatFxPool.Count > 0)
+            return _bloodSplatFxPool.Dequeue();
+
+        ParticleSystem bloodSplatFx = Instantiate(m_bloodSplatFX);
+        bloodSplatFx.gameObject.SetActive(false);
+
+        return bloodSplatFx;
+    }
+
+    public void ReturnBloodSplatFX(ParticleSystem decal) => StartCoroutine(ReturnBloodSplatFXToPool(decal));
+
+    private IEnumerator ReturnBloodSplatFXToPool(ParticleSystem ps) {
+        yield return new WaitForSeconds(1.5f);
+        ps.gameObject.SetActive(false);
+        _bloodSplatFxPool.Enqueue(ps);
     }
     #endregion
 }

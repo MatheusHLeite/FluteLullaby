@@ -14,6 +14,7 @@ namespace DelightStudio.AI {
         private Enemy_VisualHandler visualHandler;
         private Enemy_Ragdoll ragdoll;
         private Enemy_Combat combat;
+        private Enemy_Animator animator;
         private ProceduralHitReaction hitReactionSystem;
 
         public bool IsDead { get; private set; }
@@ -59,26 +60,58 @@ namespace DelightStudio.AI {
         #endregion
 
         #region Events
-        private void OnDie(Vector3 hitPoint, Vector3 hitDirection, float impact) {
+        private void OnDie(Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart bodyPart) {
             IsDead = true;
    
-            ragdoll.OnAIDied(hitPoint, hitDirection, impact);
+            ragdoll.OnAIDied(hitPoint, hitDirection, impact, bodyPart);
             combat.OnDied();
+
+            if (bodyPart == BodyPart.Head)
+                visualHandler.OnCriticalDeath();
         }
 
-        private void OnDamageTaken(Vector3 hitPosition, Vector3 hitDirection, float staggerAmount, float currentHp) {
-            Singleton.Instance.GameEvents.OnUpdateEnemyFound?.Invoke(m_enemy);
+        private void OnDamageTaken(DamageParameters damageParameters) {
+            Transform hitBone = ragdoll.GetClosestBonePrecisely(damageParameters.hitPosition);
+            if (hitBone != null)
+                hitReactionSystem.PlayHitReaction(hitBone, damageParameters.hitDirection, damageParameters.staggerAmount);
 
-            if (currentHp <= 0) 
+            if (IsDead && damageParameters.bodyPart == BodyPart.Head)
+                visualHandler.OnCriticalDeath(true);
+
+            if (damageParameters.currentHp <= 0)
                 return;
 
-            Transform hitBone = ragdoll.GetClosestBonePrecisely(hitPosition);
+            Singleton.Instance.GameEvents.OnUpdateEnemyFound?.Invoke(m_enemy);
 
-            if (hitBone != null)
-                hitReactionSystem.PlayHitReaction(hitBone, hitDirection, staggerAmount);
+            visualHandler.OnHit(damageParameters.hitPosition, damageParameters.hitDirection);
+            combat.ApplyStaggerAmount(damageParameters.staggerAmount);            
 
-            visualHandler.PlayFlash();
-            combat.ApplyStaggerAmount(staggerAmount);
+            if (!IsServer) 
+                return;
+
+            if (damageParameters.bodyPart == BodyPart.Leg && !ragdoll.IsRagdoll && damageParameters.impact > m_enemy.m_legResistanceAmount) {
+                float chance = m_enemy.m_legShotReactionChance / 100f;
+                float weaponPowerMultiplier = damageParameters.staggerAmount / 60;
+                float multiplier = Mathf.Clamp(weaponPowerMultiplier, 1, 2.5f);
+
+                float randomResult = Random.value;                
+
+                float chanceCalculated = chance * multiplier;
+
+                if (randomResult <= chanceCalculated) 
+                    ragdoll.OnLegHit(damageParameters.hitPosition, damageParameters.hitDirection, damageParameters.impact);                
+            }
+            
+            if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(damageParameters.killerClientId, out NetworkClient attackerClient))
+                return;
+
+            NetworkObject attackerObj = attackerClient.PlayerObject;
+
+            if (attackerObj == null) 
+                return;
+
+            Transform attackerTransform = attackerObj.transform;
+            movement.ReactToDamage(attackerTransform);
         }
 
         private void OnTargetKilled() {

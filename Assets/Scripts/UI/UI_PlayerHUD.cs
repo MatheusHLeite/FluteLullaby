@@ -1,3 +1,4 @@
+using DelightStudio.Data;
 using DG.Tweening;
 using TMPro;
 using Unity.Cinemachine;
@@ -31,6 +32,7 @@ public class UI_PlayerHUD : MonoBehaviour {
     private bool _staminaFull;
 
     private int _crosshairType;
+    private float _lastHealthValue;
 
     private CinemachineImpulseSource _impulseSource;
 
@@ -105,7 +107,8 @@ public class UI_PlayerHUD : MonoBehaviour {
             if (!m_ammo.gameObject.activeSelf) m_ammo.gameObject.SetActive(true);
             m_ammo.text = $"{weapon.GetCurrentAmmo()}/<size=50%>{weapon.GetStockedAmmo()}</size>";
 
-            weaponType = weapon.ThisWeaponClass;
+            Weapon currentWeapon = weapon.GetItem() as Weapon;
+            weaponType = currentWeapon.m_weaponType;
         }
         
         CheckCrosshair(weaponType);
@@ -156,30 +159,38 @@ public class UI_PlayerHUD : MonoBehaviour {
         }
     }
 
-    private void OnDamageTakenScreenVisual() {
+    private void OnDamageTakenScreenVisual(bool isBlocking) {
         int index = Random.Range(0, m_damageTakenScreenEffect.Length);
+
+        float force = isBlocking ? 0.3f : 1.25f;
+        _impulseSource.GenerateImpulseWithForce(force);
+
+        if (isBlocking) 
+            return;
 
         m_damageTakenScreenEffect[index].alpha = 1;
         m_damageTakenScreenEffect[index].DOFade(0, 0.5f).SetDelay(1.7f);
-    
-        _impulseSource.GenerateImpulse();
     }
 
-    private void OnDamageTaken(float currentHealth, float maxHealth) {
-        if (currentHealth < maxHealth)
-            OnDamageTakenScreenVisual();
+    private void OnDamageTaken(float currentHealth, float maxHealth, bool isBlocking) {
+        bool isHealing = currentHealth > _lastHealthValue;
+        _lastHealthValue = currentHealth;
+
+        if (currentHealth < maxHealth && !isHealing)
+            OnDamageTakenScreenVisual(isBlocking);
 
         float fillValue = Mathf.Clamp01(currentHealth / maxHealth);
         Color correctColor = Color.Lerp(m_lowHealthColor, m_defaultHealthColor, fillValue);
-        
+        float delay = isHealing ? 0 : 1.2f;
+
         m_healthBar.DOKill();
         m_healthBarEffect.DOKill();
 
-        m_healthBar.color = Color.red;
+        m_healthBar.color = isHealing ? Color.green : Color.red;
         m_healthBar.DOColor(correctColor, 0.3f);
 
         m_healthBar.DOFillAmount(fillValue, 0.03f);
-        m_healthBarEffect.DOFillAmount(fillValue, 0.25f).SetDelay(1.2f);
+        m_healthBarEffect.DOFillAmount(fillValue, 0.25f).SetDelay(delay);
     }
 
     private void SetSelectedActionText(string text) {

@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -150,10 +151,10 @@ namespace DelightStudio.AI {
             if (fov.CurrentTarget != null)            
                 FaceTarget(fov.CurrentTarget.position);
 
-            if (attackTimer > 0) 
+            if (attackTimer > 0)
                 return;
 
-            animator.PlayAttackAnimation(() => {
+            animator.PlayAttackAnimation(fov.CurrentTarget, () => {
                 ChangeState(EnemyState.Chasing);
             });
             attackTimer = attackCooldown;            
@@ -198,6 +199,15 @@ namespace DelightStudio.AI {
             }
 
             return origin;
+        }
+
+        public void ReactToDamage(Transform attacker) {
+            if (currentState == EnemyState.Idle || currentState == EnemyState.Wandering || currentState == EnemyState.Searching) {
+                fov.AlertToTarget(attacker);
+
+                ChangeState(EnemyState.Chasing);
+                FaceTarget(attacker.position);
+            }
         }
 
         public void Tick() {

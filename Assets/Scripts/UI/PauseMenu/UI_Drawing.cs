@@ -13,8 +13,11 @@ namespace DelightStudio.UI {
         [Header("Notes")]
         [SerializeField] private TMP_InputField if_notes;
 
-        private Color backgroundColor;
+        private Camera playerCamera;
+        private LayerMask bookLayer;
+        private DiaryPageSurface pageSurface;
 
+        private Color backgroundColor;
         private RawImage rawImage;
         private Texture2D texture;
 
@@ -61,6 +64,12 @@ namespace DelightStudio.UI {
             Singleton.Instance.GameEvents.OnGamePaused.RemoveListener(OnGamePaused);
             Singleton.Instance.GameEvents.OnGameResumed.RemoveListener(OnGameResumed);
             Singleton.Instance.GameEvents.OnScreenSwitch.RemoveListener(SaveData);
+        }
+
+        public void Setup(DiaryPageSurface surface, Camera playerCam, LayerMask layer) {
+            playerCamera = playerCam;
+            pageSurface = surface;
+            bookLayer = layer;
         }
 
         private void Start() {
@@ -182,18 +191,12 @@ namespace DelightStudio.UI {
             }
 
             byte[] pngData = texture.EncodeToPNG();
-
             return Convert.ToBase64String(pngData);
         }
         #endregion
 
         #region Input
         private void CheckEraser() {
-            /*if (eventData.button == PointerEventData.InputButton.Left && eraserEnabled)
-                eraserEnabled = false;
-            if (eventData.button == PointerEventData.InputButton.Right && !eraserEnabled)
-                eraserEnabled = true;*/
-
             if (Input.GetMouseButton(0) && eraserEnabled)
                 eraserEnabled = false;
             if (Input.GetMouseButton(1) && !eraserEnabled)
@@ -207,8 +210,6 @@ namespace DelightStudio.UI {
             isDrawing = true;
             previousPixel = pixel;
             
-            DrawCircle(pixel.x, pixel.y);
-
             textureDirty = true;
             OnNotesEdited();
         }
@@ -228,7 +229,6 @@ namespace DelightStudio.UI {
             textureDirty = true;
         }
 
-
         public void OnPointerUp(PointerEventData eventData) {
             isDrawing = false;
         }
@@ -238,31 +238,44 @@ namespace DelightStudio.UI {
         private bool TryGetPixelPosition(PointerEventData eventData, out Vector2Int pixel) {
             pixel = default;
 
-            if (rawImage == null || texture == null)
+            if (rawImage == null || texture == null || playerCamera == null || pageSurface == null)
                 return false;
 
-            RectTransform rectTransform = rawImage.rectTransform;
-
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                rectTransform,
-                eventData.position,
-                eventData.pressEventCamera,
-                out Vector2 localPoint)) {
+            if (eventData.pointerId < 0)
                 return false;
-            }
 
-            Rect rect = rectTransform.rect;
-
-            float normalizedX = Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x);
-            float normalizedY = Mathf.InverseLerp(rect.yMin, rect.yMax, localPoint.y);
-
-            if (normalizedX < 0f || normalizedX > 1f ||
-                normalizedY < 0f || normalizedY > 1f) {
+            Ray ray = playerCamera.ScreenPointToRay(eventData.position);
+            if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, bookLayer, QueryTriggerInteraction.Ignore))
                 return false;
-            }
 
-            int x = Mathf.RoundToInt(normalizedX * (textureWidth - 1));
-            int y = Mathf.RoundToInt(normalizedY * (textureHeight - 1));
+            if (!pageSurface.TryGetNormalizedPosition(hit, out Vector2 pageNormalized))
+                return false;
+
+            Canvas canvas = rawImage.canvas;
+            if (canvas == null)
+                return false;
+
+            RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+            Rect cRect = canvasRect.rect;
+
+            Vector2 canvasLocalPoint = new Vector2(
+                Mathf.Lerp(cRect.xMin, cRect.xMax, pageNormalized.x),
+                Mathf.Lerp(cRect.yMin, cRect.yMax, pageNormalized.y)
+            );
+
+            Vector3 worldPoint = canvasRect.TransformPoint(canvasLocalPoint);
+
+            Vector3 rawLocalPoint = rawImage.rectTransform.InverseTransformPoint(worldPoint);
+            Rect rRect = rawImage.rectTransform.rect;
+
+            float normalizedX = Mathf.InverseLerp(rRect.xMin, rRect.xMax, rawLocalPoint.x);
+            float normalizedY = Mathf.InverseLerp(rRect.yMin, rRect.yMax, rawLocalPoint.y);
+
+            if (normalizedX < 0f || normalizedX > 1f || normalizedY < 0f || normalizedY > 1f)
+                return false;
+
+            int x = Mathf.Clamp(Mathf.RoundToInt(normalizedX * (textureWidth - 1)), 0, textureWidth - 1);
+            int y = Mathf.Clamp(Mathf.RoundToInt(normalizedY * (textureHeight - 1)), 0, textureHeight - 1);
 
             pixel = new Vector2Int(x, y);
             return true;

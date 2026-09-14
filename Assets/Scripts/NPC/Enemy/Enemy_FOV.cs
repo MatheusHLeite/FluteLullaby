@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -7,10 +8,13 @@ namespace DelightStudio.AI {
         [SerializeField] private float m_viewRadius = 10f;
         [Range(0, 360)][SerializeField] private float m_viewAngle = 90f;
 
-        public LayerMask targetMask;
-        public LayerMask obstacleMask;
+        [SerializeField] private LayerMask targetMask;
+        [SerializeField] private LayerMask obstacleMask;
 
-        public Transform eyePoint;
+        [SerializeField] private Transform eyePoint;
+
+        private bool isTargetAlerted;
+        private float timeToForgetTarget = 10f;
 
         public Transform CurrentTarget { get; private set; }
         public Vector3 LastSeenPosition { get; private set; }
@@ -18,8 +22,23 @@ namespace DelightStudio.AI {
         public event UnityAction<ulong> OnFOVEntered;
         public event UnityAction OnFOVExit;
 
+        private Coroutine alertRoutine;
+
         private void FindTargets() {
-            CurrentTarget = null;
+            if (isTargetAlerted) 
+                return;
+
+            if (CurrentTarget != null) {
+                Vector3 dirToCurrent = (CurrentTarget.position - eyePoint.position).normalized;
+                float distToCurrent = Vector3.Distance(eyePoint.position, CurrentTarget.position);
+
+                if (distToCurrent <= m_viewRadius * 2.5f && !Physics.Raycast(eyePoint.position, dirToCurrent, distToCurrent, obstacleMask)) {
+                    LastSeenPosition = CurrentTarget.position;
+                    return;
+                }
+                else                
+                    CurrentTarget = null;           
+            }
 
             Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, m_viewRadius, targetMask);
 
@@ -36,6 +55,24 @@ namespace DelightStudio.AI {
                     }
                 }
             }
+        }
+
+        public void AlertToTarget(Transform attacker) {
+            if (isTargetAlerted)
+                return;
+            isTargetAlerted = true;
+
+            CurrentTarget = attacker;
+            LastSeenPosition = attacker.position;
+
+            if (alertRoutine != null)
+                StopCoroutine(alertRoutine);
+            alertRoutine = StartCoroutine(ResetAlertRoutine());
+        }
+
+        private IEnumerator ResetAlertRoutine() {
+            yield return new WaitForSeconds(timeToForgetTarget);
+            isTargetAlerted = false;
         }
 
         private void OnDrawGizmosSelected() {

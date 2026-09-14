@@ -91,7 +91,7 @@ public interface IWeapon {
 }
 
 public interface IDamageable {
-    void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact);
+    void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, NetworkObject attacker);
 }
 
 public enum WeaponClass { None = 0, Revolver = 1, Shotgun = 2, Melee = 3 }

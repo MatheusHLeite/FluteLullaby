@@ -18,7 +18,7 @@ MonoBehaviour:
     devastating up close.
   m_itemPrefab: {fileID: 8580961907081263343, guid: 4e5477c4d5ca66440bb54f0e4a7928a6, type: 3}
   m_itemType: 1
-  m_itemRarity: 4
+  m_itemRarity: 6
   m_itemPositionOffset: {x: 0.017, y: -0.03, z: 0}
   m_itemRotationOffset: {x: 16.44, y: 2.4, z: 9.12}
   m_itemSpawnRotation: {x: 0, y: 0, z: 0}
@@ -26,10 +26,11 @@ MonoBehaviour:
   m_showcaseItemScale: {x: 1.05, y: 1.05, z: 1.05}
   id: 087058f1-9013-4d3a-9af6-80d88f97d729
   m_damage: 100
+  m_impactForce: 110
   m_weaponType: 2
   m_overrideController: {fileID: 22100000, guid: c021ddbcc0d474d4da563350cb740a2a, type: 2}
   m_maxAmmo: 2
   m_range: 30
   m_recoilForce: 45
-  m_impactForce: 170
+  m_fireRate: 0.2
   m_ammo: {fileID: 11400000, guid: 20a81a40735b486469897699f72fdd0c, type: 2}
