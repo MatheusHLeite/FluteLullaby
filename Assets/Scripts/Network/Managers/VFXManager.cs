@@ -9,6 +9,7 @@ public class VFXManager : MonoBehaviour {
     [SerializeField] private GameObject m_shotDecal;
     [Header("Particle system")]
     [SerializeField] private ParticleSystem m_bloodSplatFX;
+    [SerializeField] private ParticleSystem[] m_hitEffects;
 
     private Queue<GameObject> _shotDecalPool = new Queue<GameObject>();
     private Queue<TrailRenderer> _shotTrailPool = new Queue<TrailRenderer>();
@@ -79,6 +80,13 @@ public class VFXManager : MonoBehaviour {
     public void ReturnTrail(TrailRenderer trail) {
         trail.gameObject.SetActive(false);
         _shotTrailPool.Enqueue(trail);
+    }
+    #endregion
+
+    #region Hit effects
+    public ParticleSystem GetRandomHitEffect() {
+        int randomValue = Random.Range(0, m_hitEffects.Length); 
+        return m_hitEffects[randomValue];
     }
     #endregion
 

@@ -29,6 +29,11 @@ namespace DelightStudio.UI {
         private GameObject currentPointerObject; 
         private GameObject pressedObject;
 
+        private GameObject dragObject;
+        private bool isDragging;
+        private Vector2 pressPosition;
+        private const float DragThreshold = 5f;
+
         public static PointerEventData pointerData;
 
         #region Initialization
@@ -100,6 +105,8 @@ namespace DelightStudio.UI {
 
         private void ClearPress() {
             pressedObject = null;
+            dragObject = null;
+            isDragging = false;
         }
 
         private void ClearPointer() {
@@ -125,12 +132,27 @@ namespace DelightStudio.UI {
         }
         #endregion
 
+        private void DebugUIElementClicked(List<RaycastResult> results) {
+            GameObject target = results[0].gameObject;
+
+            string uiLog = $"<color=green>[UI Click] Clique na UI registrado!</color>\n";
+            uiLog += $"Alvo principal (O que foi efetivamente clicado): <b>{target.name}</b>\n";
+            uiLog += "Fila de elementos da UI sob o ponteiro (do mais à frente pro fundo):\n";
+            for (int i = 0; i < results.Count; i++)            
+                uiLog += $"  {i}. {results[i].gameObject.name}\n";   
+            
+            Debug.Log(uiLog);
+        }
+
         #region Pointer
         private void ProcessPointerMove(Vector2 screenPosition) {
             if (!TryGetPointerData(screenPosition, out pointerData, out List<RaycastResult> results)) {
                 ClearHover(pointerData);
                 return;
             }
+
+            if (results.Count > 0)
+                pointerData.pointerCurrentRaycast = results[0];
 
             GameObject newObject = results.Count > 0 ? results[0].gameObject : null;
 
@@ -144,10 +166,28 @@ namespace DelightStudio.UI {
                     ExecuteEvents.Execute(currentPointerObject, pointerData, ExecuteEvents.pointerEnterHandler);
             }
 
-            if (pressedObject != null) { 
-                pointerData.button = PointerEventData.InputButton.Left;
-                ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.dragHandler);
+            if (pressedObject == null)
+                return;
+
+            pointerData.button = PointerEventData.InputButton.Left;
+
+            if (!isDragging) {
+                float distance = Vector2.Distance(screenPosition, pressPosition);
+
+                if (distance < DragThreshold)
+                    return;
+
+                isDragging = true;
+                dragObject = pressedObject;
+
+                pointerData.pointerDrag = dragObject;
+
+                ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.initializePotentialDrag);
+                ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.beginDragHandler);
             }
+
+            pointerData.pointerDrag = dragObject;
+            ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.dragHandler);
         }
 
         private void ProcessPointerDown(Vector2 screenPosition) {
@@ -159,25 +199,12 @@ namespace DelightStudio.UI {
 
             GameObject target = results[0].gameObject;
 
-
-
-
-            string uiLog = $"<color=green>[UI Click] Clique na UI registrado!</color>\n";
-            uiLog += $"Alvo principal (O que foi efetivamente clicado): <b>{target.name}</b>\n";
-            uiLog += "Fila de elementos da UI sob o ponteiro (do mais à frente pro fundo):\n";
-            for (int i = 0; i < results.Count; i++)
-            {
-                uiLog += $"  {i}. {results[i].gameObject.name}\n";
-            }
-            Debug.Log(uiLog);
-
-
-
-
-            pointerData.button = PointerEventData.InputButton.Left;
+            DebugUIElementClicked(results);
 
             pressedObject = target;
+            pressPosition = screenPosition;
 
+            pointerData.button = PointerEventData.InputButton.Left;
             pointerData.pointerPress = target;
             pointerData.rawPointerPress = target;
 
@@ -186,19 +213,36 @@ namespace DelightStudio.UI {
 
         private void ProcessPointerUp(Vector2 screenPosition) {
             if (!TryGetPointerData(screenPosition, out PointerEventData pointerData, out List<RaycastResult> results)) {
+                if (isDragging && dragObject != null) {
+                    ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.endDragHandler);
+                }
+
                 ClearPress();
                 return;
             }
+
+            if (results.Count > 0)
+                pointerData.pointerCurrentRaycast = results[0];
 
             GameObject currentObject =results.Count > 0 ? results[0].gameObject : null;
 
             pointerData.button = PointerEventData.InputButton.Left;
 
             if (pressedObject != null) {
-                ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerUpHandler);
+                pointerData.pointerPress = pressedObject;
+                pointerData.rawPointerPress = pressedObject;
 
-                if (currentObject == pressedObject)
-                    ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerClickHandler);
+                if (isDragging) {
+                    pointerData.pointerDrag = dragObject;
+
+                    ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.endDragHandler);
+                }
+                else{
+                    ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerUpHandler );
+
+                    if (currentObject == pressedObject) 
+                        ExecuteEvents.Execute(pressedObject, pointerData, ExecuteEvents.pointerClickHandler);                    
+                }
             }
 
             ClearPress();

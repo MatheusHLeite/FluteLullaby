@@ -1,4 +1,3 @@
-using DelightStudio.AI;
 using Steamworks;
 using System.Collections;
 using TMPro;
@@ -17,8 +16,14 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
     [SerializeField] private GameObject m_indicator;
     [SerializeField] private GameObject m_indicatorHolder;
 
+    [Header("VFX")]
+    [SerializeField] private GameObject m_parryVFX;
+    [SerializeField] private GameObject m_defenseBrokenVFX;
+
+    private enum VisualEffectsType { ParryFX, DefenseFX }
+
     private Player_CameraMovementSystem CameraSystem;
-    public NetworkVariable<FixedString64Bytes> PlayerName = new NetworkVariable<FixedString64Bytes>(writePerm: NetworkVariableWritePermission.Server);
+    private NetworkVariable<FixedString64Bytes> PlayerName = new NetworkVariable<FixedString64Bytes>(writePerm: NetworkVariableWritePermission.Server);
 
     private void Awake() {
         CameraSystem = GetComponent<Player_CameraMovementSystem>();
@@ -57,6 +62,7 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
         Singleton.Instance.GameEvents.OnShot.RemoveListener(OnShot);
     }
 
+    #region VFX
     private void OnShot(Vector3 initialPoint, RaycastHit targetPos, Vector3 direction) {
         TrailRenderer newTrail = Singleton.Instance.VFXManager.GetShotTrail();        
         newTrail.transform.rotation = Quaternion.LookRotation(direction);
@@ -106,6 +112,45 @@ public class Player_VisualManagementSystem : NetworkBehaviour {
 
         Singleton.Instance.VFXManager.ReturnTrail(trail);
     }
+
+    public void OnParry(Vector3 pos) {
+        Singleton.Instance.GlobalTimeManager.TriggerParrySlowMotion(2f);
+        RequestVFXSpawn(pos, VisualEffectsType.ParryFX);
+    }
+
+    public void OnDefenseBroken(Vector3 pos) {
+        RequestVFXSpawn(pos, VisualEffectsType.DefenseFX);
+    }
+
+    private void RequestVFXSpawn(Vector3 pos, VisualEffectsType visualEffectsType) {
+        if (IsServer)
+            PlayVFXRpc(pos, visualEffectsType);
+        else
+            RequestVFXSpawnRpc(pos, visualEffectsType);
+    }
+
+    [Rpc(SendTo.Server)]
+    private void RequestVFXSpawnRpc(Vector3 position, VisualEffectsType visualEffectsType) => PlayVFXRpc(position, visualEffectsType);
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void PlayVFXRpc(Vector3 position, VisualEffectsType visualEffectsType) {
+        GameObject correctFX = GetCorrectFX(visualEffectsType);
+
+        if (correctFX == null)
+            return;
+
+        GameObject vfxInstance = Instantiate(correctFX, position, Quaternion.LookRotation(transform.forward));
+        Destroy(vfxInstance, 3f);
+    }
+
+    private GameObject GetCorrectFX(VisualEffectsType visualEffectsType) {
+        return visualEffectsType switch {
+            VisualEffectsType.DefenseFX => m_defenseBrokenVFX,
+            VisualEffectsType.ParryFX => m_parryVFX,
+            _ => null
+        };
+    }
+    #endregion
 
     private void OnPlayerIndicatorChanged(int index) {
         bool nameIndicator = true;

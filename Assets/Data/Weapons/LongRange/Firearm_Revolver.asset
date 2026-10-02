@@ -32,4 +32,9 @@ MonoBehaviour:
   m_range: 100
   m_recoilForce: 22.5
   m_fireRate: 0
+  m_minSpread: 0
+  m_maxSpread: 15
+  m_spreadPerShot: 3
+  m_spreadRecovery: 0.55
+  m_defaultSpreadRecoveryTime: 6
   m_ammo: {fileID: 11400000, guid: e44370350b4395c4faba237aae2bc481, type: 2}

@@ -10,7 +10,6 @@ public class GameManager : MonoBehaviour {
     [Header("Setup")]
     [SerializeField] private List<Item_SO> m_allGameItems = new List<Item_SO>();
     [SerializeField] private List<BodyPartDamageMultiplier> m_bodyPartDamageMultiplier = new List<BodyPartDamageMultiplier>();
-    [SerializeField] private List<Transform> m_spawnPoints = new List<Transform>();
     [SerializeField] private List<Rarities> m_rarities = new List<Rarities>();
 
     [Header("Prefabs references")]
@@ -57,8 +56,6 @@ public class GameManager : MonoBehaviour {
         return m_bodyPartDamageMultiplier.Where(bp => bp.m_bodyPart == bodyPart).Select(bp => bp.m_damageMultiplier).FirstOrDefault();
     }
 
-    public Vector3 GetRandomSpawnPos() => m_spawnPoints[UnityEngine.Random.Range(0, m_spawnPoints.Count)].position;
-
     public List<Item_SO> GetAllItems() => m_allGameItems;
 
     public static GameState GetGameState() => GameState;
@@ -88,6 +85,7 @@ public interface IInteractable {
 public interface IWeapon {
     void Fire(Player_CombatSystem combat);
     void Reload(Player_CombatSystem combat);
+    WeaponClass GetWeaponClass();
 }
 
 public interface IDamageable {
@@ -141,6 +139,7 @@ public enum StatisticId {
     EnemiesKilled
 }
 
+public enum CriticalIndicator { Health, Stamina }
 
 [System.Serializable]
 public struct Statistic {

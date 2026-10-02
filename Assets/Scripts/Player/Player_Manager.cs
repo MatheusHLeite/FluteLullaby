@@ -1,12 +1,15 @@
 using DelightStudio.Player;
 using System.Collections;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class Player_Manager : NetworkBehaviour {
     [Header("Setup")]
     [SerializeField] private PlayerParameters_SO m_playerParameters;
     [SerializeField] private Camera m_playerCamera;
+
+    private NetworkTransform NTransform;
 
     private Player_AnimationSystem playerAnimationSystem;
     private Player_AudioSystem playerAudioSystem;
@@ -22,7 +25,12 @@ public class Player_Manager : NetworkBehaviour {
     private Player_VoiceChat playerVoiceChat;
     private Player_FlaskManager playerFlaskManager;
 
+    public Camera GetPlayerCamera() => m_playerCamera;
+
+    #region Initialization
     private void Awake() {
+        NTransform = GetComponent<NetworkTransform>();
+
         playerAnimationSystem = GetComponent<Player_AnimationSystem>();
         playerAudioSystem = GetComponent<Player_AudioSystem>();
         PlayerCameraMovementSystem = GetComponent<Player_CameraMovementSystem>();
@@ -41,9 +49,9 @@ public class Player_Manager : NetworkBehaviour {
     public override void OnNetworkSpawn() => InitializeComponents();
 
     public override void OnNetworkDespawn() => DeinitializeComponents();
+    #endregion
 
-    public Camera GetPlayerCamera() => m_playerCamera;
-
+    #region Initializatin
     private void InitializeComponents() {
         bool isOwner = IsOwner;
 
@@ -89,7 +97,31 @@ public class Player_Manager : NetworkBehaviour {
 
         Singleton.Instance.GameEvents.OnPlayerLoaded?.Invoke(this);
     }
+    #endregion
 
+    #region Teleport
+    [Rpc(SendTo.Server)]
+    private void TeleportPlayerRpc() {
+        TeleportClientRpc(transform.position, transform.rotation, Vector3.one, new ClientRpcParams {
+            Send = new ClientRpcSendParams {
+                TargetClientIds = new ulong[] { NetworkObject.OwnerClientId }
+            }
+        });
+    }
+
+    [ClientRpc]
+    private void TeleportClientRpc(Vector3 pos, Quaternion rot, Vector3 scale, ClientRpcParams clientParams = default) 
+        => NTransform.Teleport(pos, rot, scale);
+    #endregion
+
+    #region Events
+    public void OnPlayerRevived() {
+        m_playerCamera.transform.localPosition = Vector3.zero;
+        m_playerCamera.transform.localRotation = Quaternion.identity;
+    }
+    #endregion
+
+    #region  Updates
     private void Update() {
         bool isOwner = IsOwner;
 
@@ -116,4 +148,5 @@ public class Player_Manager : NetworkBehaviour {
 
         playerInputHandler.LateTick(isOwner);
     }
+    #endregion
 }

@@ -28,9 +28,7 @@ namespace DelightStudio.Player {
             if (!isOwner) return;
 
             PlayerSaveData data = Singleton.Instance.SaveManager.PlayerData;
-            flaskAmount = 5; //[TODO] Add to saving system
-
-            UpdateUI();
+            OnFlaskAdded(5); //[TODO] Add to saving system
         }
 
         private void DrinkFlask() {
@@ -46,6 +44,8 @@ namespace DelightStudio.Player {
         public void OnFlashDrankEvent() {
             flaskAmount--;
             healthSystem.Heal(flaskHealthAmount);
+
+            UpdateUI();
 
             if (IsServer)
                 PlayHealParticleRpc();            
@@ -68,13 +68,13 @@ namespace DelightStudio.Player {
             m_healFlask.SetActive(false); 
         }
 
-        public void OnFlaskAdded() {
-            flaskAmount++;
+        public void OnFlaskAdded(int amount) {
+            flaskAmount += amount;
             UpdateUI();
         }
 
         private void UpdateUI() {
-            //evento da UI
+            Singleton.Instance.GameEvents.OnFlaskAmountUpdated?.Invoke(flaskAmount);
         }
 
         public void Tick(bool isOwner) {

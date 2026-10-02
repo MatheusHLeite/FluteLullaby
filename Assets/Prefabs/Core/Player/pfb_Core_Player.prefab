@@ -3280,6 +3280,7 @@ MonoBehaviour:
   m_playerCameraHolder: {fileID: 1079605932885980738}
   m_weaponsHolder: {fileID: 3238552059071448730}
   m_playerCamera: {fileID: 3387822892132135912}
+  m_handsTransformMovement: {fileID: 7163485850856818008}
   swayIntensity: 0.075
   swaySmoothness: 4
   swayMovementIntensity: 0.01
@@ -3307,6 +3308,19 @@ MonoBehaviour:
   sprintBobAmount: 0.315
   jumpBobAmount: 0.3
   landBobAmount: 0.9
+  m_armsRestPosition: {x: 0, y: -0.323, z: 0.224}
+  m_handsForwardBackwardAmount: 0.125
+  m_handsSideAmount: 0.1
+  m_handsMovementSmooth: 8
+  m_handsInertiaAmount: 0.065
+  m_handsInertiaSmooth: 7
+  m_handsLookSwayAmount: 0.003
+  m_handsLookSwaySmooth: 12
+  m_handsBobAmount: 0.012
+  m_handsBobSmooth: 10
+  m_handsLookRotationAmount: 0.015
+  m_handsRotationSmooth: 8
+  m_handsPositionLimit: {x: 0.18, y: 0, z: 0.245}
 --- !u!114 &5411995304523090221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3320,14 +3334,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  m_parryVFX: {fileID: 1303102526221522, guid: 6c7761bc9a843da409235177477c7db3, type: 3}
-  m_defenseBrokenVFX: {fileID: 139844, guid: bd9cbf3a6ae77524788b4bbdb5422498, type: 3}
   m_parryWindowDuration: 0.25
   m_parrySpamPenalty: 0.5
-  IsBlocking_NV:
-    m_InternalValue: 0
-  IsParryActive_NV:
-    m_InternalValue: 0
 --- !u!114 &7646962963957074228
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3376,6 +3384,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+  m_reviveHealthPercentageAmount: 40
 --- !u!114 &1083899724122043962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3391,6 +3400,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   m_fullBodyAnimator: {fileID: 264613001944911014}
   m_handsAnimator: {fileID: 2454976041807889717}
+  m_camera: {fileID: 5066780774256794730}
   m_animationSmoothness: 8
   ragdollBodies:
   - {fileID: 6453651065967344213}
@@ -3425,75 +3435,8 @@ MonoBehaviour:
   m_nameIndicator: {fileID: 4859149709178767087}
   m_indicator: {fileID: 366555099020118485}
   m_indicatorHolder: {fileID: 3756091104604983358}
-  PlayerName:
-    m_InternalValue:
-      utf8LengthInBytes: 0
-      bytes:
-        offset0000:
-          byte0000: 0
-          byte0001: 0
-          byte0002: 0
-          byte0003: 0
-          byte0004: 0
-          byte0005: 0
-          byte0006: 0
-          byte0007: 0
-          byte0008: 0
-          byte0009: 0
-          byte0010: 0
-          byte0011: 0
-          byte0012: 0
-          byte0013: 0
-          byte0014: 0
-          byte0015: 0
-        offset0016:
-          byte0000: 0
-          byte0001: 0
-          byte0002: 0
-          byte0003: 0
-          byte0004: 0
-          byte0005: 0
-          byte0006: 0
-          byte0007: 0
-          byte0008: 0
-          byte0009: 0
-          byte0010: 0
-          byte0011: 0
-          byte0012: 0
-          byte0013: 0
-          byte0014: 0
-          byte0015: 0
-        offset0032:
-          byte0000: 0
-          byte0001: 0
-          byte0002: 0
-          byte0003: 0
-          byte0004: 0
-          byte0005: 0
-          byte0006: 0
-          byte0007: 0
-          byte0008: 0
-          byte0009: 0
-          byte0010: 0
-          byte0011: 0
-          byte0012: 0
-          byte0013: 0
-          byte0014: 0
-          byte0015: 0
-        byte0048: 0
-        byte0049: 0
-        byte0050: 0
-        byte0051: 0
-        byte0052: 0
-        byte0053: 0
-        byte0054: 0
-        byte0055: 0
-        byte0056: 0
-        byte0057: 0
-        byte0058: 0
-        byte0059: 0
-        byte0060: 0
-        byte0061: 0
+  m_parryVFX: {fileID: 1132206551871088, guid: cb8a83b63e008134da9393db9af8915f, type: 3}
+  m_defenseBrokenVFX: {fileID: 139844, guid: bd9cbf3a6ae77524788b4bbdb5422498, type: 3}
 --- !u!114 &1864122820044978215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5943,7 +5886,7 @@ Transform:
   m_Children:
   - {fileID: 4116962923009334550}
   - {fileID: 3238552059071448730}
-  m_Father: {fileID: 8249561724443410011}
+  m_Father: {fileID: 5163779972096427900}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &3387822892132135912
 Camera:
@@ -6614,6 +6557,7 @@ Transform:
   m_Children:
   - {fileID: 7163485850856818008}
   - {fileID: 6185935756069620718}
+  - {fileID: 5066780774256794730}
   m_Father: {fileID: 8249561724443410011}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &2454976041807889717
@@ -6743,7 +6687,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5066780774256794730}
   - {fileID: 3929323106990168414}
   - {fileID: 5163779972096427900}
   m_Father: {fileID: 1079605932885980738}

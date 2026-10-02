@@ -79,7 +79,7 @@ Material:
     - _EmissionMultiply: 0
     - _EnvironmentReflections: 1
     - _ErosionIntensity: 0.05
-    - _ErosionSmoothness: 1
+    - _ErosionSmoothness: 1.01
     - _FlatColor: 0
     - _HueShift: 0
     - _IsAdd: 1
@@ -100,9 +100,9 @@ Material:
     - _MaskErosion: 0
     - _MaskErosionSmooth: 0.01
     - _Metallic: 0
-    - _NormalIntensity: 1
+    - _NormalIntensity: 1.25
     - _OpacityMaskErosion: 0
-    - _OpacityMaskErosionSmoothness: 1
+    - _OpacityMaskErosionSmoothness: 1.16
     - _OpacityMultiply: 1
     - _ParticleColorLUT: 0
     - _PixelateSize: 0.03
@@ -122,3 +122,4 @@ Material:
     - _NoiseDistortionUVPan: {r: 0, g: 0, b: 0, a: 0}
     - _NoiseDistortionUVS: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

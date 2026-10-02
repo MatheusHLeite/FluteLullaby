@@ -71,6 +71,8 @@ public class Player_MovementSystem : NetworkBehaviour {
     private float _staminaRegenCooldown;
     private float _lastStaminaConsumption;
 
+    private bool _staminaCriticalUISet;
+
     private bool _isPaused => GameManager.GetGameState() == GameState.Paused;
     #endregion
 
@@ -115,6 +117,7 @@ public class Player_MovementSystem : NetworkBehaviour {
     public bool IsGrounded { get; private set; }
     public bool IsSprinting { get; private set; }
     public bool IsCrouched { get; private set; }
+    public bool IsMoving => _rb.linearVelocity.magnitude > 0.1f;   
     public bool IsDashing => _isDashing;
     public bool IsSliding => _isSliding;
     public float StaminaRemaining => _staminaRemaining;
@@ -339,15 +342,16 @@ public class Player_MovementSystem : NetworkBehaviour {
         if (IsSprinting) {
             _staminaRemaining -= Time.deltaTime * m_runningStaminaCost;
             _staminaRegenCooldown = Time.time + m_staminaRegenCooldownTime;
+
+            if (_staminaRemaining < GetStaminaPercentage(10))
+                SetCriticalStaminaLevel();
+
             if (_staminaRemaining <= 0) {
                 IsSprinting = false;
                 _sprintOnCooldown = true;
             }
             return;
         }
-
-        if (_staminaRegenCooldown < Time.time) 
-            _staminaRemaining = Mathf.Clamp(_staminaRemaining += Time.deltaTime * m_staminaRecoverSpeed, 0, m_maxStamina);        
 
         if (_sprintOnCooldown) {
             m_sprintCooldown -= Time.deltaTime;
@@ -357,23 +361,6 @@ public class Player_MovementSystem : NetworkBehaviour {
         }
 
         m_sprintCooldown = _sprintCooldownReset;
-    }
-
-    public bool ConsumeStamina(float stamina = 2f, UnityAction onDefenseBroken = default) {
-        _staminaRemaining -= stamina;
-        _staminaRemaining = Mathf.Clamp(_staminaRemaining, 0, m_maxStamina);
-
-        _staminaRegenCooldown = Time.time + (m_staminaRegenCooldownTime * 2f);
-
-        if (_staminaRemaining <= 0) {
-            IsSprinting = false;
-            _sprintOnCooldown = true;
-
-            onDefenseBroken?.Invoke();
-            return false;
-        }
-
-        return true;
     }
 
     private void HandleJump() {
@@ -424,9 +411,14 @@ public class Player_MovementSystem : NetworkBehaviour {
 
         bool hasMovementInput = movementInput.magnitude > 0.1f;
         bool isNotHoldingSprint = !_sprintHoldActive;
-        bool hasEnoughStamina = m_unlimitedSprint || _staminaRemaining >= m_dashStaminaCost;
+        float currentStaminaValue = m_unlimitedSprint ? 0 : m_dashStaminaCost;
 
-        if (Input.Dash && _dashCooldownTimer <= 0f && !IsCrouched && !_isSliding && hasMovementInput && isNotHoldingSprint && hasEnoughStamina) {
+        if (Input.Dash && _dashCooldownTimer <= 0f && !IsCrouched && !_isSliding && hasMovementInput && isNotHoldingSprint) {
+            if (!ConsumeStamina(currentStaminaValue, false)) {
+                SetCriticalStaminaLevel();
+                return;
+            }
+
             PerformDash();
             Input.ConsumeDash();
         }
@@ -557,11 +549,55 @@ public class Player_MovementSystem : NetworkBehaviour {
         }
     }
 
+    private float GetStaminaPercentage(float percentage) {
+        float percentageCalculated = percentage / 100;
+        return m_maxStamina * percentageCalculated;
+    }
+
     private void HandleStamina() {
         if (_lastStaminaConsumption != _staminaRemaining) {
             _lastStaminaConsumption = _staminaRemaining;
             Singleton.Instance.GameEvents.OnStaminaConsume?.Invoke(_staminaRemaining);
         }
+
+        if (IsSprinting || _staminaRegenCooldown >= Time.time)
+            return;
+
+        _staminaRemaining = Mathf.Clamp(_staminaRemaining += Time.deltaTime * m_staminaRecoverSpeed, 0, m_maxStamina);
+
+        if (_staminaRemaining > GetStaminaPercentage(20) && _staminaCriticalUISet) {
+            Singleton.Instance.GameEvents.OnCriticalIndicatorShow?.Invoke(CriticalIndicator.Stamina, false);
+            _staminaCriticalUISet = false;
+        }
+    }
+
+    public bool ConsumeStamina(float staminaToConsume, bool forceConsumption, UnityAction onDefenseBroken = default) {
+        if (_staminaRemaining < staminaToConsume && !forceConsumption)
+            return false;
+
+        _staminaRemaining -= staminaToConsume;
+        _staminaRemaining = Mathf.Clamp(_staminaRemaining, 0, m_maxStamina);
+
+        _staminaRegenCooldown = Time.time + (m_staminaRegenCooldownTime * 2f);
+
+        if (_staminaRemaining <= 0) {
+            SetCriticalStaminaLevel();
+
+            IsSprinting = false;
+            _sprintOnCooldown = true;
+
+            onDefenseBroken?.Invoke();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void SetCriticalStaminaLevel() {
+        if (_staminaCriticalUISet) return;
+
+        Singleton.Instance.GameEvents.OnCriticalIndicatorShow?.Invoke(CriticalIndicator.Stamina, true);
+        _staminaCriticalUISet = true;
     }
 
     private void Crouch() {
@@ -608,10 +644,8 @@ public class Player_MovementSystem : NetworkBehaviour {
         _isDashing = true;
         _dashTimer = m_dashDuration;
 
-        if (!m_unlimitedSprint) {
-            _staminaRemaining -= m_dashStaminaCost;
-            _staminaRemaining = Mathf.Max(_staminaRemaining, 0f);
-        }
+        if (!ConsumeStamina(m_dashStaminaCost, false))
+            SetCriticalStaminaLevel();
 
         _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
         _rb.AddForce(_dashDirection * m_dashForce, ForceMode.VelocityChange);

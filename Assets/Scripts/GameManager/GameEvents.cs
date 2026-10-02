@@ -34,7 +34,7 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<ItemData, int> OnItemSplit { get; private set; } = new();        
     public UnityEvent<int, int> OnQuickSlotItemUpdated { get; private set; } = new();
     public UnityEvent<ItemData, int, int> OnInventoryItemSlotChanged { get; private set; } = new();
-    public UnityEvent<Weapon_Firearm> OnAmmoUISet { get; private set; } = new();
+    public UnityEvent<IWeapon, bool> OnCurrentWeaponChanged { get; private set; } = new();
     public UnityEvent<int, bool> OnSlotSelected { get; private set; } = new();
     public UnityEvent<Item_SO, bool> OnActualSlotItemSet { get; private set; } = new();
     public UnityEvent<int> OnDragBegun { get; private set; } = new();
@@ -91,4 +91,8 @@ public class GameEvents : MonoBehaviour {
     public UnityEvent<NotesSaveData> OnNoteDataSaved { get; private set; } = new();
 
     public UnityEvent<Enemy_SO> OnEnemyKilled { get; private set; } = new();
+
+    public UnityEvent<int> OnFlaskAmountUpdated { get; private set; } = new();
+
+    public UnityEvent<CriticalIndicator, bool> OnCriticalIndicatorShow { get; private set; } = new();
 }

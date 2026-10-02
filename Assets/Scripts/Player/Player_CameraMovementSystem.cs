@@ -9,6 +9,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     [SerializeField] private Transform m_playerCameraHolder;
     [SerializeField] private Transform m_weaponsHolder;
     [SerializeField] private Camera m_playerCamera;
+    [SerializeField] private Transform m_handsTransformMovement;
 
     [Header("Sway")]
     [SerializeField] private float swayIntensity = 0.075f;
@@ -49,6 +50,27 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     [SerializeField] private float jumpBobAmount = 0.4f;
     [SerializeField] private float landBobAmount = 0.6f;
 
+    [Header("Hands movement")]
+    [SerializeField] private Vector3 m_armsRestPosition = new Vector3(0, -0.323f, 0.224f);
+    [SerializeField] private float m_handsForwardBackwardAmount = 0.025f;
+    [SerializeField] private float m_handsSideAmount = 0.015f;
+    [SerializeField] private float m_handsMovementSmooth = 8f;
+    [Space(10)]
+    [SerializeField] private float m_handsInertiaAmount = 0.035f;
+    [SerializeField] private float m_handsInertiaSmooth = 7f;
+    [Space(10)]
+    [SerializeField] private float m_handsLookSwayAmount = 0.035f;
+    [SerializeField] private float m_handsLookSwaySmooth = 8f;
+    [Space(10)]
+    [SerializeField] private float m_handsBobAmount = 0.012f;
+    [SerializeField] private float m_handsBobSmooth = 10f;
+    [Space(10)]
+    [SerializeField] private float m_handsLookRotationAmount = 2f;
+    [SerializeField] private float m_handsRotationSmooth = 8f;
+
+    [Header("Hands Position Limits")]
+    [SerializeField] private Vector3 m_handsPositionLimit;
+
     #region Parameters
     private bool m_cameraCanMove;
     private bool m_enableZoom;
@@ -81,7 +103,20 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     private float headBobVerticalOffset;
     private float headBobHorizontalOffset;
     private bool wasGrounded = true;
-    #endregion 
+    #endregion
+
+    #region Hands movement
+    private Vector3 m_handsMovementOffset;
+    private Vector3 m_handsInertiaOffset;
+    private Vector3 m_handsLookSwayOffset;
+    private Vector3 m_handsBobOffset;
+
+    private Vector2 m_previousMoveInput;
+    private Vector2 m_previousLookInput;
+
+    private Quaternion m_handsInitialRotation;
+    private Quaternion m_handsTargetRotation;
+    #endregion
 
     #region Private references
     private Player_InputHandler Input;
@@ -150,7 +185,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         postProcessingVolumeProfile = Singleton.Instance.SettingsManager.VolumeProfile;
 
         if (postProcessingVolumeProfile != null && postProcessingVolumeProfile.TryGet(out MotionBlur mb)) 
-            motionBlur = mb;        
+            motionBlur = mb;
+
+        m_handsInitialRotation = m_handsTransformMovement.localRotation;
     }
 
     public void SetPlayerParameters(PlayerParameters_SO playerParameters) {
@@ -218,6 +255,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         HandleWeaponSway();
         HandleHeadBob();
+        HandleHandsMovement();
         HandleSpeedShake();
 
         _yaw += (Input.LookInput.x * m_sensitivityMultiplier) * m_mouseSensitivity;
@@ -333,6 +371,79 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         headBobVerticalOffset = Mathf.Lerp(headBobVerticalOffset, targetVertical, Time.deltaTime * 10f);
         headBobHorizontalOffset = Mathf.Lerp(headBobHorizontalOffset, targetHorizontal, Time.deltaTime * 10f);
     }
+
+    #region Arms movement
+    private void HandleHandsMovement() {
+        HandleHandsMovementSway();
+        HandleHandsInertia();
+        HandleHandsLookSway();
+        HandleHandsBob();
+        HandleHandsLookRotation();
+
+        Vector3 targetOffset = m_handsMovementOffset + m_handsInertiaOffset + m_handsLookSwayOffset + m_handsBobOffset;
+        Vector3 positionLimit = m_armsRestPosition + m_handsPositionLimit;
+
+        targetOffset.x = Mathf.Clamp(targetOffset.x, -positionLimit.x, positionLimit.x);       
+        targetOffset.z = Mathf.Clamp(targetOffset.z, -positionLimit.z, positionLimit.z);
+
+        Vector3 targetPosition = m_armsRestPosition + targetOffset;
+        targetPosition.y = Mathf.Clamp(targetPosition.y, -.46f, -.25f);
+
+        m_handsTransformMovement.localPosition = Vector3.Lerp(m_handsTransformMovement.localPosition, targetPosition, Time.deltaTime * m_handsMovementSmooth);
+    }
+
+    private void HandleHandsMovementSway() {
+        Vector2 moveInput = Input.MoveInput;
+        Vector3 targetOffset = Vector3.zero;
+
+        if (moveInput.sqrMagnitude > 0.01f) {
+            float forwardMovement = Mathf.Abs(moveInput.y);
+
+            targetOffset.x = -moveInput.x * m_handsSideAmount;            
+            targetOffset.z = -forwardMovement * m_handsForwardBackwardAmount;
+        }
+
+        m_handsMovementOffset = Vector3.Lerp(m_handsMovementOffset, targetOffset, Time.deltaTime * m_handsMovementSmooth);
+    }
+
+    private void HandleHandsInertia() {
+        Vector2 currentInput = Input.MoveInput;
+        Vector2 inputDelta = currentInput - m_previousMoveInput;
+        Vector3 targetOffset = new Vector3(-inputDelta.x, 0f, -inputDelta.y) * m_handsInertiaAmount;
+
+        m_handsInertiaOffset = Vector3.Lerp(m_handsInertiaOffset, targetOffset, Time.deltaTime * m_handsInertiaSmooth);
+        m_previousMoveInput = currentInput;
+    }
+
+    private void HandleHandsLookSway() {
+        Vector2 lookInput = Input.LookInput;
+        Vector3 targetOffset = new Vector3(-lookInput.x, -lookInput.y, 0f) * m_handsLookSwayAmount;
+
+        m_handsLookSwayOffset = Vector3.Lerp(m_handsLookSwayOffset, targetOffset, Time.deltaTime * m_handsLookSwaySmooth);
+    }
+
+    private void HandleHandsBob() {
+        bool isMoving = Mathf.Abs(Input.MoveInput.x) > 0.1f || Mathf.Abs(Input.MoveInput.y) > 0.1f;
+        Vector3 targetOffset = Vector3.zero;
+
+        if (Movement.IsGrounded && isMoving) {
+            float bobMultiplier = Movement.IsSprinting ? 1.25f : 1f;
+
+            targetOffset.y = Mathf.Sin(headBobTimer) * m_handsBobAmount * bobMultiplier;
+            targetOffset.x = Mathf.Cos(headBobTimer * 0.5f) * m_handsBobAmount * 0.35f * bobMultiplier;
+        }
+
+        m_handsBobOffset = Vector3.Lerp(m_handsBobOffset, targetOffset, Time.deltaTime * m_handsBobSmooth);
+    }
+
+    private void HandleHandsLookRotation() {
+        Vector2 lookInput = Input.LookInput;
+        Quaternion targetRotation = Quaternion.Euler(-lookInput.y * m_handsLookRotationAmount, lookInput.x * m_handsLookRotationAmount, -lookInput.x * m_handsLookRotationAmount);
+
+        m_handsTargetRotation = Quaternion.Slerp(m_handsTargetRotation, targetRotation, Time.deltaTime * m_handsRotationSmooth);
+        m_handsTransformMovement.localRotation = m_handsInitialRotation * m_handsTargetRotation;
+    }
+    #endregion
 
     private void HandleCameraZoom() {
         if (!m_enableZoom) return;
@@ -545,7 +656,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     public void Tick(bool isOwner) {
         HandleNetworkCameraRotation();
 
-        if (!IsOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) {
+        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) {
             ResetCameraBalance();
             return; 
         }

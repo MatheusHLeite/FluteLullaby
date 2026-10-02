@@ -353,10 +353,12 @@ public struct FirearmWeaponData : INetworkSerializable {
 
 [System.Serializable]
 public struct MeleeWeaponData : INetworkSerializable {
-    public float m_attackSpeedMultiplier;
+    public float m_damageMultiplier;
+    public float m_attackSpeedMultiplier;    
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter {
-        serializer.SerializeValue(ref m_attackSpeedMultiplier);
+        serializer.SerializeValue(ref m_damageMultiplier);
+        serializer.SerializeValue(ref m_attackSpeedMultiplier);       
     }
 }
 

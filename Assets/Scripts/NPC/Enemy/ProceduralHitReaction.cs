@@ -48,7 +48,7 @@ namespace DelightStudio.AI {
             hitBone = bone;
             hitDirection = dir.normalized;
 
-            targetIntensity = staggerAmount * intensityMultiplier; 
+            targetIntensity = Mathf.Clamp(staggerAmount * intensityMultiplier, 0, 13); 
         }
 
         private void HandleHitReaction() {

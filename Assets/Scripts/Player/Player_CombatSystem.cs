@@ -5,8 +5,7 @@ using Unity.Netcode;
 using UnityEngine;
 
 public class Player_CombatSystem : NetworkBehaviour {
-    [SerializeField] private GameObject m_parryVFX;
-    [SerializeField] private GameObject m_defenseBrokenVFX;
+    [Header("Setup")]    
     [SerializeField] private float m_parryWindowDuration = 0.25f;
     [SerializeField] private float m_parrySpamPenalty = 0.5f;
 
@@ -19,13 +18,12 @@ public class Player_CombatSystem : NetworkBehaviour {
     private float _parryTimer;
     private float _parryCooldownTimer;
     private float _defenseBreakTime;
+    private float _invulnerabilityTime;
 
     private CinemachineImpulseSource _impulseSource;
 
-    private enum VisualEffectsType { ParryFX, DefenseFX }
-
-    public NetworkVariable<bool> IsBlocking_NV = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<bool> IsParryActive_NV = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> IsBlocking_NV = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private NetworkVariable<bool> IsParryActive_NV = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     #region Private references
     private Player_InputHandler Input;
@@ -34,11 +32,13 @@ public class Player_CombatSystem : NetworkBehaviour {
     private Player_CameraMovementSystem Camera;
     private Player_MovementSystem Movement;
     private Player_HealthSystem HealthSystem;
+    private Player_VisualManagementSystem Visual;
     #endregion
 
-    public bool IsBlocking { get; private set; }
-    public bool ParryWindowOpened { get; private set; }
-
+    public bool IsBlocking => IsBlocking_NV.Value;
+    public bool ParryWindowOpened => IsParryActive_NV.Value;
+    public bool IsInvulnerable => _invulnerabilityTime > Time.time;
+    public bool IsMeleeWeaponEquipped => _melee != null && _firearm == null;
 
     #region Initialization
     private void Awake() {
@@ -48,6 +48,7 @@ public class Player_CombatSystem : NetworkBehaviour {
         Camera = GetComponent<Player_CameraMovementSystem>();
         HealthSystem = GetComponent<Player_HealthSystem>();
         Movement = GetComponent<Player_MovementSystem>();
+        Visual = GetComponent<Player_VisualManagementSystem>();
         _impulseSource = GetComponent<CinemachineImpulseSource>();
 
         SetCanSwitch(true);
@@ -73,7 +74,7 @@ public class Player_CombatSystem : NetworkBehaviour {
     public bool GetCanSwitch() => _canSwitchWeapons;
 
     private void HandleAttack() {
-        if (CurrentHandItemAction == null || !_canSwitchWeapons || IsBlocking) 
+        if (CurrentHandItemAction == null || IsBlocking) 
             return;
 
         if (Input.Attack)
@@ -85,21 +86,27 @@ public class Player_CombatSystem : NetworkBehaviour {
 
     #region Block an parry
     private void HandleBlock() {
+        if (!IsMeleeWeaponEquipped)
+            return;
+
         if (!IsBlocking && (!_canSwitchWeapons || Movement.StaminaRemaining < 2.5f || _defenseBreakTime > Time.time))
+            return;
+
+        if (IsInvulnerable)
             return;
 
         if (_parryCooldownTimer > 0f) 
             _parryCooldownTimer -= Time.deltaTime;
 
-        if (Input.Block && !IsBlocking) {
-            IsBlocking = true;
+        bool openParryWindow = false;
 
+        if (Input.Block && !IsBlocking) {
             if (_parryCooldownTimer <= 0f) {
-                ParryWindowOpened = true;
+                openParryWindow = true;
                 _parryTimer = m_parryWindowDuration;
             }
 
-            SetBlockState();  
+            SetBlockState(true, openParryWindow);  
         }
         else if (!Input.Block && IsBlocking) 
             CancelBlock();        
@@ -112,33 +119,26 @@ public class Player_CombatSystem : NetworkBehaviour {
         _impulseSource.GenerateImpulseWithVelocity(new Vector3(3, .5f, 0));
 
         CancelBlock();
-        RequestVFXSpawn(pos, VisualEffectsType.DefenseFX);
+        Visual.OnDefenseBroken(pos);
     }
 
     private void CancelBlock() {
-        IsBlocking = false;
-        ParryWindowOpened = false;
-
         _parryCooldownTimer = m_parrySpamPenalty;
-
-        SetBlockState();
+        SetBlockState(false, false);
     }
 
     public void PerformParry(NetworkObject attacker, Vector3 pos) {
         SetCanSwitch(false);
 
-        IsBlocking = false;
-        ParryWindowOpened = false;
-        
+        _invulnerabilityTime = Time.time + 1.24f;
+
         _impulseSource.ImpulseDefinition.TimeEnvelope.DecayTime = 0.45f;
         _impulseSource.GenerateImpulseWithVelocity(Vector3.one * .5f);
 
         Animator.OnParry();
-        SetBlockState();
+        SetBlockState(false, false);
 
-        Singleton.Instance.GlobalTimeManager.TriggerParrySlowMotion(0.6f);
-
-        RequestVFXSpawn(pos, VisualEffectsType.ParryFX);
+        Visual.OnParry(pos);
 
         if (attacker != null) 
             StunEnemyServerRpc(attacker.NetworkObjectId);        
@@ -150,52 +150,28 @@ public class Player_CombatSystem : NetworkBehaviour {
 
         _parryTimer -= Time.deltaTime;
 
-        if (_parryTimer <= 0f) {
-            ParryWindowOpened = false;
-            SetBlockState();
-        }
+        if (_parryTimer <= 0f) 
+            SetBlockState(IsBlocking, false);        
     }
 
-    private void SetBlockState() {
-        Animator.OnBlock(IsBlocking);
-        SetBlockStateServerRpc(IsBlocking, ParryWindowOpened);
+    private void SetBlockState(bool blocking, bool parrying) {
+        SetCanSwitch(!blocking);
+
+        Animator.OnBlock(blocking);
+        SetBlockStateServerRpc(blocking, parrying);
+
     }
 
     [Rpc(SendTo.Server)]
-    private void SetBlockStateServerRpc(bool isBlocking, bool isParryActive) {
+    private void SetBlockStateServerRpc(bool isBlocking, bool isParrying) {
         IsBlocking_NV.Value = isBlocking;
-        IsParryActive_NV.Value = isParryActive;
+        IsParryActive_NV.Value = isParrying;
     }
     #endregion
 
-    private void RequestVFXSpawn(Vector3 pos, VisualEffectsType visualEffectsType) {
-        if (IsServer)
-            PlayParryFXRpc(pos, visualEffectsType);
-        else
-            RequestParryFXSpawnRpc(pos, visualEffectsType);
-    }
+    
 
-    [Rpc(SendTo.Server)]
-    private void RequestParryFXSpawnRpc(Vector3 position, VisualEffectsType visualEffectsType) => PlayParryFXRpc(position, visualEffectsType);
-
-    [Rpc(SendTo.ClientsAndHost)]
-    private void PlayParryFXRpc(Vector3 position, VisualEffectsType visualEffectsType) {
-        GameObject correctFX = GetCorrectFX(visualEffectsType);
-
-        if (correctFX == null)
-            return;
-
-        GameObject vfxInstance = Instantiate(correctFX, position, Quaternion.LookRotation(transform.forward));
-        Destroy(vfxInstance, 3f);
-    }
-
-    private GameObject GetCorrectFX(VisualEffectsType visualEffectsType) {
-        return visualEffectsType switch { 
-            VisualEffectsType.DefenseFX => m_defenseBrokenVFX,
-            VisualEffectsType.ParryFX => m_parryVFX,
-            _ => null
-        };
-    }
+    
 
     [Rpc(SendTo.Server)]
     private void StunEnemyServerRpc(ulong attackerId) {
@@ -215,24 +191,81 @@ public class Player_CombatSystem : NetworkBehaviour {
         CurrentHandItemAction = null;
         _firearm = null;
 
-        Singleton.Instance.GameEvents.OnAmmoUISet?.Invoke(null);
+        Singleton.Instance.GameEvents.OnCurrentWeaponChanged?.Invoke(null, true);
     }
 
     public void SetWeapon(IWeapon weaponEquipped, Item_SO item) {
-        CurrentHandItemAction = weaponEquipped != null ? weaponEquipped : null;
-        _firearm = weaponEquipped != null ? CurrentHandItemAction as Weapon_Firearm : null;
+        CurrentHandItemAction = null;
+        _firearm = null;
+        _melee = null;
 
-        if (_firearm != null && item != null)
-            _firearm.SetupWeapon(item, this);
+        if (weaponEquipped == null) 
+            return;
 
-        Singleton.Instance.GameEvents.OnAmmoUISet?.Invoke(this._firearm);
+        CurrentHandItemAction = weaponEquipped;
+
+        Weapon_Firearm firearm = CurrentHandItemAction as Weapon_Firearm;
+        Weapon_Melee melee = CurrentHandItemAction as Weapon_Melee;
+
+        if (item == null)
+            return;
+
+        if (firearm != null)
+            SetFirearm(firearm, item);
+        else if (melee != null)
+            SetMelee(melee, item);
+    }
+
+    private void SetFirearm(Weapon_Firearm firearm, Item_SO item) {
+        if (item == null) 
+            return;
+
+        firearm.SetupWeapon(item, this);
+        _firearm = firearm;
+
+        Singleton.Instance.GameEvents.OnCurrentWeaponChanged?.Invoke(_firearm, false);
+
+    }
+
+    private void SetMelee(Weapon_Melee melee, Item_SO item) {
+        if (item == null)
+            return;
+
+        melee.SetupWeapon(item, this);
+        _melee = melee;
+
+        Singleton.Instance.GameEvents.OnCurrentWeaponChanged?.Invoke(_melee, false);
     }
 
     public void Tick(bool isOwner) {
-        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) return;
+        if (!isOwner || HealthSystem.IsDead || GameManager.GetGameState() != GameState.Resumed) 
+            return;
 
         HandleAttack();
         HandleBlock();
         HandleParryWindow();
     }
+
+    #region Melee events
+    public void OnAttackHit() {
+        if (_melee == null)
+            return;
+
+        _melee.OnAttackHit(); 
+    }
+
+    public void OnComboWindowOpen() {
+        if (_melee == null)
+            return;
+
+        _melee.OnComboWindowOpen();
+    }
+
+    public void OnAttackEnd() {
+        if (_melee == null)
+            return;
+
+        _melee.OnAttackEnd();
+    }
+    #endregion
 }

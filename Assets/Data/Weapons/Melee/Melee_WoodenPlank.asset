@@ -17,12 +17,16 @@ MonoBehaviour:
   m_description: A rough piece of wood. Not ideal for combat, but better than nothing.
   m_itemPrefab: {fileID: 6141448346860764315, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
   m_itemType: 0
-  m_itemPositionOffset: {x: 0, y: 0, z: 0}
-  m_itemRotationOffset: {x: 0, y: 0, z: 0}
+  m_itemRarity: 0
+  m_itemPositionOffset: {x: 0, y: -0.03, z: 0.12}
+  m_itemRotationOffset: {x: -9.5, y: 0, z: 14.29}
   m_itemSpawnRotation: {x: 0, y: 0, z: 0}
+  m_showcaseItemPosition: {x: 0, y: 0, z: 0}
+  m_showcaseItemScale: {x: 0, y: 0, z: 0}
   id: 21fd2e28-4fc1-45a7-ae97-fa765b0800d4
-  m_damage: 25
-  m_handUsage: 0
+  m_damage: 40
+  m_impactForce: 90
   m_weaponType: 3
-  m_overrideController: {fileID: 0}
+  m_overrideController: {fileID: 22100000, guid: 3ea563a94b7cdf74e851adb65a1893da, type: 2}
   m_hitboxSize: {x: 0.3, y: 1.85, z: 0.2}
+  m_hitRangeSize: 0.35

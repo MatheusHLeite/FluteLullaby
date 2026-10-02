@@ -1,3 +1,4 @@
+using DelightStudio.AI;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,6 +14,12 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
     private NetworkVariable<Vector3> hitPoint = new NetworkVariable<Vector3>(Vector3.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<Vector3> hitDirection = new NetworkVariable<Vector3>(Vector3.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<float> impact = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private Enemy_Combat enemyCombat;
+
+    private void Awake() {
+        enemyCombat = GetComponent<Enemy_Combat>();
+    }
 
     public override void OnDestroy() {
         m_onDie.RemoveAllListeners();
@@ -48,11 +55,14 @@ public class Global_HealthHandler : NetworkBehaviour, IDamageable {
         HandleDamage(damage, hitPoint, hitDirection, impact, part, rpcParams.Receive.SenderClientId);
 
     private void HandleDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, ulong killerClientId) {
+        if (enemyCombat != null && enemyCombat.IsStaggered)
+            damage *= 2f;
+
         DamageParameters damageParameters = new DamageParameters {
             hitPosition = hitPoint,
             hitDirection = hitDirection,
             impact = impact,
-            staggerAmount = damage,
+            staggerAmount = impact,
             currentHp = currentHealth.Value,
             killerClientId = killerClientId,
             bodyPart = part

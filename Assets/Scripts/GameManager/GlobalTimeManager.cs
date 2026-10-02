@@ -8,6 +8,7 @@ namespace DelightStudio.Manager {
         [Header("Slow-Mo Settings")]        
         [SerializeField] private AnimationCurve criticalDeathSlowMoCurve = AnimationCurve.EaseInOut(0f, 0.1f, 1f, 1f);
         [SerializeField] private AnimationCurve parrySlowMoCurve = AnimationCurve.EaseInOut(0f, 0.1f, 1f, 1f);
+        [SerializeField] private AnimationCurve hitSlowMoCurve = AnimationCurve.EaseInOut(0f, 0.1f, 1f, 1f);
 
         [Header("Audio")]
         [SerializeField] private AudioMixer mainMixer;
@@ -19,7 +20,7 @@ namespace DelightStudio.Manager {
 
         private Coroutine slowMoRoutine;
 
-        private enum SlowMotionCurve { CriticalDeath, Parry }
+        private enum SlowMotionCurve { CriticalDeath, Parry, Hit }
 
         private void Start() {
             defaultTimeScale = Time.timeScale;
@@ -38,6 +39,11 @@ namespace DelightStudio.Manager {
             ExecuteSlowMoClientRpc(duration, SlowMotionCurve.Parry);
         }
 
+        public void TriggerOnHitSlowMotion(float duration) {
+            if (!IsServer) return;
+            ExecuteSlowMoClientRpc(duration, SlowMotionCurve.Hit);
+        }
+
         [ClientRpc]
         private void ExecuteSlowMoClientRpc(float duration, SlowMotionCurve curve) { 
             if (slowMoRoutine != null)
@@ -50,6 +56,8 @@ namespace DelightStudio.Manager {
         private IEnumerator SlowMotionRoutine(float slowMoDuration, SlowMotionCurve slowMoCurve) {
             float elapsed = 0f;
             AnimationCurve curve = GetAnimationCurve(slowMoCurve);
+
+            print("Applying slow motion");
 
             yield return new WaitForSecondsRealtime(0.045f);
 
@@ -72,6 +80,7 @@ namespace DelightStudio.Manager {
             return curve switch {
                 SlowMotionCurve.Parry => parrySlowMoCurve, 
                 SlowMotionCurve.CriticalDeath => criticalDeathSlowMoCurve,
+                SlowMotionCurve.Hit => hitSlowMoCurve,
                 _ => null 
             };            
         }

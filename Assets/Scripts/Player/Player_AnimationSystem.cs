@@ -1,14 +1,17 @@
 using DelightStudio.Data;
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem.EnhancedTouch;
 
 public class Player_AnimationSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Animator m_fullBodyAnimator;
     [SerializeField] private Animator m_handsAnimator;
+
+    [SerializeField] private Transform m_camera;
 
     [Header("Animation settings")]
     [SerializeField] private float m_animationSmoothness;
@@ -210,9 +213,30 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
     public void OnJump() => RequestAnimationServerRpc(Jump);
 
+    public void OnSetCombo(string comboIndexParameter, int currentCombo) {
+        m_handsAnimator.SetInteger(comboIndexParameter, currentCombo);
+    }
+
+    public void OnMeleeAttack(string attackAnimTrigger) {        
+       m_handsAnimator.SetTrigger(attackAnimTrigger);
+
+        //handle rpc animations and animator override on network
+    }
+
     public void OnShot() {
         m_handsAnimator.SetTrigger(Shot);
         RequestAnimationServerRpc(Shot); 
+    }
+
+    public void OnDamageTaken(bool successfullyBlocked) {
+        float punchForce = successfullyBlocked ? 0.125f : 0.265f;
+        float time = successfullyBlocked ? 0.425f : 0.675f;
+        Vector3 punchPos = new Vector3(0, 0, -punchForce);
+
+        m_camera.transform.DOKill();
+
+        m_camera.localPosition = punchPos;
+        m_camera.DOLocalMove(Vector3.zero, time);
     }
 
     public void OnParry() {
@@ -317,6 +341,24 @@ public class Player_AnimationSystem : NetworkBehaviour {
         if (!isOwner) return;
 
         UpdateAnimator();
+    }
+
+    internal void SetFireRateSpeedMultiplier(string animationKey, float fireRateMultiplier)
+    {
+        //AnimationSystem.SetFloat(FireRate, fireRateMultiplier);
+        //animator.SetFloat(ReloadSpeed, reloadSpeedMultiplier);
+    }
+
+    internal void SetAttackSpeedMultiplier(string animationKey, float attackSpeedMultiplier)
+    {
+        //AnimationSystem.SetFloat(FireRate, fireRateMultiplier);
+        //animator.SetFloat(ReloadSpeed, reloadSpeedMultiplier);
+    }
+
+    internal void SetReloadSpeedMultiplier(string animationKey, float reloadSpeedMultiplier)
+    {
+        //AnimationSystem.SetFloat(FireRate, fireRateMultiplier);
+        //animator.SetFloat(ReloadSpeed, reloadSpeedMultiplier);
     }
     #endregion
 }

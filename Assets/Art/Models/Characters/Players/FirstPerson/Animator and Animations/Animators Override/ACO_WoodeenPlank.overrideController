@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ACO_WoodeenPlank
+  m_Controller: {fileID: 9100000, guid: 3b3e71e73aac27249a5d689ee0433ba2, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 64a2389a74169f94f9949b369bc80d4e, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 64a2389a74169f94f9949b369bc80d4e, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: ca0478242583a2b469dd20ded405b8e8, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: ca0478242583a2b469dd20ded405b8e8, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: ca128cf86721e654a9ff7cabb5db7792, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: ca128cf86721e654a9ff7cabb5db7792, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 7580eb64b98509640b745678032f6a79, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: e22ea58ac90566a4681b8c560c3a341b, type: 2}

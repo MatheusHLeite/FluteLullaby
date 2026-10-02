@@ -1,10 +1,11 @@
 using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
-using static Steamworks.InventoryItem;
 
 public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     [Header("Setup")]
+    [SerializeField] [Range(1, 100)] private float m_reviveHealthPercentageAmount = 40;
+    [SerializeField] private float m_staminaConsumptionWhenBlocking = 2.35f;
+
     private NetworkVariable<float> currentHealth = new NetworkVariable<float>(100f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private NetworkVariable<Vector3> hitPoint = new NetworkVariable<Vector3>(Vector3.zero, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -12,71 +13,92 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     private NetworkVariable<float> impact = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkVariable<bool> isDead = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-    public bool IsDead { get; private set; }
+    public bool IsDead => isDead.Value;
 
+    private Player_Manager manager;
+    private Player_AnimationSystem animationSystem;
     private Player_MovementSystem movementSystem;
     private Player_CombatSystem combatSystem;
-    private NetworkTransform NTransform;
 
     private float maxHealth;
     private bool isBlocking;
 
+    #region Initialization
     private void Awake() {
+        manager = GetComponent<Player_Manager>();
+        animationSystem = GetComponent<Player_AnimationSystem>();
         movementSystem = GetComponent<Player_MovementSystem>();
         combatSystem = GetComponent<Player_CombatSystem>();
-        NTransform = GetComponent<NetworkTransform>();
     }
+
+    internal void SetPlayerParameters(PlayerParameters_SO playerParameters) {
+        maxHealth = playerParameters.m_maxHealth;
+        SetHealth(maxHealth, maxHealth);
+    }
+    #endregion
 
     #region Network Initialization
     public void InitializeNetwork(bool isOwner) {
         if (!isOwner) return;
 
         currentHealth.OnValueChanged += OnHealthChanged;
-
-        //Singleton.Instance.GameEvents.OnPlayerRespawn.AddListener(OnSpawn);
     }
 
     public void DeinitializeNetwork(bool isOwner) {
         if (!isOwner) return;
 
         currentHealth.OnValueChanged -= OnHealthChanged;
-
-        //Singleton.Instance.GameEvents.OnPlayerRespawn.RemoveListener(OnSpawn);
     }
     #endregion
 
-    internal void SetPlayerParameters(PlayerParameters_SO playerParameters) {
-        maxHealth = playerParameters.m_maxHealth;
-
-        SetHealth(maxHealth);
-    }
-
+    #region Events
     private void OnHealthChanged(float previousValue, float newValue) {
         if (newValue <= 0f && !IsDead) 
-            Die(hitPoint.Value, hitDirection.Value, impact.Value);        
-
-        Singleton.Instance.GameEvents.OnDamageTaken?.Invoke(newValue, maxHealth, isBlocking);
+            Die(hitPoint.Value, hitDirection.Value, impact.Value);
     }
+    #endregion
 
-    private void SetHealth(float maxHealth) {
-        Singleton.Instance.GameEvents.OnHealthSet?.Invoke(maxHealth, maxHealth);
+    #region Health set
+    private void SetHealth(float currentHealth, float maxHealth) {
+        Singleton.Instance.GameEvents.OnHealthSet?.Invoke(currentHealth, maxHealth);
 
         if (IsServer) {
-            OnHealthSet(maxHealth);
+            OnHealthSet(currentHealth);
             return;
         }
 
-        SetHealthServerRpc(maxHealth);
+        SetHealthServerRpc(currentHealth);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void SetHealthServerRpc(float maxHealth) => OnHealthSet(maxHealth);
 
     private void OnHealthSet(float maxHealth) => currentHealth.Value = maxHealth;
+    #endregion
 
+    #region Helpers
     public bool CanDrinkFlask() => currentHealth.Value < maxHealth;
 
+    private float GetHealthPercentage(float percentage) {
+        float percentageCalculated = percentage / 100;
+        return maxHealth * percentageCalculated;
+    }
+
+    private bool IsLookingAtEnemy() {
+        //[TODO] adicionar check se estiver olhando para o inimigo
+        return true;
+    }
+    #endregion
+
+    #region Healing
     public void Heal(float amount) {
+        float healthAfterHeal = currentHealth.Value + amount;
+
+        if (healthAfterHeal > 10)
+            Singleton.Instance.GameEvents.OnCriticalIndicatorShow?.Invoke(CriticalIndicator.Health, false);
+
+        Singleton.Instance.GameEvents.OnDamageTaken?.Invoke(healthAfterHeal, maxHealth, false);
+
         if (IsServer && NetworkManager.Singleton.LocalClientId == OwnerClientId)
             HandleHeal(amount);
         else
@@ -91,34 +113,42 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
     [Rpc(SendTo.Server)]
     private void HandleHealRpc(float amount) 
         => HandleHeal(amount);
-    
-    private bool IsLookingAtEnemy() {
-        //[TODO] adicionar check se estiver olhando para o inimigo
-        return true;
-    }
+    #endregion
 
+    #region Damage
     public void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, NetworkObject attacker) {
-        if (currentHealth.Value <= 0) 
+        if (currentHealth.Value <= 0 || combatSystem.IsInvulnerable) 
             return;
+        
+        bool isOnRange = IsLookingAtEnemy();
+        bool successfullyBlocked = false;
+    
+        isBlocking = combatSystem.IsBlocking;
 
-        bool isExtremelyClose = IsLookingAtEnemy();
-        isBlocking = combatSystem.IsBlocking_NV.Value;
-        bool isParrying = combatSystem.IsParryActive_NV.Value;
-
-        if (isExtremelyClose) {
-            if (isParrying) {
+        if (isOnRange) {
+            if (combatSystem.ParryWindowOpened) {
                 combatSystem.PerformParry(attacker, hitPoint);
                 return;
             }
 
             if (isBlocking) {
-                if (movementSystem.ConsumeStamina(2.5f, () => {
+                if (movementSystem.ConsumeStamina(m_staminaConsumptionWhenBlocking, true, () => {
                     combatSystem.BreakDefense(hitPoint);
                 })) {
                     damage *= 0.3f;
+                    successfullyBlocked = true;
                 }
             }
         }
+
+        float healthAfterDamage = currentHealth.Value - damage;
+
+        Singleton.Instance.GameEvents.OnDamageTaken?.Invoke(healthAfterDamage, maxHealth, isBlocking);
+
+        if (healthAfterDamage <= 10)
+            Singleton.Instance.GameEvents.OnCriticalIndicatorShow?.Invoke(CriticalIndicator.Health, true);
+
+        animationSystem.OnDamageTaken(successfullyBlocked);
 
         if (IsServer && NetworkManager.Singleton.LocalClientId == OwnerClientId)
             HandleDamage(damage, hitPoint, hitDirection, impact, OwnerClientId);   
@@ -137,7 +167,7 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
 
         currentHealth.Value -= damage;
 
-        if (currentHealth.Value <= 0f && isDead.Value == false) {
+        if (currentHealth.Value <= 0f && !IsDead) {
             isDead.Value = true;
 
             var clientParams = new ClientRpcParams {
@@ -148,44 +178,38 @@ public class Player_HealthSystem : NetworkBehaviour, IDamageable {
             NotifyKillClientRpc(clientParams);
         }
     }
+    #endregion
 
+    #region Death
     [ClientRpc]
-    private void NotifyKillClientRpc(ClientRpcParams clientRpcParams = default) {
+    private void NotifyKillClientRpc(ClientRpcParams rpcParams = default) {
         Singleton.Instance.GameEvents.OnKill?.Invoke();
     }
 
     private void Die(Vector3 hitPoint, Vector3 hitDirection, float impact) {
         Singleton.Instance.GameEvents.OnPlayerDie?.Invoke(hitPoint, hitDirection, impact);
-        IsDead = true;
-
-        //StartCoroutine(RespawnCoroutine());
     }
-
-    /*private IEnumerator RespawnCoroutine() {
-        yield return new WaitForSeconds(respawnDelay);
-
-        RequestTeleportServerRpc();
+    #endregion
+    
+    public void RevivePlayer() {
+        float health = GetHealthPercentage(m_reviveHealthPercentageAmount);
+        float revivedHealthAmount = Mathf.Clamp(health, 0, maxHealth);
 
         Singleton.Instance.GameEvents.OnPlayerRespawn?.Invoke();
-        IsDead = false;
-    }*/
 
-    [ServerRpc(RequireOwnership = false)]
-    public void RequestTeleportServerRpc() {
-        Vector3 randomPos = Singleton.Instance.GameManager.GetRandomSpawnPos();
-        Quaternion randomRot = Quaternion.identity;
-
-        isDead.Value = false;
-
-        TeleportClientRpc(randomPos, randomRot, Vector3.one, new ClientRpcParams {
-            Send = new ClientRpcSendParams {
-                TargetClientIds = new ulong[] { NetworkObject.OwnerClientId }
-            }
-        });
+        manager.OnPlayerRevived();
+        SetHealth(revivedHealthAmount, maxHealth);
+        RevivePlayerRpc();
     }
 
-    [ClientRpc]
-    private void TeleportClientRpc(Vector3 pos, Quaternion rot, Vector3 scale, ClientRpcParams clientParams = default) {
-        NTransform.Teleport(pos, rot, scale);
+    [Rpc(SendTo.Server)]
+    private void RevivePlayerRpc() {
+        isDead.Value = false;
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.K))
+            RevivePlayer();
     }
 }

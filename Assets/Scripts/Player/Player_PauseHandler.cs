@@ -11,6 +11,7 @@ namespace DelightStudio.Player {
         private InputHandler Input;
         private Player_CameraMovementSystem Camera;
         private Player_FlaskManager FlaskManager;
+        private Player_HealthSystem HealthSystem;
 
         private float minTime;
         private float cooldownTime;
@@ -27,6 +28,7 @@ namespace DelightStudio.Player {
             Input = Singleton.Instance.InputHandler;
             Camera = GetComponent<Player_CameraMovementSystem>();
             FlaskManager = GetComponent<Player_FlaskManager>();
+            HealthSystem = GetComponent<Player_HealthSystem>();
         }
 
         public void InitializeNetwork(bool isOwner) {
@@ -116,7 +118,7 @@ namespace DelightStudio.Player {
             if (!isOwner) 
                 return;
 
-            if (Time.time < minTime) 
+            if (Time.time < minTime || HealthSystem.IsDead)
                 return;
 
             if (Input.Pause) {

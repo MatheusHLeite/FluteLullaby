@@ -28,7 +28,6 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     private Vector2 lastPointerPosition;
 
     private bool isShowingPopUp;
-    private float minCooldownToDrag;
     private float minCooldownToClick;
 
     #region Rotation and position
@@ -53,6 +52,9 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         canvasGroup = GetComponent<CanvasGroup>();
         mainCanvas = GetComponentInParent<Canvas>();
 
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
+
         canvasRect = mainCanvas.GetComponent<RectTransform>();
         canvasCamera = mainCanvas.worldCamera;
 
@@ -76,13 +78,10 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
 
     public void UpdateQuantity(int quantity) { this.quantity = quantity; }
 
+    #region Interfaces
     public void OnBeginDrag(PointerEventData eventData) {
-        if (Time.time < minCooldownToDrag)
+        if (isReloading) 
             return;
-
-        minCooldownToDrag = Time.time + 0.1f;
-
-        if (isReloading) return;
 
         HideTooltip();
 
@@ -94,11 +93,7 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         canvasGroup.blocksRaycasts = false;
         isDragging = true;
 
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
-            canvasRect,
-            eventData.position,
-            canvasCamera,
-            out Vector3 worldPosition)) {
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRect, eventData.position, canvasCamera, out Vector3 worldPosition)) {
             dragOffset = transform.position - worldPosition;
             pointerPosition = transform.position;
         }
@@ -108,16 +103,11 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     public void OnDrag(PointerEventData eventData) {
-        if (canvasRect == null || Time.time < minCooldownToDrag)
+        if (!isDragging)
             return;
 
-        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
-            canvasRect,
-            eventData.position,
-            canvasCamera,
-            out Vector3 worldPosition)) {
-            pointerPosition = worldPosition + dragOffset;
-        }
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(canvasRect, eventData.position, canvasCamera, out Vector3 worldPosition)) 
+            pointerPosition = worldPosition + dragOffset;        
 
         deltaX = eventData.position.x - lastPointerPosition.x;
         targetRotation = Mathf.Clamp(
@@ -132,11 +122,13 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     public void OnEndDrag(PointerEventData eventData) {
         newTransform = originalParent;
 
-        if (eventData.pointerCurrentRaycast.gameObject != null) {
-            if (eventData.pointerCurrentRaycast.gameObject.TryGetComponent(out UI_Slot slot) && slot.emptySlot) {
-                HandleSlotDrop(slot);
-            }
-            if (eventData.pointerCurrentRaycast.gameObject.TryGetComponent(out UI_DragDropHandler otherItem)) {
+        GameObject target = eventData.pointerCurrentRaycast.gameObject;
+
+        if (target != null) {
+            if (target.TryGetComponent(out UI_Slot slot) && slot.emptySlot)            
+                HandleSlotDrop(slot);            
+
+            if (target.TryGetComponent(out UI_DragDropHandler otherItem)) {
                 HandleSlotSwap(otherItem);
                 return;
             }
@@ -147,8 +139,8 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     public void OnPointerClick(PointerEventData eventData) {
-        minCooldownToDrag = Time.time + 0.1f;
-        
+        Debug.Log($"Pointer click");
+
         if (Time.time < minCooldownToClick) 
             return;
 
@@ -170,6 +162,7 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
         else
             HideTooltip();
     }
+#endregion
 
     private void HideTooltip() {
         TooltipSystem.HideInventoryTooltip();
@@ -239,7 +232,8 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     private void LateUpdate() {
-        if (!isDragging) return;
+        if (!isDragging) 
+            return;
 
         transform.position = Vector3.Lerp(transform.position, pointerPosition, Time.deltaTime * movementSmooth);
         currentRotation = Mathf.Lerp(currentRotation, targetRotation, Time.deltaTime * rotationSmooth);

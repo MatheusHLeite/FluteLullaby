@@ -88,7 +88,7 @@ public class Player_InventorySystem : NetworkBehaviour {
     public void OnDrawAnimationStarted() {
         DespawnItemOnHandRpc();
 
-        if (currentItem != null && currentItem.m_itemType == (ItemType.MeleeWeapon | ItemType.Firearm))
+        if (currentItem != null && (currentItem.m_itemType == ItemType.MeleeWeapon || currentItem.m_itemType == ItemType.Firearm))
             SpawnItemOnHandRpc(equippedItem);
 
         Combat.SetWeapon(_currentWeaponEquipped, currentItem);

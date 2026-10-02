@@ -471,6 +471,11 @@ Transform:
   - {fileID: 27453984}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &578698469 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1532606119130346060, guid: e36cde800304cd44f90b23ada816ed0d, type: 3}
+  m_PrefabInstance: {fileID: 978568532}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &596030688
 GameObject:
   m_ObjectHideFlags: 0
@@ -578,7 +583,7 @@ Transform:
   - {fileID: 1413791463}
   - {fileID: 1866213798}
   - {fileID: 899070174}
-  - {fileID: 1767975237}
+  - {fileID: 1295751418}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &665385104
@@ -1224,11 +1229,52 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6935046592841767486, guid: e36cde800304cd44f90b23ada816ed0d, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3384634759
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1532606119130346060, guid: e36cde800304cd44f90b23ada816ed0d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2084619475}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7353204415707694442, guid: e36cde800304cd44f90b23ada816ed0d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: e36cde800304cd44f90b23ada816ed0d, type: 3}
+--- !u!1 &1295751417
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1295751418}
+  m_Layer: 0
+  m_Name: Melhorar combate corpo a corpo e adicionar efeitos de on hit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1295751418
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1295751417}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 4.593142, y: -2.3694053, z: -13.683012}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 597559431}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1327109905
 GameObject:
   m_ObjectHideFlags: 0
@@ -1337,37 +1383,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1767975236
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1767975237}
-  m_Layer: 0
-  m_Name: Flask drink
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1767975237
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1767975236}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.5442729, y: -1.5948137, z: -0.68863726}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 597559431}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1866213797
 GameObject:
   m_ObjectHideFlags: 0
@@ -1430,6 +1445,88 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2084619474
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 578698469}
+    m_Modifications:
+    - target: {fileID: 323314250581495814, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.03
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.12
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.98882675
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.08216515
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.010299746
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.12395357
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -9.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 14.29
+      objectReference: {fileID: 0}
+    - target: {fileID: 5579986891907210028, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1692926208
+      objectReference: {fileID: 0}
+    - target: {fileID: 6752005437105541031, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7917263734638177625, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_Name
+      value: pfb_Interactor_Weapon_WoodenPlank
+      objectReference: {fileID: 0}
+    - target: {fileID: 7917263734638177625, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 9115724140818214402, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+--- !u!4 &2084619475 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3025236026721556844, guid: a54c6acee22d05942925077e2bcb139c, type: 3}
+  m_PrefabInstance: {fileID: 2084619474}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

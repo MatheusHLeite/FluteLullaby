@@ -33,5 +33,11 @@ namespace DelightStudio.Player {
         public void OnHealDrankAnimationEnded() {
             _flaskManager.OnEndFlaskDrinkAnimation();
         }
+
+        public void OnAttackHit() => _combatSystem.OnAttackHit();
+
+        public void OnComboWindowOpen() => _combatSystem.OnComboWindowOpen();
+
+        public void OnAttackEnd() => _combatSystem.OnAttackEnd();
     }
 }
