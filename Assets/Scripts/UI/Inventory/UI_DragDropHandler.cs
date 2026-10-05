@@ -139,18 +139,14 @@ public class UI_DragDropHandler : MonoBehaviour, IBeginDragHandler, IDragHandler
     }
 
     public void OnPointerClick(PointerEventData eventData) {
-        Debug.Log($"Pointer click");
-
         if (Time.time < minCooldownToClick) 
             return;
 
         minCooldownToClick = Time.time + 0.25f;
 
-        bool shiftPressed =
-            Input.GetKey(KeyCode.LeftShift) ||
-            Input.GetKey(KeyCode.RightShift);
+        bool shiftPressed = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-        if (eventData.button == PointerEventData.InputButton.Right && shiftPressed) {
+        if (shiftPressed) {
             HandleItemSplit(itemData);
             return;
         }

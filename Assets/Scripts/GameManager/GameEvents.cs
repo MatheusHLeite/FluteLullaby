@@ -28,7 +28,7 @@ public class GameEvents : MonoBehaviour {
 
     #region Inventory management
     public UnityEvent<Item_SO, int, int, bool> OnItemCollected { get; private set; } = new();
-    public UnityEvent<int> OnItemDropped { get; private set; } = new();
+    public UnityEvent<int, float> OnItemDropped { get; private set; } = new();
     public UnityEvent<ItemData, int> OnInventoryItemAdded { get; private set; } = new();
     public UnityEvent<ItemData, int> OnInventoryItemRemoved { get; private set; } = new();
     public UnityEvent<ItemData, int> OnItemSplit { get; private set; } = new();        

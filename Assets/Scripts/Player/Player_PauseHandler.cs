@@ -6,18 +6,15 @@ namespace DelightStudio.Player {
         [Header("Setup")]
         [SerializeField] private DiaryPageSurface m_diaryCollider;
         [SerializeField] private GameObject m_diaryVisual;
-        [SerializeField] private Animator m_handsAnimator;
 
         private InputHandler Input;
         private Player_CameraMovementSystem Camera;
         private Player_FlaskManager FlaskManager;
         private Player_HealthSystem HealthSystem;
+        private Player_AnimationSystem AnimationSystem;
 
         private float minTime;
         private float cooldownTime;
-
-        private const string DIARY_ON_TRIGGER = "Pause";
-        private const string DIARY_ON_BOOL = "Paused";
 
         bool isPaused => GameManager.GetGameState() == GameState.Paused;
         bool isResumed => GameManager.GetGameState() == GameState.Resumed;
@@ -29,6 +26,7 @@ namespace DelightStudio.Player {
             Camera = GetComponent<Player_CameraMovementSystem>();
             FlaskManager = GetComponent<Player_FlaskManager>();
             HealthSystem = GetComponent<Player_HealthSystem>();
+            AnimationSystem = GetComponent<Player_AnimationSystem>();
         }
 
         public void InitializeNetwork(bool isOwner) {
@@ -42,12 +40,13 @@ namespace DelightStudio.Player {
         #endregion
 
         private void HandleDiaryAnimation(bool putOnAnimation) {
-            m_handsAnimator.SetBool(DIARY_ON_BOOL, putOnAnimation);
+            AnimationSystem.OnDiaryOpened(putOnAnimation);
+            Camera.ResetHandMovementEffect();
 
-            if (putOnAnimation) {
-                m_handsAnimator.SetTrigger(DIARY_ON_TRIGGER);
-                SetDiaryVisibility(true);
-            }
+            if (!putOnAnimation)
+                return;
+
+            SetDiaryVisibility(true);
         }
 
         #region Pause

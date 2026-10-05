@@ -1,6 +1,5 @@
 using DelightStudio.Data;
 using DG.Tweening;
-using System;
 using System.Collections;
 using System.Linq;
 using Unity.Netcode;
@@ -10,8 +9,6 @@ public class Player_AnimationSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Animator m_fullBodyAnimator;
     [SerializeField] private Animator m_handsAnimator;
-
-    [SerializeField] private Transform m_camera;
 
     [Header("Animation settings")]
     [SerializeField] private float m_animationSmoothness;
@@ -25,6 +22,7 @@ public class Player_AnimationSystem : NetworkBehaviour {
     #region Private references
     private Rigidbody m_rb;
     private Collider m_collider;
+    private Transform camera;
 
     private Player_InputHandler Input;
     private Player_MovementSystem Movement;
@@ -58,6 +56,9 @@ public class Player_AnimationSystem : NetworkBehaviour {
     private const string Draw = "Draw";
     private const string Holster = "Holster";
     private const string Drop = "Drop";
+
+    private const string DIARY_ON_TRIGGER = "Pause";
+    private const string DIARY_ON_BOOL = "Paused";
     #endregion
 
     private Coroutine changeWeaponRoutine;
@@ -69,6 +70,8 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
         m_rb = GetComponent<Rigidbody>();
         m_collider = GetComponent<CapsuleCollider>();
+
+        camera = GetComponent<Player_Manager>().GetPlayerCamera().transform;
 
         ragdollColliders = new Collider[ragdollBodies.Length];
         for (int i = 0; i < ragdollBodies.Length; i++) {
@@ -223,6 +226,13 @@ public class Player_AnimationSystem : NetworkBehaviour {
         //handle rpc animations and animator override on network
     }
 
+    public void OnDiaryOpened(bool putOnAnimation) {
+        m_handsAnimator.SetBool(DIARY_ON_BOOL, putOnAnimation);
+
+        if (putOnAnimation) 
+            m_handsAnimator.SetTrigger(DIARY_ON_TRIGGER);        
+    }
+
     public void OnShot() {
         m_handsAnimator.SetTrigger(Shot);
         RequestAnimationServerRpc(Shot); 
@@ -233,10 +243,10 @@ public class Player_AnimationSystem : NetworkBehaviour {
         float time = successfullyBlocked ? 0.425f : 0.675f;
         Vector3 punchPos = new Vector3(0, 0, -punchForce);
 
-        m_camera.transform.DOKill();
+        camera.transform.DOKill();
 
-        m_camera.localPosition = punchPos;
-        m_camera.DOLocalMove(Vector3.zero, time);
+        camera.localPosition = punchPos;
+        camera.DOLocalMove(Vector3.zero, time);
     }
 
     public void OnParry() {

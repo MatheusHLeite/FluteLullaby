@@ -32,6 +32,7 @@ public class Player_InputHandler : NetworkBehaviour {
     public bool Reload { get; private set; }
     public bool Interact { get; private set; }
     public bool Drop { get; private set; }
+    public bool DropUp { get; private set; }
     public bool Slot1 { get; private set; }
     public bool Slot2 { get; private set; }
     public bool Slot3 { get; private set; }
@@ -90,9 +91,12 @@ public class Player_InputHandler : NetworkBehaviour {
         Input.Player.Block.performed += i => Block = true;
         Input.Player.Block.canceled += i => Block = false;
 
-        Input.Player.Interact.performed += i => Interact = true;
-        Input.Player.Drop.performed += i => Drop = true;
+        Input.Player.Interact.performed += i => Interact = true;  
         Input.Player.DrinkFlask.performed += i => DrinkFlask = true;
+
+        Input.Player.Drop.performed += i => Drop = true;
+        Input.Player.Drop.canceled += i => Drop = false;
+        Input.Player.Drop.canceled += i => DropUp = true;        
 
         Input.Player.Slot1.performed += i => Slot1 = true;
         Input.Player.Slot2.performed += i => Slot2 = true;
@@ -144,8 +148,11 @@ public class Player_InputHandler : NetworkBehaviour {
         Input.Player.Block.canceled -= i => Block = false;
 
         Input.Player.Interact.performed -= i => Interact = true;
-        Input.Player.Drop.performed -= i => Drop = true;
         Input.Player.DrinkFlask.performed -= i => DrinkFlask = true;
+
+        Input.Player.Drop.performed -= i => Drop = true;
+        Input.Player.Drop.canceled -= i => Drop = false;
+        Input.Player.Drop.canceled -= i => DropUp = true;
 
         Input.Player.Slot1.performed -= i => Slot1 = true;
         Input.Player.Slot2.performed -= i => Slot2 = true;
@@ -192,7 +199,7 @@ public class Player_InputHandler : NetworkBehaviour {
         Slot4 = false;
         LastSlotUsed = false;
         Interact = false;
-        Drop = false;
+        DropUp = false;
         Reload = false;
         DrinkFlask = false;
     }

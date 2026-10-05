@@ -11,6 +11,7 @@ public class Item_Interactor : Interactor {
     [PropertySpace(5)]
     [BoxGroup("Item setup"), SerializeField, MinValue(1), MaxValue(nameof(m_maxAmount)), HideIf(nameof(m_randomizeAmount))] private int m_amount = 1;
     [BoxGroup("Item setup"), SerializeField, ShowIf(nameof(m_randomizeAmount))] private GameObject[] m_itemVisuals;
+    [BoxGroup("Item setup"), SerializeField] private GameObject m_itemBox;
 
     [Header("Setup")]
     [SerializeField] private MonoBehaviour[] scriptsToDisableOnHand;
@@ -50,14 +51,31 @@ public class Item_Interactor : Interactor {
         highlightReference.Setup(m_item.m_itemRarity);
         highlightReference.SetOnHandItem(displayItem);
 
-        if (m_randomizeAmount) {
-            m_amount = Random.Range(1, m_itemVisuals.Length);
+        if (m_randomizeAmount) 
+            SetAmount(Random.Range(1, m_itemVisuals.Length));
+    }
 
-            for (int i = 0; i < m_itemVisuals.Length; i++) 
-                m_itemVisuals[i].SetActive(false);
-            for (int i = 0; i < m_amount; i++)
-                m_itemVisuals[i].SetActive(true);
-        }
+    #region Set
+    public void SetItemAmount(int amount) {
+        lockRandomize = true;
+
+        SetAmount(amount);
+    }
+    
+    private void SetAmount(int amount) {
+        amount = Mathf.Max(amount, 0);
+        int maxVisuals = m_itemVisuals.Length;
+        bool tooManyItems = amount > maxVisuals;
+
+        if (m_itemBox != null)
+            m_itemBox.SetActive(tooManyItems);
+        for (int i = 0; i < maxVisuals; i++)
+            m_itemVisuals[i].SetActive(i < amount && !tooManyItems);
+
+        m_amount = amount;
+
+        if (amount <= 0)
+            RequestDespawnServerRpc();
     }
 
     public void SetAs3DView() {
@@ -68,37 +86,6 @@ public class Item_Interactor : Interactor {
 
         for (int i = 0; i < m_itemVisuals.Length; i++)
             m_itemVisuals[i].SetActive(true);
-    }
-
-    public override void OnHoverOverItem(bool isOnTarget) {
-        if (displayItem) return;
-        Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke(isOnTarget ? m_item.m_itemName : "");
-
-        base.OnHoverOverItem(isOnTarget);
-    }
-
-    public override void Interact(Player_InteractionSystem interactor) {
-        if (displayItem) return;
-
-        if (!Singleton.Instance.InventoryManager.CanPickUpItem(m_item)) {
-            print("<color=yellow>Cannot pick up item: {reason}</color>");
-            return; 
-        }
-        if (InventoryManager.IsInventoryFull()) {
-            Debug.Log("<color=red>Inventory is full</color>");
-            return; 
-        }
-
-        bool isQuickSlotItem = m_item.m_itemType != (ItemType.MeleeWeapon | ItemType.Firearm);
-
-        m_index = isQuickSlotItem ? UI_InventoryManager._quickSlots.Count : 0;
-        m_slotIndex = Singleton.Instance.InventoryManager.GetEmptySlotIndex(m_index);
-
-        Singleton.Instance.GameEvents.OnItemCollected?.Invoke(m_item, m_slotIndex, m_amount, false);
-
-        base.Interact(interactor);
-
-        RequestDespawnServerRpc();
     }
 
     public void SetAsHandItem(ulong playerId) {
@@ -120,8 +107,7 @@ public class Item_Interactor : Interactor {
         if (!Player_InteractionSystem.Players.TryGetValue(playerId, out var player))
             return;
 
-        bool isLocalPlayer =
-            playerId == NetworkManager.Singleton.LocalClientId;
+        bool isLocalPlayer = playerId == NetworkManager.Singleton.LocalClientId;
 
         followTarget = player.GetRightPlayerHand;
 
@@ -134,6 +120,38 @@ public class Item_Interactor : Interactor {
 
         foreach (Transform child in obj.transform)
             SetLayerRecursively(child.gameObject, layer);
+    }
+    #endregion
+
+    public override void Interact(Player_InteractionSystem interactor) {
+        if (displayItem) return;
+
+        if (!Singleton.Instance.InventoryManager.CanPickUpItem(m_item)) {
+            print("<color=yellow>Cannot pick up item: {reason}</color>");
+            return; 
+        }
+        if (InventoryManager.IsInventoryFull()) {
+            Debug.Log("<color=red>Inventory is full</color>");
+            return; 
+        }
+
+        bool isQuickSlotItem = m_item.m_itemType == ItemType.MeleeWeapon || m_item.m_itemType == ItemType.Firearm;
+
+        m_index = isQuickSlotItem ? 0 : UI_InventoryManager._quickSlots.Count;
+        m_slotIndex = Singleton.Instance.InventoryManager.GetEmptySlotIndex(m_index);
+
+        Singleton.Instance.GameEvents.OnItemCollected?.Invoke(m_item, m_slotIndex, m_amount, false);
+
+        base.Interact(interactor);
+
+        RequestDespawnServerRpc();
+    }
+
+    public override void OnHoverOverItem(bool isOnTarget) {
+        if (displayItem) return;
+        Singleton.Instance.GameEvents.OnHoverOverItem?.Invoke(isOnTarget ? m_item.m_itemName : "");
+
+        base.OnHoverOverItem(isOnTarget);
     }
 
     private void RemoveColliders(bool shouldDestroy = true) {
@@ -149,8 +167,10 @@ public class Item_Interactor : Interactor {
         NetworkObject.Despawn(true);
     }
 
-    private void LateUpdate() {
-        if (!followTarget) return;
+    #region Update
+    private void HandleItemTrack() {
+        if (!followTarget) 
+            return;
 
         Vector3 itemOffset = m_item.m_itemPositionOffset;
         Vector3 finalPos = followTarget.position + (followTarget.rotation * itemOffset);
@@ -160,4 +180,9 @@ public class Item_Interactor : Interactor {
 
         transform.SetPositionAndRotation(finalPos, finalRot);
     }
+
+    private void LateUpdate() {
+        HandleItemTrack();
+    }
+    #endregion
 }

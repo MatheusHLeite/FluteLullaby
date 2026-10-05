@@ -78,8 +78,9 @@ public class UI_InventoryManager : MonoBehaviour {
         m_slots[index].SetupSlot(item);
     }
 
-    private void OnSlotItemDropped(int index) {
-        if (m_slots[index].transform.childCount > 0) Destroy(m_slots[index].transform.GetChild(0).gameObject);
+    private void OnSlotItemDropped(int index, float timeHolding) {
+        if (m_slots[index].transform.childCount > 0)
+            Destroy(m_slots[index].transform.GetChild(0).gameObject);
 
         if (index < m_quickSlots.Count && m_quickSlots[index].transform.childCount > 0) 
             Destroy(m_quickSlots[index].transform.GetChild(0).gameObject);       

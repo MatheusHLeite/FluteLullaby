@@ -8,7 +8,6 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     [Header("References")]
     [SerializeField] private Transform m_playerCameraHolder;
     [SerializeField] private Transform m_weaponsHolder;
-    [SerializeField] private Camera m_playerCamera;
     [SerializeField] private Transform m_handsTransformMovement;
 
     [Header("Sway")]
@@ -126,6 +125,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     private MotionBlur motionBlur;
     private VolumeProfile postProcessingVolumeProfile;
     private Camera firstPersonCamera;
+    private Camera playerCamera;
     #endregion
 
     #region Performance Cache
@@ -161,7 +161,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
     #region Public variables
     public bool IsZoomed { get; private set; }
-    public Camera GetPlayerCamera => m_playerCamera;
+    public Camera GetPlayerCamera => playerCamera;
     public Camera GetFirstPersonCamera => firstPersonCamera;
     public Transform GetPlayerCameraHolder => m_playerCameraHolder;
     #endregion
@@ -177,7 +177,9 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         Input = GetComponent<Player_InputHandler>();
         Movement = GetComponent<Player_MovementSystem>();
         HealthSystem = GetComponent<Player_HealthSystem>();
-        firstPersonCamera = m_playerCamera.transform.GetChild(0).GetComponent<Camera>();
+
+        playerCamera = GetComponent<Player_Manager>().GetPlayerCamera();
+        firstPersonCamera = playerCamera.transform.GetChild(0).GetComponent<Camera>();
 
         originalRotation = m_weaponsHolder.transform.localRotation;
         initialPosition = m_weaponsHolder.transform.localPosition;
@@ -206,7 +208,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         m_cameraCanMove = true;
         m_enableZoom = true;
-        m_playerCamera.fieldOfView = m_defaultFov;
+        playerCamera.fieldOfView = m_defaultFov;
         firstPersonCamera.fieldOfView = 50f;
     }
     #endregion
@@ -214,7 +216,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     #region Network Initialization
     public void InitializeNetwork(bool isOwner) {
         if (!isOwner) 
-            m_playerCamera.gameObject.SetActive(false);        
+            playerCamera.gameObject.SetActive(false);        
         else {
             Singleton.Instance.GameEvents.OnSensitivityChanged.AddListener(OnSensitivityChanged);
             Singleton.Instance.GameEvents.OnInvertAxisChanged.AddListener(CheckInvertCameraEnabled);
@@ -244,7 +246,7 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
     }
 
     public void SetCameraGameObjectActive(bool active) {
-        m_playerCamera.gameObject.SetActive(active);
+        playerCamera.gameObject.SetActive(active);
     }
 
     private void HandleCameraMovement() {
@@ -443,6 +445,18 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         m_handsTargetRotation = Quaternion.Slerp(m_handsTargetRotation, targetRotation, Time.deltaTime * m_handsRotationSmooth);
         m_handsTransformMovement.localRotation = m_handsInitialRotation * m_handsTargetRotation;
     }
+
+    public void ResetHandMovementEffect() {
+        m_handsMovementOffset = Vector3.zero;
+        m_handsInertiaOffset = Vector3.zero;
+        m_handsLookSwayOffset = Vector3.zero;
+        m_handsBobOffset = Vector3.zero;
+
+        m_handsTransformMovement.localPosition = m_armsRestPosition;
+
+        m_handsTargetRotation = Quaternion.identity;
+        m_handsTransformMovement.localRotation = m_handsInitialRotation;
+    }
     #endregion
 
     private void HandleCameraZoom() {
@@ -457,8 +471,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
 
         float targetFOV = m_actualFov + dashFOVOffset;
 
-        if (m_playerCamera.fieldOfView != targetFOV)
-            m_playerCamera.fieldOfView = Mathf.Lerp(m_playerCamera.fieldOfView, targetFOV, m_zoomStepTime * Time.deltaTime);
+        if (playerCamera.fieldOfView != targetFOV)
+            playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFOV, m_zoomStepTime * Time.deltaTime);
 
        /* if (firstPersonCamera.fieldOfView != targetFOV)
             firstPersonCamera.fieldOfView = Mathf.Lerp(m_playerCamera.fieldOfView, targetFOV, m_zoomStepTime * Time.deltaTime);*/        
@@ -477,9 +491,8 @@ public class Player_CameraMovementSystem : NetworkBehaviour {
         _zRotation = Mathf.Lerp(_zRotation, 0, Time.deltaTime * m_cameraZRotationTime);
         Vector3 localEA = new Vector3(_pitch, 0, -_zRotation);
 
-        if (m_playerCameraHolder.localEulerAngles != localEA) { 
-            m_playerCameraHolder.localEulerAngles = localEA; 
-        }
+        if (m_playerCameraHolder.localEulerAngles != localEA) 
+            m_playerCameraHolder.localEulerAngles = localEA;        
     }
 
     public void PlayWeaponSwitchAnimation() {

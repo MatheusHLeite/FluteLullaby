@@ -104,6 +104,8 @@ public class UI_PlayerHUD : MonoBehaviour {
         m_criticalStaminaIndicator.SetActive(false);
 
         _targetGap = m_minGap;
+
+        OnWeaponChanged(null, false);
     }
 
     private void SetPlayerCamera(Player_Manager player) {

@@ -213,9 +213,8 @@ namespace DelightStudio.UI {
 
         private void ProcessPointerUp(Vector2 screenPosition) {
             if (!TryGetPointerData(screenPosition, out PointerEventData pointerData, out List<RaycastResult> results)) {
-                if (isDragging && dragObject != null) {
-                    ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.endDragHandler);
-                }
+                if (isDragging && dragObject != null && pointerData != null) 
+                    ExecuteEvents.Execute(dragObject, pointerData, ExecuteEvents.endDragHandler);                
 
                 ClearPress();
                 return;

@@ -19,6 +19,7 @@ namespace DelightStudio.Player {
         }
 
         public void OnDrawAnimationEnded() {
+            _inventorySystem.OnDrawAnimationEnded();
             _combatSystem.SetCanSwitch(true);
         }
 

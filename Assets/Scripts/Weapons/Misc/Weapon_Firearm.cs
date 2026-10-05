@@ -107,15 +107,14 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         stockedAmmo = Singleton.Instance.SaveManager.GetAllItemQuantities(weapon.m_ammo.id);
 
         Singleton.Instance.GameEvents.OnItemCollected.AddListener((item, i, o, b) => OnAmmoCollected());
-        Singleton.Instance.GameEvents.OnItemDropped.AddListener(i => OnAmmoCollected());
+        Singleton.Instance.GameEvents.OnItemDropped.AddListener((i, t) => OnAmmoCollected());
 
         weaponMuzzle = muzzleFlash.transform;
-        currentAmmo = 999;
     }
 
     private void OnDestroy() {
         Singleton.Instance.GameEvents.OnItemCollected.RemoveListener((item, i, o, b) => OnAmmoCollected());
-        Singleton.Instance.GameEvents.OnItemDropped.RemoveListener(i => OnAmmoCollected());
+        Singleton.Instance.GameEvents.OnItemDropped.RemoveListener((i, t) => OnAmmoCollected());
     }
 
     public void OnWeaponUpgrade(FirearmWeaponData data) {
@@ -149,8 +148,8 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
 
     private void OnAmmoCollected() {
         stockedAmmo = Singleton.Instance.SaveManager.GetAllItemQuantities(weapon.m_ammo.id);
-
         remainingAmmo = 0;
+
         UpdateAmmo();
     }
     #endregion

@@ -6,17 +6,17 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private Player_InputHandler Input;
     private Player_HealthSystem HealthSystem;
     private Player_CombatSystem CombatSystem;
-    private Player_AnimationSystem AnimatorSystem;
 
     [Header("References")]
-    [SerializeField] private Transform m_playerCamera;
     [SerializeField] private Transform m_rightHand;
+    [SerializeField] private Transform m_thirdPersonRightHand;
 
     [Header("Setup")]
     [SerializeField] private float m_interactionRadius;
     [SerializeField] private float m_interactionDistance;
     [SerializeField] private LayerMask m_interactionLayer;
 
+    private Transform playerCamera;
     public static readonly Dictionary<ulong, Player_InteractionSystem> Players = new();
 
     #region Private variables 
@@ -25,15 +25,24 @@ public class Player_InteractionSystem : NetworkBehaviour {
     private RaycastHit _hit;
     private Vector3 _target;
 
+    private bool _hasTarget;
+
     private int _lastSelectedSlotIndex;
     private int _lastSlot;
     private float _slotSelectionCooldown;
+
+    private float _itemDropHoldingTime;
     #endregion
 
     #region Public variables
     public int ActualSlotSelected { get; private set; }
     public Transform GetRightPlayerHand => m_rightHand;
-    public Vector3 GetTargetAim() => _target;
+
+    public Transform GetThirdPersonRightPlayerHand => m_thirdPersonRightHand;
+    public void GetTargetAim(out Vector3 target, out bool hasTarget) {
+        hasTarget = _hasTarget;
+        target = _hasTarget ? _target : playerCamera.position + (playerCamera.forward * 0.4f);
+    }
     #endregion
 
     #region Initialization
@@ -41,7 +50,9 @@ public class Player_InteractionSystem : NetworkBehaviour {
         Input = GetComponent<Player_InputHandler>();
         HealthSystem = GetComponent<Player_HealthSystem>();
         CombatSystem = GetComponent<Player_CombatSystem>();
-        AnimatorSystem = GetComponent<Player_AnimationSystem>();
+
+        playerCamera = GetComponent<Player_CameraMovementSystem>().GetPlayerCameraHolder;
+        _itemDropHoldingTime = 0;
     }
     #endregion
 
@@ -76,9 +87,11 @@ public class Player_InteractionSystem : NetworkBehaviour {
 
     #region Object detection
     private void DetectInteractable() {
-        _target = m_playerCamera.position + (m_playerCamera.forward * m_interactionDistance);
-        if (Physics.Raycast(m_playerCamera.position, m_playerCamera.forward, out _hit, m_interactionDistance))
-            _target = _hit.point;        
+        _target = playerCamera.position + (playerCamera.forward * m_interactionDistance);
+        _hasTarget = Physics.Raycast(playerCamera.position, playerCamera.forward, out _hit, m_interactionDistance);
+        if (_hasTarget) 
+            _target = _hit.point;
+        
         result = Physics.OverlapSphere(_target, m_interactionRadius, m_interactionLayer);
 
         newInteractable = result.Length > 0 ? NearestObject(result, _target).GetComponent<IInteractable>() : null;
@@ -117,8 +130,15 @@ public class Player_InteractionSystem : NetworkBehaviour {
     }
 
     private void HandleItemDrop() {
-        if (Input.Drop && Singleton.Instance.InventoryManager.GetItemFromSlot(ActualSlotSelected) != null) {
-            Singleton.Instance.GameEvents.OnItemDropped?.Invoke(ActualSlotSelected);
+        if (Input.Drop) {
+            _itemDropHoldingTime += Time.deltaTime;
+            //call event to show on UI the holding time
+        }
+
+        if (Input.DropUp && Singleton.Instance.InventoryManager.GetItemFromSlot(ActualSlotSelected) != null) {
+            Singleton.Instance.GameEvents.OnItemDropped?.Invoke(ActualSlotSelected, _itemDropHoldingTime);
+            _itemDropHoldingTime = 0;
+            //call event to reset the holding time on UI
         }
     }
 
