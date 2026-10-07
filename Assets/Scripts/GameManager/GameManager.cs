@@ -83,7 +83,9 @@ public interface IInteractable {
 }
 
 public interface IWeapon {
-    void Fire(Player_CombatSystem combat);
+    void FireButtonDown(Player_CombatSystem combat);
+    void FireButtonHold(Player_CombatSystem combat);
+    void FireButtonUp(Player_CombatSystem combat);
     void Reload(Player_CombatSystem combat);
     WeaponClass GetWeaponClass();
 }
@@ -92,7 +94,9 @@ public interface IDamageable {
     void TakeDamage(float damage, Vector3 hitPoint, Vector3 hitDirection, float impact, BodyPart part, NetworkObject attacker);
 }
 
-public enum WeaponClass { None = 0, Revolver = 1, Shotgun = 2, Melee = 3 }
+public enum WeaponClass { None, Revolver, Shotgun, Melee, Bow }
+
+public enum HandSide { Right, Left }
 
 public enum Language { English, Portuguese, Spanish }
 

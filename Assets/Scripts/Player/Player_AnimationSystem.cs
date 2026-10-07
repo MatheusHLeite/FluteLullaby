@@ -59,6 +59,8 @@ public class Player_AnimationSystem : NetworkBehaviour {
 
     private const string DIARY_ON_TRIGGER = "Pause";
     private const string DIARY_ON_BOOL = "Paused";
+
+    private const string BowCharge = "BowCharge";
     #endregion
 
     private Coroutine changeWeaponRoutine;
@@ -236,6 +238,11 @@ public class Player_AnimationSystem : NetworkBehaviour {
     public void OnShot() {
         m_handsAnimator.SetTrigger(Shot);
         RequestAnimationServerRpc(Shot); 
+    }
+
+    public void OnBowDraw() {
+        m_handsAnimator.SetTrigger(BowCharge);
+        RequestAnimationServerRpc(BowCharge);       
     }
 
     public void OnDamageTaken(bool successfullyBlocked) {

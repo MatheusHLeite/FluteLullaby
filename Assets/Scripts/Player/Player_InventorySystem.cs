@@ -1,3 +1,4 @@
+using DelightStudio.Data;
 using System;
 using Unity.Netcode;
 using UnityEngine;
@@ -11,7 +12,8 @@ public class Player_InventorySystem : NetworkBehaviour {
     private Item_Interactor _currentHandItem;
     private IWeapon _currentWeaponEquipped;
 
-    private Transform firstPersonWeaponContainer;
+    private Transform leftFirstPersonWeaponContainer;
+    private Transform rightFirstPersonWeaponContainer;
     private Transform thirdPersonWeaponContainer;
 
     private Transform playerCamera;
@@ -36,7 +38,9 @@ public class Player_InventorySystem : NetworkBehaviour {
         CameraMovement = GetComponent<Player_CameraMovementSystem>();
         Animator = GetComponent<Player_AnimationSystem>();
 
-        firstPersonWeaponContainer = Interaction.GetRightPlayerHand;
+        rightFirstPersonWeaponContainer = Interaction.GetRightPlayerHand;
+        leftFirstPersonWeaponContainer = Interaction.GetLeftPlayerHand;
+
         thirdPersonWeaponContainer = Interaction.GetThirdPersonRightPlayerHand;
 
         playerCamera = CameraMovement.GetPlayerCamera.transform;
@@ -106,9 +110,17 @@ public class Player_InventorySystem : NetworkBehaviour {
     [Rpc(SendTo.Server)]
     private void SpawnItemOnHandRpc(ItemData itemData) {
         Item_SO itemBase = Singleton.Instance.GameManager.GetItemByID(itemData.itemBaseId);
-        Vector3 finalPos = firstPersonWeaponContainer.position + (firstPersonWeaponContainer.rotation * itemBase.m_itemPositionOffset);
+        Weapon weapon = itemBase as Weapon;
+        Transform weaponContainer;
+
+        if (weapon != null) 
+            weaponContainer = weapon.m_handSide == HandSide.Right ? rightFirstPersonWeaponContainer : leftFirstPersonWeaponContainer;
+        else
+            weaponContainer = rightFirstPersonWeaponContainer;
+
+        Vector3 finalPos = weaponContainer.position + (weaponContainer.rotation * itemBase.m_itemPositionOffset);
         Quaternion rotOffset = Quaternion.Euler(itemBase.m_itemRotationOffset);
-        Quaternion finalRot = firstPersonWeaponContainer.rotation * rotOffset;
+        Quaternion finalRot = weaponContainer.rotation * rotOffset;
         GameObject instantiableItem = Instantiate(itemBase.m_itemPrefab.gameObject, finalPos, finalRot);
         ulong targetClient = OwnerClientId;
 

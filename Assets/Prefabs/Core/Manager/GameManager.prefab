@@ -214,6 +214,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a2be64c25ab54cd4f9d3f16ddb89c544, type: 2}
   - {fileID: 11400000, guid: 5521447aa413e99499dcced905ddca49, type: 2}
   - {fileID: 11400000, guid: f56fc13465b48bf4cb26cf048e085f2d, type: 2}
+  - {fileID: 11400000, guid: 0d9e8fb5fe0bc7f499b3c61778592fad, type: 2}
   - {fileID: 11400000, guid: e44370350b4395c4faba237aae2bc481, type: 2}
   - {fileID: 11400000, guid: 20a81a40735b486469897699f72fdd0c, type: 2}
   m_bodyPartDamageMultiplier:

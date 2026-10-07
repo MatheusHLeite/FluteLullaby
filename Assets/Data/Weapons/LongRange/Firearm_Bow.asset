@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be2e3952cc4b8a34395096ee9dcb2e23, type: 3}
+  m_Name: Firearm_Bow
+  m_EditorClassIdentifier: 
+  m_itemName: Bow
+  m_icon: {fileID: 21300000, guid: e024343c1702fc44e931a1594ccb10a4, type: 3}
+  m_description: 
+  m_itemPrefab: {fileID: 5502987882898253985, guid: c8279215fc90e22449125285a90f5c38, type: 3}
+  m_itemType: 1
+  m_itemRarity: 5
+  m_itemPositionOffset: {x: 0.0419, y: -0.0845, z: 0.0682}
+  m_itemRotationOffset: {x: 23.349, y: -5.844, z: 117.425}
+  m_itemSpawnRotation: {x: 0, y: 0, z: 0}
+  m_showcaseItemPosition: {x: 0, y: -0.069, z: 0.14}
+  m_showcaseItemScale: {x: 1.05, y: 1.05, z: 1.05}
+  id: cfb24f24-13c3-4072-97a5-68c75a892744
+  m_damage: 150
+  m_impactForce: 40
+  m_weaponType: 4
+  m_handSide: 1
+  m_overrideController: {fileID: 22100000, guid: dfced3744551ee6438621d602c77f259, type: 2}
+  m_maxAmmo: 10
+  m_range: 0
+  m_recoilForce: 0
+  m_fireRate: 0.1
+  m_minSpread: 0
+  m_maxSpread: 8
+  m_spreadPerShot: 0
+  m_spreadRecovery: 0.1
+  m_defaultSpreadRecoveryTime: 1
+  m_ammo: {fileID: 11400000, guid: 20a81a40735b486469897699f72fdd0c, type: 2}

@@ -8,14 +8,16 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
 
     #region Protected variables
     protected float m_damage;
+    protected float _impact;
     #endregion
 
     #region Private variables
     private Transform weaponMuzzle;
     private RaycastHit hit;
 
-    private int currentAmmo;   
+    private int currentAmmo;
     private int stockedAmmo;
+
     private int remainingAmmo;
     private int maxAmmo;
 
@@ -25,17 +27,17 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     private float _spreadRecovery;
     private float _defaultSpreadRecoveryTime;
 
-    private float _range;
-    private float _impact;
+    private float _range;    
     private float _currentSpread;
-
-    private float minimumShotTimeCooldown;
-    private float minimumShotTime;
+    
     private float lastShotTime;
 
     private float fireRateMultiplier;
     private float reloadSpeedMultiplier;
     private float weaponRecoilForce;
+    
+    private float minimumShotTimeCooldown;
+    private float minimumShotTime;
 
     private bool isReloading;
     private bool isShooting;
@@ -43,7 +45,6 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     private int layerToIgnore;
 
     private UI_PlayerHUD hud;
-
     private Animator animator;
 
     private Player_CombatSystem CombatSystem;
@@ -52,9 +53,9 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     private Player_AnimationSystem AnimationSystem;
     private Player_AudioSystem AudioSystem;
     private CinemachineImpulseSource impulseSource;
-
-    private const string ShootAnimTrigger = "Shoot";
+    
     private const string ReloadAnimTrigger = "Reload";
+    private const string ShootAnimTrigger = "Shoot";
 
     private const string FireRate = "FireRate_Multiplier";
     private const string ReloadSpeed = "ReloadSpeed_Multiplier";
@@ -109,7 +110,10 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         Singleton.Instance.GameEvents.OnItemCollected.AddListener((item, i, o, b) => OnAmmoCollected());
         Singleton.Instance.GameEvents.OnItemDropped.AddListener((i, t) => OnAmmoCollected());
 
-        weaponMuzzle = muzzleFlash.transform;
+        if (muzzleFlash != null)
+            weaponMuzzle = muzzleFlash.transform;
+
+        currentAmmo = 99;
     }
 
     private void OnDestroy() {
@@ -144,7 +148,7 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         isReloading = true;
     }
 
-    private void UpdateAmmo() => Singleton.Instance.GameEvents.OnAmmoUpdated?.Invoke(weapon, currentAmmo, stockedAmmo, remainingAmmo);     
+    protected void UpdateAmmo() => Singleton.Instance.GameEvents.OnAmmoUpdated?.Invoke(weapon, currentAmmo, stockedAmmo, remainingAmmo);     
 
     private void OnAmmoCollected() {
         stockedAmmo = Singleton.Instance.SaveManager.GetAllItemQuantities(weapon.m_ammo.id);
@@ -155,24 +159,25 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     #endregion
 
     #region Public functions
-    public void Fire(Player_CombatSystem combat) {
+    public void FireButtonDown(Player_CombatSystem combat) {
         if (isReloading || isShooting || (currentAmmo <= 0 && stockedAmmo <= 0)) 
             return;
 
-        if (currentAmmo <= 0 && stockedAmmo > 0) {
-            Reload(combat);
+        FireDown(combat);
+    }
+
+    public void FireButtonHold(Player_CombatSystem combat) {
+        if (isReloading || isShooting || (currentAmmo <= 0 && stockedAmmo <= 0))
             return;
-        }
 
-        if (Time.time < minimumShotTime) return;
-        minimumShotTime = Time.time + minimumShotTimeCooldown;
+        FireHold(combat);
+    }
 
-        isShooting = true;
+    public void FireButtonUp(Player_CombatSystem combat) {
+        if (isReloading || isShooting || (currentAmmo <= 0 && stockedAmmo <= 0))
+            return;
 
-        animator.SetTrigger(ShootAnimTrigger);
-        AnimationSystem.OnShot();
-
-        Fire();
+        FireUp(combat);
     }
 
     public void Reload(Player_CombatSystem combat) {
@@ -214,6 +219,40 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         IncreaseSpread(_spreadPerShot);
         lastShotTime = Time.time + _spreadRecovery;
     }
+
+    protected virtual bool OnShotPerformed(Player_CombatSystem combat) {
+        if (currentAmmo <= 0 && stockedAmmo > 0) {
+            Reload(combat);
+            return false;
+        }
+
+        if (Time.time < minimumShotTime)
+            return false;
+        minimumShotTime = Time.time + minimumShotTimeCooldown;
+
+        isShooting = true;
+
+        animator.SetTrigger(ShootAnimTrigger);
+        AnimationSystem.OnShot();
+        return true;
+    }
+
+    protected virtual bool OnProjectileShotPerformed() {
+        if (!CombatSystem.IsOwner)
+            return false;
+
+        if (isShooting)
+            return false;
+
+        isShooting = true;
+
+        currentAmmo--;
+        UpdateAmmo();
+
+        AnimationSystem.OnShot();
+        AudioSystem.CallPlayShotSFX(weapon.m_weaponType);
+        return true;
+    }
     #endregion
 
     #region Spread
@@ -231,6 +270,17 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
             recoveryTime = _defaultSpreadRecoveryTime * 1.6f;
 
         _currentSpread = Mathf.Lerp(_currentSpread, _minSpread, Time.deltaTime * recoveryTime);
+    }
+
+    protected Vector3 GetProjectileAimDirection(Vector3 projectileSpawnPoint, LayerMask layerMask) {
+        _currentSpread = 0;
+        Ray ray = CreateSpreadRay();
+        float aimDistance = 100f;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, aimDistance, layerMask))
+            return (hit.point - projectileSpawnPoint).normalized;
+
+        return (ray.GetPoint(aimDistance) - projectileSpawnPoint).normalized;
     }
 
     private Ray CreateSpreadRay() {
@@ -281,7 +331,11 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
     #endregion
 
     #region Animation events
-    protected abstract void Fire();
+    protected abstract void FireDown(Player_CombatSystem combat);
+
+    protected abstract void FireHold(Player_CombatSystem combat);
+
+    protected abstract void FireUp(Player_CombatSystem combat);
 
     public virtual void OnReloadEnd() {
         int prevCurrentAmmo = currentAmmo;

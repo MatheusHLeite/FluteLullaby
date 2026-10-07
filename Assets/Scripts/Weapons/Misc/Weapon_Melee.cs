@@ -91,7 +91,7 @@ public class Weapon_Melee : MonoBehaviour, IWeapon {
     }
 
     #region Main calls
-    public void Fire(Player_CombatSystem combat) {
+    public void FireButtonDown(Player_CombatSystem combat) {
         if (CombatSystem == null)
             CombatSystem = combat;
 
@@ -103,6 +103,10 @@ public class Weapon_Melee : MonoBehaviour, IWeapon {
 
         StartAttack();
     }
+
+    public void FireButtonHold(Player_CombatSystem combat) { }
+
+    public void FireButtonUp(Player_CombatSystem combat) { }
 
     public void Reload(Player_CombatSystem combat) { }
     #endregion

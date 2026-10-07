@@ -26,7 +26,9 @@ public class Player_InputHandler : NetworkBehaviour {
     public bool Crouch { get; private set; }
     public bool JumpHold { get; private set; }
     public bool Zoom { get; private set; }
-    public bool Attack { get; private set; }    
+    public bool AttackDown { get; private set; }
+    public bool AttackHold { get; private set; }
+    public bool AttackUp { get; private set; }
     public bool Block { get; private set; }
     public bool DrinkFlask { get; private set; }
     public bool Reload { get; private set; }
@@ -86,7 +88,12 @@ public class Player_InputHandler : NetworkBehaviour {
 
         Input.Player.Jump.performed += i => Jump = true;
 
-        Input.Player.Attack.performed += i => Attack = true;
+        Input.Player.Attack.performed += i => AttackDown = true;
+
+        Input.Player.Attack.performed += i => AttackHold = true;
+        Input.Player.Attack.canceled += i => AttackHold = false;
+
+        Input.Player.Attack.canceled += i => AttackUp = true;
 
         Input.Player.Block.performed += i => Block = true;
         Input.Player.Block.canceled += i => Block = false;
@@ -142,7 +149,12 @@ public class Player_InputHandler : NetworkBehaviour {
 
         Input.Player.Jump.performed -= i => Jump = true;
 
-        Input.Player.Attack.performed -= i => Attack = true;
+        Input.Player.Attack.performed -= i => AttackDown = true;
+
+        Input.Player.Attack.performed -= i => AttackHold = true;
+        Input.Player.Attack.canceled -= i => AttackHold = false;
+
+        Input.Player.Attack.canceled -= i => AttackUp = true;
 
         Input.Player.Block.performed -= i => Block = true;
         Input.Player.Block.canceled -= i => Block = false;
@@ -192,7 +204,8 @@ public class Player_InputHandler : NetworkBehaviour {
         if (!isOwner) return;
 
         Jump = false;
-        Attack = false;
+        AttackDown = false;
+        AttackUp = false;
         Slot1 = false;
         Slot2 = false;
         Slot3 = false;

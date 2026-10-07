@@ -1,5 +1,6 @@
 using DelightStudio.AI;
 using DelightStudio.Data;
+using DelightStudio.Weapons;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
@@ -77,11 +78,35 @@ public class Player_CombatSystem : NetworkBehaviour {
         if (CurrentHandItemAction == null || IsBlocking) 
             return;
 
-        if (Input.Attack)
-            CurrentHandItemAction.Fire(this);
+        if (Input.AttackDown)
+            CurrentHandItemAction.FireButtonDown(this);
+
+        if (Input.AttackHold)
+            CurrentHandItemAction.FireButtonHold(this);
+
+        if (Input.AttackUp)
+            CurrentHandItemAction.FireButtonUp(this);
 
         if (Input.Reload)
             CurrentHandItemAction.Reload(this);
+    }
+
+    public void SetBowFire() {
+        if (_firearm == null) 
+            return;
+
+        _firearm.OnFireEnd();
+    }
+
+    public void SetBowDraw() {
+        SetCanSwitch(false);
+        Animator.OnBowDraw();
+    }
+
+    [ServerRpc]
+    public void RequestBowShotServerRpc(Vector3 aimDirection, float damage, float charge01, int id) {
+        if (CurrentHandItemAction is Weapon_Bow bow)
+            bow.FireArrowOnServer(aimDirection, charge01, damage, id);
     }
 
     #region Block an parry

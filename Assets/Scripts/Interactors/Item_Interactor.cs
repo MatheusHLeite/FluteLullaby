@@ -1,3 +1,4 @@
+using DelightStudio.Data;
 using DelightStudio.Item;
 using Sirenix.OdinInspector;
 using Unity.Netcode;
@@ -109,7 +110,11 @@ public class Item_Interactor : Interactor {
 
         bool isLocalPlayer = playerId == NetworkManager.Singleton.LocalClientId;
 
-        followTarget = player.GetRightPlayerHand;
+        Weapon currentWeapon = m_item as Weapon;
+        if (currentWeapon != null)
+            followTarget = currentWeapon.m_handSide == HandSide.Right ? player.GetRightPlayerHand : player.GetLeftPlayerHand;
+        else
+            followTarget = player.GetRightPlayerHand;
 
         if (isLocalPlayer)
             SetLayerRecursively(gameObject, LayerMask.NameToLayer("FirstPersonElement"));

@@ -9,6 +9,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
 
     [Header("References")]
     [SerializeField] private Transform m_rightHand;
+    [SerializeField] private Transform m_leftHand;
     [SerializeField] private Transform m_thirdPersonRightHand;
 
     [Header("Setup")]
@@ -37,6 +38,7 @@ public class Player_InteractionSystem : NetworkBehaviour {
     #region Public variables
     public int ActualSlotSelected { get; private set; }
     public Transform GetRightPlayerHand => m_rightHand;
+    public Transform GetLeftPlayerHand => m_leftHand;
 
     public Transform GetThirdPersonRightPlayerHand => m_thirdPersonRightHand;
     public void GetTargetAim(out Vector3 target, out bool hasTarget) {
@@ -96,9 +98,8 @@ public class Player_InteractionSystem : NetworkBehaviour {
 
         newInteractable = result.Length > 0 ? NearestObject(result, _target).GetComponent<IInteractable>() : null;
 
-        if (_lastInteractable != null && !_lastInteractable.Equals(null) && _lastInteractable != newInteractable) {
-            _lastInteractable.OnHoverOverItem(false);
-        }
+        if (_lastInteractable != null && !_lastInteractable.Equals(null) && _lastInteractable != newInteractable) 
+            _lastInteractable.OnHoverOverItem(false);        
 
         _actualInteractable = newInteractable;
 

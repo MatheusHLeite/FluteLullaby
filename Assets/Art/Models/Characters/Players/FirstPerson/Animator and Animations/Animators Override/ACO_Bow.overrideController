@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ACO_Bow
+  m_Controller: {fileID: 9100000, guid: 3b3e71e73aac27249a5d689ee0433ba2, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 7580eb64b98509640b745678032f6a79, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: d45d3b0706b8e364fb74f18ee25bbda6, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 646d57c6161b6534fb219f6fd8fd4bc4, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 3a9c85f5ba1b76946a6825b89f4e2ec2, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 3fdef11e604f70644817aab82039e845, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 3fdef11e604f70644817aab82039e845, type: 2}
