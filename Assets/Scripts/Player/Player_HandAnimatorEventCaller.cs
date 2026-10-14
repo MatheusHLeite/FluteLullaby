@@ -23,10 +23,6 @@ namespace DelightStudio.Player {
             _combatSystem.SetCanSwitch(true);
         }
 
-        public void SetBowFire() {
-            _combatSystem.SetBowFire();
-        }
-
         public void SetDiaryVisibility() {
             _pauseHandler.SetDiaryVisibility(false);
         }

@@ -91,13 +91,6 @@ public class Player_CombatSystem : NetworkBehaviour {
             CurrentHandItemAction.Reload(this);
     }
 
-    public void SetBowFire() {
-        if (_firearm == null) 
-            return;
-
-        _firearm.OnFireEnd();
-    }
-
     public void SetBowDraw() {
         SetCanSwitch(false);
         Animator.OnBowDraw();

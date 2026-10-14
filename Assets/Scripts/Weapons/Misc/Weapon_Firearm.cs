@@ -249,6 +249,7 @@ public abstract class Weapon_Firearm : MonoBehaviour, IWeapon {
         currentAmmo--;
         UpdateAmmo();
 
+        animator.SetTrigger(ShootAnimTrigger);
         AnimationSystem.OnShot();
         AudioSystem.CallPlayShotSFX(weapon.m_weaponType);
         return true;
